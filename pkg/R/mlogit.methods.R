@@ -111,6 +111,11 @@ summary.mlogit <- function (object,...){
     object$lratio <- lratio(object)
     object$mfR2 <- mfR2(object)
   }
+  if (!is.null(object$rpar)){
+    rpar <- object$rpar
+    object$summary.rpar <- t(sapply(rpar,summary))
+  }
+
   class(object) <- c("summary.mlogit","mlogit")
   return(object)
 }
@@ -140,6 +145,11 @@ print.summary.mlogit <- function(x,digits= max(3, getOption("digits") - 2),width
     cat("Likelihood ratio test : ",names(x$lratio$statistic),
         " = ",signif(x$lratio$statistic,digits),
         " (p.value=",format.pval(x$lratio$p.value,digits=digits),")\n",sep="")
+  }
+
+  if (!is.null(x$summary.rpar)){
+    cat("\nrandom coefficients\n")
+    print(x$summary.rpar)
   }
   invisible(x)
 }

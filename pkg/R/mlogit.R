@@ -1,26 +1,49 @@
-mlogit <- function(formula, data, subset, weights, na.action,
-                   alt.subset = NULL, reflevel= NULL, estimate = TRUE, ...){
+mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
+                   alt.subset = NULL, reflevel= NULL,
+                   nests = NULL, heterosc = FALSE, rpar = NULL,
+                   R = 40, correlation = FALSE, halton = NULL, random.nb = NULL,
+                   estimate = TRUE, ...){
 
   start.time <- proc.time()
   callT <- match.call(expand.dots = TRUE)
   callF <- match.call(expand.dots = FALSE)
   formula <- callF$formula <- logitform(formula)
+  nframe <- length(sys.calls())
+
+  heterosc.logit <- heterosc
+  nested.logit <- !is.null(nests)
+  mixed.logit <- !is.null(rpar)
+  multinom.logit <- !heterosc & is.null(nests) & is.null(rpar)
+
+  if (heterosc.logit + nested.logit + mixed.logit > 1)
+    stop("only one of heterosc, rpar and nests can be used")
+
+  if (!multinom.logit && !is.null(callT$method) && callT$method == 'nr')
+    stop("nr method only implemented for the simple multinomial logit mode")
+
+  if (multinom.logit){
+    if (is.null(callT$method)) callT$method <- 'nr'
+    if (is.null(callT$print.level)) callT$print.level <- 0
+  }
   
   # 1 ############################################################
   #  check whether arguments for mlogit.data are present: if so run
   #  mlogit.data
   ################################################################
-  
+ 
   mldata <- callT
-  m <- match(c("data","choice","shape","varying","sep",
-               "alt.var","id.var","alt.levels",
-               "opposite", "drop.index"),
+  response.name <- paste(deparse(attr(formula, "lhs")[[1]]))
+  m <- match(c("data", "choice", "shape", "varying", "sep",
+               "alt.var", "id.var", "alt.levels",
+               "opposite", "drop.index", "id"),
              names(mldata), 0L)
   use.mlogit.data <- sum(m[-1]) > 0
   if (use.mlogit.data){
     mldata <- mldata[c(1L, m)]
     mldata[[1L]] <- as.name("mlogit.data")
-    data <- eval(mldata, parent.frame())
+    mldata$choice <- response.name
+#    data <- eval(mldata, parent.frame())
+    data <- eval(mldata, sys.frame(which = nframe))
   }
   
   # 2 ###########################################################
@@ -29,17 +52,20 @@ mlogit <- function(formula, data, subset, weights, na.action,
   ###############################################################
 
   mf <- callT
-  m <- match(c("formula", "data", "subset", "na.action","weights","id"),
+  m <- match(c("formula", "data", "subset", "na.action", "weights"),
              names(mf), 0L)
   mf <- mf[c(1L, m)]
   mf$drop.unused.levels <- TRUE
   mf$formula <- formula
   mf[[1L]] <- as.name("model.frame")
   if (use.mlogit.data) mf$data <- data
-  mf <- eval(mf, parent.frame())
+#  mf <- eval(mf, parent.frame())
+  mf <- eval(mf, sys.frame(which = nframe))
   index <- attr(mf, "index")
   alt <- index[["alt"]]
   chid <- index[["chid"]]
+  id <- index[["id"]]
+  if (!is.null(id)) id <- split(index[["id"]], alt)[[1]]
   # change the reference level of the response if required
   if (!is.null(reflevel)){
     alt <- relevel(alt, reflevel)
@@ -65,6 +91,7 @@ mlogit <- function(formula, data, subset, weights, na.action,
   chid.un <- unique(chid)
   n <- length(chid.un)
   T <- length(alt.un)
+  balanced <- TRUE
   if (nrow(mf) != (n * T)){
     rownames(mf) <- paste(chid, alt, sep = ".")
     all.rn <- as.character(t(outer(chid.un, alt.un, paste, sep = ".")))
@@ -73,8 +100,10 @@ mlogit <- function(formula, data, subset, weights, na.action,
     chid <- rep(chid.un, each = T)
     alt <- rep(alt.un, n)
     index <- data.frame(chid = chid, alt = alt, row.names = rownames(mf))
+    balanced <- FALSE
   }
   #suppress individuals for which no choice is made
+  if (FALSE){
   delete.id <- tapply(model.response(mf), chid, sum, na.rm = TRUE)
   delete.id <- names(delete.id[delete.id == 0])
   mf <- mf[!(chid %in% delete.id), ]
@@ -82,7 +111,7 @@ mlogit <- function(formula, data, subset, weights, na.action,
   index[[1]] <- index[[1]][, drop=TRUE]
   index[[2]] <- alt <- index[[2]][, drop=TRUE]
   attr(mf, "index") <- index
-  
+}
   # if estimate is FALSE, return the data.frame
   if (!estimate) return(mf)
 
@@ -91,202 +120,181 @@ mlogit <- function(formula, data, subset, weights, na.action,
   ###############################################################
 
   y <- model.response(mf)
+  choice <- alt[y]
   X <- model.matrix(formula, mf)
   K <- ncol(X)
+  n <- nrow(X)
+  df.residual <- n - K
   colnamesX <- colnames(X)
   if (any(names(mf)=="(weights)"))
-    mf[["(weights)"]] <- mf[["(weights)"]]/mean(mf[["(weights)"]])
+    weights <- mf[["(weights)"]] <- mf[["(weights)"]]/mean(mf[["(weights)"]])
+  else weights <- NULL
   freq <- table(alt[y])
-
   X <- split(as.data.frame(X), alt)
   X <- lapply(X, as.matrix)
   y <- split(y, alt)
-  rownamesX <- split(chid, alt)
   y <- lapply(y, function(x){x[is.na(x)] <- FALSE ; x})
+  
+  if (mixed.logit){
+    # if some random parameters are linked to factors, change the name
+    # to the second level (only relevant for 2 levels factors (to be
+    # tested)
+    for (i in 1:length(rpar)){
+      n <- names(rpar)[i]
+      clvar <- class(data[[n]])
+      if (inherits(clvar, "factor")){
+        lvar <- levels(data[[n]])[2]
+        names(rpar)[i] <- paste(n, lvar, sep="")
+      }
+    }
+    Vara <- sort(match(names(rpar), colnames(X[[1]])))
+    Varc <- (1:K)[-Vara]
+    Ka <- length(Vara)
+    Xa <- lapply(X, function(x) x[, Vara, drop = F])
+    Xc <- lapply(X, function(x) x[, Varc, drop = F])
+    # create the random numbers matrix
+    if (is.null(random.nb)) random.nb <- make.random.nb(R, Ka, halton)
+    colnames(random.nb) <- colnames(Xa[[1]])
+    if (!is.null(id)) idl <- split(id,alt)[[1]] else idl <- NULL
+  }
 
   # 4 ###########################################################
-  # estimate the model using maxLik and passing the correct arguments
+  # Compute the starting values
   ###############################################################
+
+  # first give names to the supplementary coefficients and values if
+  # start is null
+  if (nested.logit){
+    J <- length(nests)
+    if (is.null(start)) sup.coef <- rep(1, J)
+    names.sup.coef <- paste("lambda", names(nests), sep = ".")
+  }
+  if (heterosc.logit){
+    unalt <- levels(alt)
+    J <- length(unalt)
+    if (is.null(start)) sup.coef <- rep(1, J-1)
+    names.sup.coef <- paste("theta", unalt[-1], sep = ".")
+  }
+  if (mixed.logit){
+    nmean <- length(c(Varc, Vara))
+    nvar <- length(Vara)
+    if (!correlation){
+      if (is.null(start)) sup.coef <- rep(.1, nvar)
+      names.sup.coef <- paste("sd", colnames(Xa[[1]]), sep = ".")
+    }
+    else{
+      if (is.null(start)) sup.coef <- rep(.1, 0.5 * nvar * (nvar + 1))
+      names.sup.coef <- c()
+      Ka <- length(rpar)
+      for (i in 1:Ka){
+        names.sup.coef <- c(names.sup.coef, paste(names(rpar)[i], names(rpar)[i:Ka], sep = "."))
+      }
+    }
+  }
+  # if no starting values are provided, provide a 0 vector and, if the
+  # model is not the multinomial logit, estimate the model
+  if (is.null(start)){
+    callst <- callT
+    start <- rep(0, K)
+    names(start) <- colnames(X[[1]])
+    callst$start <- start
+    callst$print.level <- 0
+    if (!multinom.logit){
+      callst$nests <- NULL
+      callst$heterosc <- FALSE
+      callst$rpar <- NULL
+#      start <- coef(eval(callst, parent.frame()))
+      start <- coef(eval(callst, sys.frame(which=nframe)))
+      if (mixed.logit){
+        ln <- names(rpar[rpar=="ln"])
+        start[ln] <- log(start[ln])
+      }
+      names(sup.coef) <- names.sup.coef
+      start <- c(start, sup.coef)
+    }
+  }
+  else{
+    # if starting values are provided, name them correctly
+    if (!multinom.logit) names(start) <- c(colnames(X[[1]]), names.sup.coef)
+    else names(start) <- colnames(X[[1]])
+  }
   
-  # simplify the likelihood, the gradient and the hessian
-  f <- function(param) mlogit.lnl(param, X, y, weights = NULL)
-  g <- function(param) mlogit.grad(param, X, y, weights = NULL)
-  h <- function(param) mlogit.hess(param, X, y, weights = NULL)
+  # 5 ###################################################################
+  # Estimate the model using mlogit.nlm and passing the correct arguments
+  #######################################################################
 
-  myopposite <- FALSE
-  mysum <- TRUE
-  
-##   f <- function(param){
-##     lnl.mlogit(param, X, y, weights = NULL, gradient = FALSE,
-##                hessian = FALSE, opposite = myopposite,
-##                sumlnl = mysum, sumgrad = mysum)
-##   }
+  opt <- callT
+  opt$start <- start
+  m <- match(c("method", "print.level", "iterlim",
+               "start", "constPar","tol"),
+             names(opt), 0L)
+  opt <- opt[c(1L, m)]
+  opt[[1]] <- as.name('mlogit.optim')
+  opt$f <- as.name('lnl.mlogits')
+  if (!mixed.logit) opt[c('X', 'y')] <- list(as.name('X'), as.name('y'))
+  if (mixed.logit){
+    opt$f <- as.name('lnl.rlogit')
+    opt[c('Xa', 'Xc', 'y', 'Varc', 'Vara', 'random.nb', 'id', 'rpar', 'correlation')] <-
+    list(as.name('Xa'), as.name('Xc'), as.name('y'), as.name('Varc'), as.name('Vara'),
+         as.name('random.nb'), as.name('id'), as.name('rpar'), as.name('correlation'))
+  }
+  if (heterosc.logit){
+    opt$f <- as.name('lnl.hlogit')
+    rn <- gauss.quad(R, kind = "laguerre")
+    opt[c('rn', 'choice')] <- list(as.name('rn'), as.name('choice'))
+  }
+  if (nested.logit){
+    opt$f <- as.name('lnl.nlogit')
+    opt$nests <- as.name('nests')
+  }
+  if (!is.null(weights)) opt[c('weights')] <- as.name('weights')
+  opt$opposite <- TRUE
 
-##   g <- function(param){
-##     attr(lnl.mlogit(param, X, y, weights = NULL, gradient = TRUE,
-##                     hessian = FALSE, opposite = myopposite,
-##                     sumlnl = mysum, sumgrad = mysum),
-##          "gradient"
-##          )
-##   }
-
-##   h <- function(param){
-##     attr(lnl.mlogit(param, X, y, weights = NULL, gradient = FALSE,
-##                     hessian = TRUE, opposite = myopposite,
-##                     sumlnl = mysum, sumgrad = mysum),
-##          "hessian"
-##          )
-##   }
-
-##   l <- function(param){
-##     lnl.mlogit(param, X, y, weights = NULL, gradient = TRUE,
-##                hessian = TRUE, opposite = TRUE,
-##                sumlnl = TRUE, sumgrad = TRUE)
-##   }
-
-  
-  result <- callT
-  m <- match(c("method","print.level","iterlim","start","constPar","activePar"),
-             names(result), 0L)
-  result <- result[c(1L, m)]
-  result[[1L]] <- as.name("maxLik")
-  result[c('logLik', 'grad', 'hess')] <- c(f,  g, h)
-  if (is.null(result$start)) result$start <- rep(0, K)
-  result <- eval(result, parent.frame())
-  
-  # 5 ###########################################################
+  x <- eval(opt, sys.frame(which = nframe))
+  # 6 ###########################################################
   # put the result in form
   ###############################################################
 
   n <- sum(freq)
-  logLik0 <- sum(freq*log(freq/n))
-  coef <- result$estimate
-  P <- mlogit.P(coef,X)
-  fitted.values <- as.matrix(as.data.frame(P))
-  residuals <- as.matrix(as.data.frame(y)) - fitted.values
-  logLik <- result$maximum
-  attr(logLik,"df") <- length(coef)
-  hessian <- result$hessian
-  gradient <- result$gradient
-  names(coef) <- rownames(hessian) <- colnames(hessian) <- colnamesX
+  logLik <- - as.numeric(x$optimum)
+  attr(logLik,"df") <- length(x$coefficients)
+  attr(logLik, 'null') <- sum(freq*log(freq/n))
+  fit <- as.matrix(data.frame(attr(x$optimum, 'probabilities')))
+##   if (heterosc){
+##     fitted.values <- c()
+##     for (j in 1:J){
+##       they <- as.list(rep(0,J))
+##       they[[j]] <- 1
+##       fitted.values <- cbind(fitted.values, Prob(start, they))
+##   }
+##   colnames(fitted.values) <- alt.lev
 
-  # compute the optimisation summary
-  est.stat <- structure(list(elaps.time = proc.time() - start.time,
-                             nb.iter = result$iterations,
-                             eps = gradient%*%solve(-hessian)%*%gradient,
-                             method = result$type,
-                             message = result$message),
-                        class = "est.stat")
+  if (!heterosc) resid <- as.matrix(data.frame(y)) - fit
+  else resid <- NULL
+  # if no hessian is returned, use the BHHH approximation
+  if (is.null(attr(x$optimum, 'hessian')))
+    hessian <- - crossprod(attr(x$optimum, 'gradi'))
+  else hessian <- - attr(x$optimum, 'hessian')
+  x$est.stat$elaps.time <- proc.time() - start.time
 
-  result <- list(coefficients = coef, logLik = logLik, logLik0 = logLik0,
-                 hessian = hessian, gradient = gradient,
-                 call = callT, est.stat = est.stat, freq = freq,
-                 residuals = residuals, fitted.values = fitted.values,
-                 formula = formula, model= mf)
-  class(result) <- "mlogit"
-  result
-}
-
-  # 6 ###########################################################
-  # Computation of the Likelihood
-  ###############################################################
+  if (mixed.logit)   rpar <- make.rpar(rpar, correlation, x$coefficients, NULL)
+  else rpar <- NULL
   
-mlogit.P <- function(param, X){
-  eXb <- lapply(X,function(x) exp(crossprod(t(x), param)))
-  seXb <- suml(eXb)
-  P <- lapply(eXb,
-              function(x){
-                v <- x/seXb
-                v[is.na(v)] <- 0
-                as.vector(v)
-              }
-              )
-  P
-}
-
-mlogit.lnl <- function(param, X, y, weights = NULL){
-  if (is.null(weights)) weights <- 1
-  P <- mlogit.P(param,X)
-  Pch <- suml(mapply("*", P, y, SIMPLIFY = FALSE))
-  weights*log(Pch)
-}
-
-mlogit.grad <- function(param, X, y, weights = NULL){
-  if (is.null(weights)) weights <- 1
-  P <- mlogit.P(param,X)
-  PX <- suml(mapply("*", X, P, SIMPLIFY = FALSE))
-  Xch <- suml(mapply("*", X, y, SIMPLIFY = FALSE))
-  weights*(Xch-PX)
-}
-
-mlogit.hess <- function(param, X, y, weights = NULL){
-  if (is.null(weights)) weights <- 1
-  P <- mlogit.P(param,X)
-  PX <-  suml(mapply("*", X, P, SIMPLIFY = FALSE))
-  Pch <- suml(mapply("*", P, y, SIMPLIFY = FALSE))
-  Xch <- suml(mapply("*", X, y, SIMPLIFY = FALSE))
-  XmPX <- lapply(X,
-                 function(x){
-                   g <- x - PX
-                   g[is.na(g)] <- 0
-                   g
-                 }
-                 )
-  - suml( mapply(function(x, y) crossprod(x*y, y), P, XmPX, SIMPLIFY = FALSE))
-}
-
-
-print.est.stat <- function(x, ...){
-  et <- x$elaps.time[3]
-  i <- x$nb.iter[1]
-  halton <- x$halton
-  eps <- as.numeric(x$eps)
-  if (!is.null(x$type) && x$type != "simple"){
-    R <- x$nb.draws
-    cat(paste("Simulated maximum likelihood with",R,"draws\n"))
-  }
-  s <- round(et,0)
-  h <- s%/%3600
-  s <- s-3600*h
-  m <- s%/%60
-  s <- s-60*m
-  tstr <- paste(h,"h:",m,"m:",s,"s",sep="")
-  cat(paste(i,"iterations,",tstr,"\n"))
-  if (!is.null(halton)) cat("Halton's sequences used\n")
-  cat(paste("g'(-H)^-1g =",sprintf("%5.3G",eps),"\n"))
-}
-
-suml <- function(x){
-  n <- length(x)
-  if (!is.null(dim(x[[1]]))){
-    d <- dim(x[[1]])
-    s <- matrix(0,d[1],d[2])
-    for (i in 1:n){
-      x[[i]][is.na(x[[i]])] <- 0
-      s <- s+x[[i]]
-    }
-  }
-  else{
-    s <- rep(0,length(x[[n]]))
-    for (i in 1:n){
-      s <- s+x[[i]]
-    }
-  }
-  s
-}
-
-
-  numderiv <- function(f, param){
-  eps <- 1E-4
-  nc <- c()
-  for (i in 1:length(param)){
-    params <- param
-    parami <- param
-    params[i] <- params[i]+eps
-    parami[i] <- parami[i]-eps
-    lnls <- eval(call(f, param = params))
-    lnli <- eval(call(f, parami))
-    nc <- c(nc, (lnls-lnli)/(2*eps))
-  }
-  nc
+  structure(
+            list(
+                 coefficients  = x$coefficients,
+                 logLik        = logLik,
+                 gradient      = - attr(x$optimum, 'gradient'),
+                 gradi         = - attr(x$optimum, 'gradi'),
+                 hessian       = hessian,
+                 est.stat      = x$est.stat,
+                 fitted.values = fit,
+                 residuals     = resid,
+                 rpar          = rpar,
+                 model         = mf,
+                 freq          = freq,
+                 formula       = formula,
+                 call          = callT),
+            class = 'mlogit'
+            )
 }

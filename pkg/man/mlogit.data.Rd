@@ -7,7 +7,7 @@
 \usage{
 mlogit.data(data, choice, shape = c("wide","long"), varying = NULL,
             sep=".",alt.var = NULL, id.var = NULL,
-            alt.levels = NULL, opposite = NULL, ...)
+            alt.levels = NULL, opposite = NULL, drop.index = FALSE, ...)
 }
 
 \arguments{
@@ -41,7 +41,10 @@ mlogit.data(data, choice, shape = c("wide","long"), varying = NULL,
   \code{data.frame}, they are guessed from the \code{alt.var} argument,}
 
   \item{opposite}{returns the opposite of the specified variables,}
-
+  
+  \item{drop.index}{should the index variables be dropped from the
+  \code{data.frame},}
+  
   \item{...}{further arguments passed to \code{reshape}.}
 }
 
@@ -78,22 +81,30 @@ TM <- mlogit.data(TravelMode,choice="choice",shape="long",
 TM <- mlogit.data(TravelMode,choice="choice",shape="long",
                  id.var="individual",alt.var="mode")
 
+# Same but with two own provided variables which are deleted from the
+  data.frame
+
+TM <- mlogit.data(TravelMode,choice="choice",shape="long",
+                 id.var="individual",alt.var="mode", drop.index = TRUE)
+
 
 # Train is a wide data.frame with columns 'choiceid' is the choice
-#  index, the alternatives are named "ch1" and "ch2", the opposite
-# of the variables is returned
+#  index, the alternatives are named "ch1" and "ch2", the opposite of
+#  the variables is returned
 
 data("Train",package="Ecdat")
 Train <- mlogit.data(Train,choice="choice",shape="wide",
                      varying=4:11,alt.levels=c("ch1","ch2"),
                      opposite=c("price","time","change","comfort"), sep="")
 
-# Car is a wide data.frame, indexes names are provided
+# Car is a wide data.frame
 
-data("Car",package="Ecdat")
-Car <-
-mlogit.data(Car,varying=5:70,shape="wide",sep="",choice="choice",
-            id.var="Mr",alt.var="Car",alt.levels=1:6)
+data("Car", package = "mlogit")
+Car <- mlogit.data(Car, varying = 5:70, shape = "wide", sep = "",
+                   choice = "choice", alt.levels = 1:6)
+
+data("HC", package = "mlogit")
+HC <- mlogit.data(HC, choice="depvar", varying=c(2:8,10:16), shape="wide")
 
   }
 

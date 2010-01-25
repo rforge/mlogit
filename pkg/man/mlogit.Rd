@@ -1,7 +1,7 @@
 \name{mlogit}
 \alias{mlogit}
 \alias{print.mlogit}
-
+\alias{suml}
 \alias{fitted.mlogit}
 \alias{residuals.mlogit}
 \alias{df.residual.mlogit}
@@ -20,7 +20,7 @@
 }
 \usage{
 mlogit(formula, data, subset, weights, na.action,
-       alt.subset = NULL, reflevel = NULL, ...)
+       alt.subset = NULL, reflevel = NULL, estimate = TRUE, ...)
 \method{print}{mlogit}(x, digits = max(3, getOption("digits") - 2),
     width = getOption("width"), ...)
 \method{summary}{mlogit}(object, ...)
@@ -51,6 +51,8 @@ mlogit(formula, data, subset, weights, na.action,
   alternative on which the model should be estimated,}
   \item{reflevel}{the base alternative (the one for which the
     coefficients of individual-specific variables are normalized to 0),}
+  \item{estimate}{a boolean indicating whether the model should be
+  estimated or not: if not, the \code{model.frame} is returned,}
   \item{digits}{the number of digits,}
   \item{width}{the width of the printing,}
   \item{outcome}{a boolean which indicates, for the \code{fitted} and the
@@ -131,6 +133,32 @@ summary(multinom(mode~income,data=Fishing))
 
 m <- mlogit(mode~pr+ca|income,data=Fish)
 summary(m)
+
+## same model with charter as the reference level
+
+m <- mlogit(mode~pr+ca|income, data = Fish, reflevel = "charter")
+
+## same model with a subset of alternatives : charter, pier, beach
+
+m <- mlogit(mode~pr+ca|income, data = Fish,
+            alt.subset = c("charter","pier", "beach"))
+
+## model on 'unbalanced data i.e. for some observations, some
+## alternatives are missing
+
+# a data.frame in wide format with two missing prices
+Fishing2 <- Fishing
+Fishing2[1, "pr.pier"] <- Fishing2[3, "pr.beach"] <- NA
+mlogit(mode~pr+ca|income, Fishing2, shape="wide", choice="mode", varying = 4:11)
+
+# a data.frame in long format with three missing lines
+data("TravelMode", package = "AER")
+Tr2 <- TravelMode[-c(2, 7, 9),]
+mlogit(choice~wait+gcost|income+size, Tr2, shape = "long",
+       id.var = "individual", alt.var="mode", choice = "choice")
+
+
+
 
 }
 

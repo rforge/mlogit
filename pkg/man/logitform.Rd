@@ -2,9 +2,6 @@
 \alias{logitform}
 \alias{is.logitform}
 \alias{logitform.formula}
-\alias{logitform.list}
-\alias{terms.logitform}
-\alias{update.logitform}
 \alias{model.matrix.logitform}
 \alias{model.frame.logitform}
 \title{Model formula for logit models }
@@ -17,20 +14,19 @@
 \usage{
 logitform(object)
 \method{logitform}{formula}(object)
-\method{logitform}{list}(object)
 is.logitform(object)
 \method{model.matrix}{logitform}(object, data, ...)
-\method{model.frame}{logitform}(formula, data, ...)
-\method{terms}{logitform}(x, ...)
-\method{update}{logitform}(object,new, ...)
+\method{model.frame}{logitform}(formula, data, ..., lhs = NULL, rhs = NULL)
 }
 \arguments{
-  \item{object, x}{for the \code{logitform} function, a formula or a list,
+  \item{object}{for the \code{logitform} function, a formula or a list,
     for the \code{update} and \code{model.matrix} methods, a
     \code{logitform} object,}
-  \item{new}{the new formula for the \code{update} method,}
   \item{formula}{a \code{logitform} object,}
   \item{data}{a \code{data.frame},}
+%  \item{id}{the indvidual index in case of panel data,}
+  \item{lhs}{see \code{Formula}}
+  \item{rhs}{see \code{Formula}}
   \item{...}{further arguments.}
     
 }
@@ -68,7 +64,8 @@ colnames(Fishing)[4:11] <- c("pr.beach","pr.pier","pr.boat","pr.charter",
                              "ca.beach","ca.pier","ca.boat","ca.charter")
 Fish <- mlogit.data(Fishing,varying=c(4:11),shape="wide",choice="mode")
 f <- logitform(mode~pr+ca|income)
-X <- model.matrix(f,data=Fish)
+m <- model.frame(f, Fish)
+X <- model.matrix(f,data=m)
 X[1:6,]
 
 }

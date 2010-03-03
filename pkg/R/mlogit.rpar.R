@@ -172,25 +172,29 @@ make.rpar <- function(rpar, correlation, estimate, norm){
   z
 }
 
-cor.rlogit <- function(x){
-  cor.rlogit <- cov.rlogit(x)
-  K <- nrow(cor.rlogit)
-  sd.rlogit <- sqrt(diag(cor.rlogit))
+cor.mlogit <- function(x){
+  if (is.null(x$rpar) || is.null(attr(x$rpar, 'covariance')))
+    stop('cor.mlogit only relevant for random models with correlation')
+  cor.mlogit <- cov.mlogit(x)
+  K <- nrow(cor.mlogit)
+  sd.mlogit <- sqrt(diag(cor.mlogit))
   for (i in 1:K){
     for (j in 1:K){
-      cor.rlogit[i,j] <- cor.rlogit[i,j]/sd.rlogit[i]/sd.rlogit[j]
+      cor.mlogit[i,j] <- cor.mlogit[i,j]/sd.mlogit[i]/sd.mlogit[j]
     }
   }
-  cor.rlogit
+  cor.mlogit
 }
   
-sd.rlogit <- function(x){
-  sqrt(diag(cov.rlogit(x)))
+sd.mlogit <- function(x){
+  if (is.null(x$rpar))
+    stop('sd.mlogit only relevant for random models')
+  sqrt(diag(cov.mlogit(x)))
 }
 
-cov.rlogit <- function(x){
+cov.mlogit <- function(x){
   if (is.null(x$rpar) || is.null(attr(x$rpar, 'covariance')))
-    stop('cov.rlogit only relevant for random models with correlation')
+    stop('cov.mlogit only relevant for random models with correlation')
   attr(x$rpar, 'covariance')
 }
 
@@ -237,7 +241,8 @@ plot.rpar <- function(x, type = c("density", "probability"), norm = TRUE, ...){
   title(main=ma)
 }
 
-plot.rlogit <- function(x, ...){
+plot.mlogit <- function(x, ...){
+  if (is.null(x$rpar)) stop("the plot method is only relevant for random parameters")
   rpar <- x$rpar
   K <- length(rpar)
   nrow <- 1+(K>2)+(K>6)
@@ -251,7 +256,7 @@ plot.rlogit <- function(x, ...){
 }
 
 
-rpar <- function(x, par, ...){
+rpar <- function(x, par = 1, ...){
   x$rpar[[par]]
 }
 

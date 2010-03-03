@@ -218,7 +218,7 @@ m <- mlogit(mode ~ pr + ca | income, data = Fish,
 ## An heteroscedastic logit model
 
 data("TravelMode", package = "AER")
-va <- mlogit(choice ~ wait + travel + vcost, TravelMode,
+hl <- mlogit(choice ~ wait + travel + vcost, TravelMode,
              shape = "long", id.var = "individual", alt.var = "mode",
              method = "bfgs", heterosc = TRUE, tol = 10)
 
@@ -230,17 +230,24 @@ TravelMode$time <- with(TravelMode, travel + wait)/60
 TravelMode$timeair <- with(TravelMode, time * I(mode == "air"))
 TravelMode$income <- with(TravelMode, income / 10)
 #Heiss p.231
-ra <- mlogit(choice ~ time + timeair | income, TravelMode, shape = "long",
+nl <- mlogit(choice ~ time + timeair | income, TravelMode, shape = "long",
              alt.var = "mode", print.level = 0, method = "bfgs",
              nests = list(public = c("train", "bus"), other = c("air","car")),
              tol = 1)
 
 ## a mixed logit model
 
-la <- mlogit(mode ~ pr + ca | income, Fishing, varying = 4:11, shape = 'wide',
-             rpar = c(pr = 'n', ca = 'n'), correlation = TRUE, halton = NA,
-             R = 10, tol = 10, print.level = 0)
-summary(la)
+rpl <- mlogit(mode ~ pr + ca | income, Fishing, varying = 4:11, shape = 'wide',
+              rpar = c(pr = 'n', ca = 'n'), correlation = TRUE, halton = NA,
+              R = 10, tol = 10, print.level = 0)
+summary(rpl)
+rpar(rpl)
+cor.mlogit(rpl)
+cov.mlogit(rpl)
+sd.mlogit(rpl)
+rpar(rpl, "ca")
+summary(rpar(rpl, "ca"))
+
 
 
 }

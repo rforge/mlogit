@@ -108,11 +108,5 @@ mlogit.optim(f, start, method = c("bfgs", "nr", "bhhh"), iterlim = 2000,
   
 }
 
-\references{
-}
-\seealso{
-}
-\examples{
-}
 \author{Yves Croissant}
 \keyword{regression}

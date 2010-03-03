@@ -1,5 +1,5 @@
 export(mlogit, mlogit.data, hmftest, #logitform, is.logitform,
-       mlogit.optim)
+       mlogit.optim, cov.mlogit, cor.mlogit, sd.mlogit, rpar)
 
 #mlogit methods
 #S3method(logitform,formula)
@@ -16,4 +16,5 @@ S3method(hmftest,formula)
 S3method(residuals,mlogit)
 S3method(fitted,mlogit)
 S3method(df.residual,mlogit)
-
+S3method(print, rpar)
+S3method(summary, rpar)

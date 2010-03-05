@@ -9,11 +9,12 @@
   \code{rpar} object from a \code{mlogit} object.
 }
 \usage{
-rpar(x, par = 1, ...)
+rpar(x, par = NULL, ...)
 }
 \arguments{
   \item{x}{a \code{mlogit} object,}
-  \item{par}{the name or the index of the parameter to be extracted,}
+  \item{par}{the name or the index of the parameters to be extracted ;
+    if \code{NULL}, all the parameters are selected,}
   \item{...}{further arguments.}
 }
 \value{
@@ -22,12 +23,10 @@ rpar(x, par = 1, ...)
   \item{mean}{the first parameter of the distribution,}
   \item{sigma}{the second parameter of the distribution,}
   \item{name}{the name of the parameter,}
-  \item{norm}{the name of the coefficient which is used for
-    normalisation, if any.}
 }
 
 \details{
-  \code{mlogit} objects contain an element called rpar which contain a list
+  \code{mlogit} objects contain an element called \code{rpar} which contain a list
   of \code{rpar} objects, one for each estimated random parameter. The
   \code{print} method prints the name of the distribution and the
   parameter, the \code{summary} behave like the one for numeric vectors.

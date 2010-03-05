@@ -2,7 +2,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
                    alt.subset = NULL, reflevel= NULL,
                    nests = NULL, heterosc = FALSE, rpar = NULL,
                    R = 40, correlation = FALSE, halton = NULL, random.nb = NULL,
-                   estimate = TRUE, ...){
+                   panel = FALSE, estimate = TRUE, ...){
 
   start.time <- proc.time()
   callT <- match.call(expand.dots = TRUE)
@@ -59,7 +59,6 @@ mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
   mf$formula <- formula
   mf[[1L]] <- as.name("model.frame")
   if (use.mlogit.data) mf$data <- data
-#  mf <- eval(mf, parent.frame())
   mf <- eval(mf, sys.frame(which = nframe))
   
   # change the reference level of the response if required
@@ -72,8 +71,15 @@ mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
   
   alt <- index[["alt"]]
   chid <- index[["chid"]]
-  id <- index[["id"]]
-  if (!is.null(id)) id <- split(index[["id"]], alt)[[1]]
+  if (panel){
+    if (!mixed.logit) stop("panel is only relevant for mixed logit models")
+    id <- index[["id"]]
+    if (is.null(id)) stop("no individual index")
+    id <- split(index[["id"]], alt)[[1]]
+  }
+  else{
+    id <- NULL
+  }
 
   # compute the relevent subset if required
   if (!is.null(alt.subset)){
@@ -131,8 +137,10 @@ mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
   n <- nrow(X)
   df.residual <- n - K
   colnamesX <- colnames(X)
-  if (any(names(mf)=="(weights)"))
+  if (any(names(mf)=="(weights)")){
     weights <- mf[["(weights)"]] <- mf[["(weights)"]]/mean(mf[["(weights)"]])
+    weights <- split(weights, alt)[[1]]
+  }
   else weights <- NULL
   freq <- table(alt[y])
   X <- split(as.data.frame(X), alt)
@@ -187,7 +195,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
       names.sup.coef <- paste("sd", colnames(Xa[[1]]), sep = ".")
     }
     else{
-      if (is.null(start)) sup.coef <- rep(.1, 0.5 * nvar * (nvar + 1))
+      if (is.null(start)) sup.coef <- rep(.1, 0.5 * nvar * (nvar + 1))#c(.1,.04,.02,.03,.2, .15)#rep(.1, 0.5 * nvar * (nvar + 1))
       names.sup.coef <- c()
       Ka <- length(rpar)
       for (i in 1:Ka){
@@ -207,6 +215,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
       callst$nests <- NULL
       callst$heterosc <- FALSE
       callst$rpar <- NULL
+      callst$panel <- FALSE
 #      start <- coef(eval(callst, parent.frame()))
       start <- coef(eval(callst, sys.frame(which=nframe)))
       if (mixed.logit){
@@ -241,6 +250,14 @@ mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
     opt[c('Xa', 'Xc', 'y', 'Varc', 'Vara', 'random.nb', 'id', 'rpar', 'correlation')] <-
     list(as.name('Xa'), as.name('Xc'), as.name('y'), as.name('Varc'), as.name('Vara'),
          as.name('random.nb'), as.name('id'), as.name('rpar'), as.name('correlation'))
+    # this part to check the analytical derivates
+    if (FALSE){
+      thef <- opt; thef$f <- NULL; names(thef)[2] <- "param"; thef[[1]] <- as.name("lnl.rlogit")
+      thef$gradient <- TRUE; la <- eval(thef, sys.frame(which=nframe));
+      print(attr(la, "gradient"))
+      ng <- opt; ng[[1]] <- as.name("num.gradient"); ng[["f"]] <- "lnl.rlogit"
+      names(ng)[2] <- "param"; print(eval(ng, sys.frame(which=nframe)))
+    }
   }
   if (heterosc.logit){
     opt$f <- as.name('lnl.hlogit')
@@ -251,10 +268,12 @@ mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
     opt$f <- as.name('lnl.nlogit')
     opt$nests <- as.name('nests')
   }
-  if (!is.null(weights)) opt[c('weights')] <- as.name('weights')
+
+  if (!is.null(weights)) opt$weights <- as.name('weights')#opt[c('weights')] <- as.name('weights')
   opt$opposite <- TRUE
 
   x <- eval(opt, sys.frame(which = nframe))
+
   # 6 ###########################################################
   # put the result in form
   ###############################################################
@@ -302,3 +321,5 @@ mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
             class = 'mlogit'
             )
 }
+
+

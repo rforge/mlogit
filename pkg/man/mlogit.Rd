@@ -22,7 +22,7 @@ mlogit(formula, data, subset, weights, na.action, start = NULL,
        alt.subset = NULL, reflevel = NULL, 
        nests = NULL, heterosc = FALSE, rpar = NULL,
        R = 40, correlation = FALSE, halton = NULL,
-       random.nb = NULL, estimate = TRUE, ...)
+       random.nb = NULL, panel = FALSE, estimate = TRUE, ...)
 \method{print}{mlogit}(x, digits = max(3, getOption("digits") - 2),
     width = getOption("width"), ...)
 \method{summary}{mlogit}(object, ...)
@@ -81,7 +81,12 @@ mlogit(formula, data, subset, weights, na.action, start = NULL,
   list with elements \code{prime} (the primes used) and \code{drop} (the
   number of elements droped).}
   \item{random.nb}{only relevant if \code{rpar} is not \code{NULL}, a
-  user-supplied matrix of random,}
+    user-supplied matrix of random,}
+  
+  \item{panel}{only relevant if \code{rpar} is not \code{NULL} and if
+  the data are repeated observations of the same unit ; if \code{TRUE},
+  the mixed-logit model is estimated using panel techniques,}
+
   \item{digits}{the number of digits,}
   \item{width}{the width of the printing,}
   \item{outcome}{a boolean which indicates, for the \code{fitted} and the
@@ -244,11 +249,8 @@ summary(rpl)
 rpar(rpl)
 cor.mlogit(rpl)
 cov.mlogit(rpl)
-sd.mlogit(rpl)
 rpar(rpl, "ca")
 summary(rpar(rpl, "ca"))
-
-
 
 }
 

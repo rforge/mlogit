@@ -1,7 +1,6 @@
 lnl.mlogits <- function(param, X, y, weights = NULL, gradient = FALSE,
                         hessian = FALSE, opposite = TRUE, sumlnl = TRUE,
                         direction = 0, initial.value = NULL){
-
   opposite <- ifelse(opposite, -1, +1)
   if (is.null(weights)) weights <- 1
   balanced <- TRUE
@@ -254,8 +253,9 @@ lnl.rlogit <- function(param, y, Xa, Xc,
   K <- Kc + Ka
   R <- nrow(random.nb)
   siga <- param[-c(1:K)] + direction[-c(1:K)]
-  names(mua) <- names(siga) <- colnames(Xa[[1]])
-
+  # seems redondant for uncorrelated models and false for correlated ones
+  if (!correlation)
+    names(mua) <- names(siga) <- colnames(Xa[[1]])
   b <- make.beta(mua, siga, rpar, random.nb, correlation)
   betaa <- b$betaa
   A <- lapply(Xc, function(x) as.vector(crossprod(t(as.matrix(x)), betac)))
@@ -272,7 +272,6 @@ lnl.rlogit <- function(param, y, Xa, Xc,
   pm <- apply(Pch, 1, mean)
   if (!is.null(id)) lnl <- opposite * sum(weights[!duplicated(id)]*log(pm))
   else lnl <- opposite * sum(weights*log(pm))
-
   if (!is.null(initial.value)){
     while(lnl > initial.value){
       step <- step / 2

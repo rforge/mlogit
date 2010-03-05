@@ -40,6 +40,11 @@ Changes since version 0.1-4
 	* if the choice variable is not an ordered factor, use as.factor()
 	instead of class() <- "factor"
 
-	* cov.mlogit, cor.mlogit, sd.mlogit, rpar functions are added to
-	extract and analyse random coefficients
+	* cov.mlogit, cor.mlogit, rpar , med, rg, stdev, mean functions are added to
+	extract and analyse random coefficients. 
 	
+	* a panel argument is added to mlogit so that mixed models with
+	repeated observation can be estimated using panel methods or not
+
+	* a problem with the weights argument is fixed
+

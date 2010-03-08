@@ -20,7 +20,8 @@
 \usage{
 mlogit(formula, data, subset, weights, na.action, start = NULL,
        alt.subset = NULL, reflevel = NULL, 
-       nests = NULL, heterosc = FALSE, rpar = NULL,
+       nests = NULL, un.nest.el = FALSE, unscaled = FALSE,
+       heterosc = FALSE, rpar = NULL,
        R = 40, correlation = FALSE, halton = NULL,
        random.nb = NULL, panel = FALSE, estimate = TRUE, ...)
 \method{print}{mlogit}(x, digits = max(3, getOption("digits") - 2),
@@ -62,6 +63,10 @@ mlogit(formula, data, subset, weights, na.action, start = NULL,
   \item{nests}{a named list of characters vectors, each names being a
   nest, the corresponding vector being the set of alternatives that
   belong to this nest,}
+  \item{un.nest.el}{a boolean, if \code{TRUE}, the hypothesis of unique
+    elasticity is imposed for nested logit models,}
+  \item{unscaled}{a boolean, if \code{TRUE}, the unscaled version of the
+  nested logit model is estimated,}
   \item{heterosc}{a boolean, if \code{TRUE}, the heteroscedastic logit
   model is esitmated,}
   \item{rpar}{a named vector whose names are the random parameters and

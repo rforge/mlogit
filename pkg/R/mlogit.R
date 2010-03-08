@@ -1,6 +1,7 @@
 mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
                    alt.subset = NULL, reflevel= NULL,
-                   nests = NULL, heterosc = FALSE, rpar = NULL,
+                   nests = NULL, un.nest.el = FALSE, unscaled = FALSE,
+                   heterosc = FALSE, rpar = NULL,
                    R = 40, correlation = FALSE, halton = NULL, random.nb = NULL,
                    panel = FALSE, estimate = TRUE, ...){
 
@@ -66,9 +67,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
     attr(mf, "index")[["alt"]] <-
       relevel(attr(mf, "index")[["alt"]], reflevel)
   }
-
   index <- attr(mf, "index")
-  
   alt <- index[["alt"]]
   chid <- index[["chid"]]
   if (panel){
@@ -80,7 +79,6 @@ mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
   else{
     id <- NULL
   }
-
   # compute the relevent subset if required
   if (!is.null(alt.subset)){
     # we keep only choices that belong to the subset
@@ -176,10 +174,17 @@ mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
 
   # first give names to the supplementary coefficients and values if
   # start is null
+
   if (nested.logit){
     J <- length(nests)
-    if (is.null(start)) sup.coef <- rep(1, J)
-    names.sup.coef <- paste("lambda", names(nests), sep = ".")
+    if (un.nest.el){
+      if (is.null(start)) sup.coef <- c(lambda = 1)
+      names.sup.coef <- 'lambda'
+    }
+    else{
+      if (is.null(start)) sup.coef <- rep(1, J)
+      names.sup.coef <- paste("lambda", names(nests), sep = ".")
+    }
   }
   if (heterosc.logit){
     unalt <- levels(alt)
@@ -195,11 +200,12 @@ mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
       names.sup.coef <- paste("sd", colnames(Xa[[1]]), sep = ".")
     }
     else{
-      if (is.null(start)) sup.coef <- rep(.1, 0.5 * nvar * (nvar + 1))#c(.1,.04,.02,.03,.2, .15)#rep(.1, 0.5 * nvar * (nvar + 1))
+      if (is.null(start)) sup.coef <- rep(.1, 0.5 * nvar * (nvar + 1))
       names.sup.coef <- c()
       Ka <- length(rpar)
       for (i in 1:Ka){
-        names.sup.coef <- c(names.sup.coef, paste(names(rpar)[i], names(rpar)[i:Ka], sep = "."))
+        names.sup.coef <- c(names.sup.coef,
+                            paste(names(rpar)[i], names(rpar)[i:Ka], sep = "."))
       }
     }
   }
@@ -216,10 +222,9 @@ mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
       callst$heterosc <- FALSE
       callst$rpar <- NULL
       callst$panel <- FALSE
-#      start <- coef(eval(callst, parent.frame()))
       start <- coef(eval(callst, sys.frame(which=nframe)))
       if (mixed.logit){
-        ln <- names(rpar[rpar=="ln"])
+        ln <- names(rpar[rpar == "ln"])
         start[ln] <- log(start[ln])
       }
       names(sup.coef) <- names.sup.coef
@@ -267,9 +272,11 @@ mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
   if (nested.logit){
     opt$f <- as.name('lnl.nlogit')
     opt$nests <- as.name('nests')
+    opt$un.nest.el <- as.name('un.nest.el')
+    opt$unscaled <- as.name('unscaled')
   }
 
-  if (!is.null(weights)) opt$weights <- as.name('weights')#opt[c('weights')] <- as.name('weights')
+  if (!is.null(weights)) opt$weights <- as.name('weights')
   opt$opposite <- TRUE
 
   x <- eval(opt, sys.frame(which = nframe))

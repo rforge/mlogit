@@ -367,7 +367,7 @@ med.rpar <- function(x, norm = NULL, ...){
          "ln" = exp(m),
          "u"  = m,
          "t"  = m,
-         "cn" = 0
+         "cn" = max(0, m)
          )
 }
 stdev.rpar <- function(x, norm = NULL, ...){
@@ -417,7 +417,7 @@ med.mlogit <- function(x, par = NULL, norm = NULL, ...){
   sapply(x$rpar[par], function(x) med(x, norm = norm, ...))
 }
 stdev.mlogit <- function(x, par = NULL, norm = NULL, ...){
-  if (!is.null(norm)) norm <- coef(x)[norm]
+  if (!is.null(norm)) norm <- abs(coef(x)[norm])
   if (is.null(par)) par <- names(x$rpar)
   sapply(x$rpar[par], function(x) stdev(x, norm = norm, ...))
 }
@@ -470,7 +470,7 @@ prpar.rpar <- function(x, norm = NULL, ...){
          "ln" = function(x) plnorm(x, m, s),
          "u"  = function(x) punif(x, m - s, m + s),
          "t"  = function(x) (x >= (m - s) & x < m)*(x - m + s)^2 / (2 * s^2) +
-         (x>=m & x <= (m + s)) * (1 - (m + s - x)^2 / (2 * s^2)) + (x > (m + s)) * 1 + 0,
+         (x >= m & x <= (m + s)) * (1 - (m + s - x)^2 / (2 * s^2)) + (x > (m + s)) * 1 + 0,
          "cn" = function(x) pnorm(x, m, s)
          )
 }
@@ -499,7 +499,7 @@ qrpar.mlogit <- function(x, par = 1, y = NULL, norm = NULL, ...){
   if (length(par) > 1)
     stop("only one parameter should be selected")
   x <- x$rpar[[par]]
-  if (is.null(norm)) norm <- coef(x)[norm]
+  if (is.null(norm)) norm <- abs(coef(x)[norm])
   if (is.null(y)){
     qrpar(x, norm = norm, ...)
   }

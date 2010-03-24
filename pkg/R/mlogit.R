@@ -31,7 +31,6 @@ mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
   #  check whether arguments for mlogit.data are present: if so run
   #  mlogit.data
   ################################################################
- 
   mldata <- callT
   response.name <- paste(deparse(attr(formula, "lhs")[[1]]))
   m <- match(c("data", "choice", "shape", "varying", "sep",
@@ -60,6 +59,9 @@ mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
   mf$formula <- formula
   mf[[1L]] <- as.name("model.frame")
   if (use.mlogit.data) mf$data <- data
+  # if the user called the data.frame "mldata", this conflicts with
+  # the call. The following line seems to fix the bug
+  mf$data <- data
   mf <- eval(mf, sys.frame(which = nframe))
   
   # change the reference level of the response if required
@@ -274,8 +276,16 @@ mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
     opt$nests <- as.name('nests')
     opt$un.nest.el <- as.name('un.nest.el')
     opt$unscaled <- as.name('unscaled')
+    if (FALSE){
+      thef <- opt; thef$f <- NULL; names(thef)[2] <- "param"; thef[[1]] <- as.name("lnl.nlogit")
+      thef$gradient <- TRUE;
+      la <- eval(thef, sys.frame(which=nframe));
+      print(attr(la, "gradient"))
+      ng <- opt; ng[[1]] <- as.name("num.gradient"); ng[["f"]] <- "lnl.nlogit"
+      print(ng)
+      names(ng)[2] <- "param"; print(eval(ng, sys.frame(which=nframe)))
+    }
   }
-
   if (!is.null(weights)) opt$weights <- as.name('weights')
   opt$opposite <- TRUE
 

@@ -6,7 +6,7 @@ Author: Yves Croissant <yves.croissant@univ-reunion.fr>
 Maintainer: Yves Croissant <yves.croissant@univ-reunion.fr>
 Depends: R (>= 1.8.0), Formula, statmod
 Suggests: lmtest, car
-Description: Estimation of the multinomial logit model with choice specific variables
+Description: Estimation of the multinomial logit model
 License: GPL (>=2)
 URL: http://www.r-project.org
 

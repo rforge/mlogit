@@ -17,8 +17,6 @@ has.intercept.Formula <- function(object, rhs = NULL, ...) {
   sapply(rhs, function(x) has.intercept(formula(object, lhs = 0, rhs = x)))
 }
 
-
-
 ## pFormula:
 ## methods : formula, model.frame, model.matrix, pmodel.response
 
@@ -35,10 +33,11 @@ mFormula.formula <- function(object){
   object
 }
 
-mFormula <- function(object) {
+mFormula <- function(object){
   stopifnot(inherits(object, "formula"))
-  object <- Formula(object)
-  class(object) <- c("mFormula", class(object))
+  if (!inherits(object, "Formula")) object <- Formula(object)
+  if (!inherits(object, "mFormula"))
+    class(object) <- c("mFormula", class(object))
   object
 }
 
@@ -136,12 +135,92 @@ model.matrix.mFormula <- function(object, data, ...){
   X
 }
 
-scoretest <- function(object, ....){
+scoretest <- function(object, ...){
   UseMethod("scoretest")
 }
 
+scoretest.mlogit <- function(object, ...){
+  dots <- list(...)
+  data.name <- paste(names(dots), lapply(dots, as.character), sep = " = ", collapse=" - ")
+  data.name <- paste(names(dots), dots, sep = " = ", collapse=" - ")
+  mc <- match.call()
+  mc[[1]] <- as.name('update')
+  mc[['iterlim']] <- 0
+  mc[['method']] <- 'bfgs'
+  mc[['start']] <- c(coef(object))
+  mc[['print.level']] <- 0
+  x <- eval(mc, parent.frame())
+  stat <- - sum(x$gradient * solve(x$hessian, x$gradient))
+  names(stat) <- "chisq"
+  df <- length(coef(x)) - length(coef(object))
+  pval <- pchisq(stat, df = df, lower.tail = FALSE)
+  result <- list(statistic = stat,
+                 parameter = df,
+                 p.value = pval,
+                 data.name = data.name,
+                 method = "score test",
+                 alternative = "unconstrainted model"
+                 )
+  class(result) <- 'htest'
+  result
+}
 
 ## mm <- mlogit(mode~pr+ca|income, Fish)
 ## update(mm, heterosc = TRUE, iterlim = 0, method = 'bfgs')
 
   
+waldtest.mlogit <- function(object, hyp = c("fixed", "uncorrelated"), ...){
+  K <- length(colnames(model.matrix(object)))
+  L <- length(object$freq)
+  if (!is.null(object$rpar)){
+    hyp <- match.arg(hyp)
+    correlation <- !is.null(attr(object$rpar, "covariance"))
+    J <- length(object$rpar)
+    if (correlation){
+      rd.el <- K+(1:(J*(J+1)/2))
+      diag.el <- K + c(1, cumsum(J:2)+1)
+    }
+    else rd.el <- K + (1:J)
+    if (hyp == "uncorrelated"){
+      if (!correlation) stop("no correlation")
+      rd.el <- K+(1:(J*(J+1)/2))
+      su <- rd.el[!(rd.el %in% diag.el)]
+    }
+    else su <- rd.el
+  }
+  if (!is.null(object$call$heterosc && object$call$heterosc)){
+    K <- length(colnames(model.matrix(object)))
+    su <- (K+1):(K+J-1)
+    q <- rep(1, length(su))
+  }
+  if (is.null(q)) wq <- coef(object)[su] else wq <- coef(object)[su] - q
+  stat <- as.numeric(crossprod(wq,
+                               crossprod(solve(vcov(object)[su, su]),
+                                         wq)))
+
+  names(stat) <- 'chisq'
+  df <- c(df = length(su))
+  pval <- pchisq(stat, df = df, lower.tail = FALSE)
+  result <- list(statistic = stat,
+                 parameter = df,
+                 p.value = pval,
+                 data.name = hyp,
+                 method = "Wald test"
+  #                 alternative = "unconstrainted model"
+                 )
+  class(result) <- 'htest'
+  result
+
+  
+}
+
+lrtest.mlogit <- function(object, ...){
+  dots <- list(...)
+  if (length(dots) == 0){
+    model2 <- update(object, heterosc=FALSE, rpar = NULL,
+                     start = NULL, nests = NULL,
+                     gleontief = FALSE, method = 'nr')
+    lrtest.default(object, model2)
+  }
+  else lrtest.default(object, ...)
+}

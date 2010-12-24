@@ -1,0 +1,71 @@
+\RequirePackage[greek,francais]{babel}
+\RequirePackage{geometry}
+\RequirePackage{ucs}
+\RequirePackage[utf8]{inputenc}
+\RequirePackage{graphicx,ae,fancyvrb}
+\RequirePackage{color}
+\IfFileExists{upquote.sty}{\RequirePackage{upquote}}{}
+
+% Commandes pour R
+
+\definecolor{cv}{rgb}{0.2,.4,.6}
+% \newenvironment{Rcmd}[1]{\vspace{0.5cm}\begin{center}\begin{minipage}{.9\textwidth}\hrulefill
+%      \textbf{\ #1\ } \hrulefill\par
+%  }{\par\hrulefill \end{minipage}\end{center}\vspace{.5cm}}
+\newenvironment{Rcmd}[1]{\vspace{0.5cm}\begin{center}\hrulefill
+     \textbf{\ #1\ } \hrulefill\par
+ }{\par\hrulefill \end{center}\vspace{.5cm}}
+\newcommand{\va}[1]{{\color{cv}\usefont{T1}{pag}{m}{n} #1}}
+\newcommand{\Rat}[1]{{\color{cv}\usefont{T1}{pag}{m}{n} #1}}
+\newcommand{\Rfi}[2]{{\color{red}
+   \fontsize{9}{13}\usefont{T1}{pag}{m}{n}
+   #1\index{\textbf{#2}!#1}
+}}
+
+\newcommand{\dfvar}[1]{{\color{cv}\usefont{T1}{pag}{m}{n} #1}}
+
+\newcommand{\com}[2]{{\color{red}
+   \fontsize{9}{13}\usefont{T1}{pag}{m}{n}
+   #1\index{b@\textbf{fonctions}!#1}
+}}
+
+\newcommand{\Rf}[1]{{\color{red}
+   \fontsize{9}{13}\usefont{T1}{pag}{m}{n}
+   #1\index{b@\textbf{fonctions}!#1}
+}}
+\newcommand{\Rd}[1]{{\color{red}
+   \fontsize{9}{13}\usefont{T1}{pag}{m}{n}
+   #1\index{c@\textbf{data}!#1}
+}}
+\newcommand{\Ra}[2]{{\color{blue}
+   \texttt{#1}\index{d@\textbf{functions' arguments}!\textit{#2}!#1}
+}}
+\newcommand{\Rm}[2]{{\color{blue}
+   \texttt{#1}\index{d@\textbf{methods}!\textit{#2}!#1}
+}}
+\newcommand{\Rel}[2]{{\color{blue}
+   \texttt{#1}\index{e@\textbf{objects' elements}!\textit{#2}!#1}
+}}
+\newcommand{\Rob}[1]{{\color{green}
+   \texttt{#1}\index{a@\textbf{objects}!#1}
+}}
+\newcommand{\Rv}[1]{{\color{red} \texttt{#1}}}
+\newcommand{\fichier}[1][]{\SaveVerb[aftersave= {
+     {\color{cv} \UseVerb[#1]{coucou} }}]{coucou}}
+\newcommand{\Rcl}[1][]{\SaveVerb[aftersave= {
+     {\color{red} \UseVerb[#1,fontfamily=helvetica]{coucou}} }]{coucou}}
+\newenvironment{Rcp}{\VerbatimEnvironment\begin{Verbatim}[formatcom=\color{red},fontfamily=helvetica]}{\end{Verbatim}}
+
+% \DefineVerbatimEnvironment{Sinput}{Verbatim}{fontshape=sl,frame=leftline,formatcom=\color{red},xleftmargin=5mm,baselinestretch=1,fontsize=\footnotesize}
+% \DefineVerbatimEnvironment{Soutput}{Verbatim}{formatcom=\color{blue},frame=leftline,xleftmargin=5mm,baselinestretch,fontsize=\footnotesize}
+% \DefineVerbatimEnvironment{Scode}{Verbatim}{fontshape=sl}
+
+%\newenvironment{Schunk}{}{}
+
+% \newenvironment{answer}[1][5]%
+% {\vspace{.5cm}\hspace{1cm} \begin{minipage}{10cm}\sffamily \small}%
+% {\end{minipage}\vspace{.5cm}\par }
+
+\newenvironment{answer}[1][5]%
+{\vspace{.1cm}\hspace{1cm}\sffamily \small}%
+{\vspace{.1cm}\par }

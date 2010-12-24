@@ -66,7 +66,7 @@ mlogit(formula, data, subset, weights, na.action, start = NULL,
   \item{unscaled}{a boolean, if \code{TRUE}, the unscaled version of the
   nested logit model is estimated,}
   \item{heterosc}{a boolean, if \code{TRUE}, the heteroscedastic logit
-    model is esitmated,}
+    model is estimated,}
   \item{rpar}{a named vector whose names are the random parameters and
   values the distribution : \code{'n'} for normal, \code{'l'} for
   log-normal, \code{'t'} for truncated normal, \code{'u' } for uniform,}
@@ -212,7 +212,7 @@ mlogit(choice~wait+gcost|income+size, Tr2, shape = "long",
 
 data("TravelMode", package = "AER")
 hl <- mlogit(choice ~ wait + travel + vcost, TravelMode,
-             shape = "long", id.var = "individual", alt.var = "mode",
+             shape = "long", chid.var = "individual", alt.var = "mode",
              method = "bfgs", heterosc = TRUE, tol = 10)
 
 ## A nested logit model

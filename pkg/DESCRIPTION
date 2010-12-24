@@ -1,10 +1,10 @@
 Package: mlogit
-Version: 0.1-8
-Date: 2010-07-16
+Version: 0.1-9
+Date: 2010-12-23
 Title: multinomial logit model
 Author: Yves Croissant <yves.croissant@univ-reunion.fr>
 Maintainer: Yves Croissant <yves.croissant@univ-reunion.fr>
-Depends: R (>= 1.8.0), Formula, statmod, lmtest
+Depends: R (>= 1.8.0), Formula, statmod, lmtest, maxLik
 Suggests: lmtest, car
 Description: Estimation of the multinomial logit model
 License: GPL (>=2)

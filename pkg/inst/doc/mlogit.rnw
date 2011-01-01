@@ -131,7 +131,6 @@ Once fitted, a logit model is useful for predictions :
   \end{itemize}
 \end{itemize}
 
-
 Consider, as an example interurban trips between two towns (Lyon and
 Paris). Suppose that there are three modes (car, plane and train) and
 that the characteristics of the modes and the market shares are as
@@ -162,11 +161,9 @@ To get the predictions, one just has to change the values of train
 time or plane price and compute the new probabilities, which can be
 interpreted at the aggregate level as predicted market shares.
 
-
 \section{Data management and model description}
 
 \subsection{Data management}
-
 
 <<echo=FALSE,results=hide>>=
 options(prompt= "R> ", useFancyQuotes = FALSE)
@@ -950,21 +947,21 @@ $\frac{\partial{l(x)}}{\partial{x}}=g(x_t)+
 \end{enumerate}
 
   \begin{center}
-    \begin{figure}
+    \begin{figure}[hbtp]
       \includegraphics[width=.75\textwidth]{./graph/opt1}
       \caption{Numerical optimization}
     \end{figure}
   \end{center}
 
   \begin{center}
-    \begin{figure} 
+    \begin{figure}[hbtp] 
       \includegraphics[width=.75\textwidth]{./graph/opt2}
       \caption{Numerical optimization}
     \end{figure}
   \end{center}
 
   \begin{center}
-    \begin{figure}
+    \begin{figure}[hbtp]
     \includegraphics[width=.75\textwidth]{./graph/opt3}
     \caption{Numerical optimization}
     \end{figure}
@@ -1258,8 +1255,8 @@ trips, it is relevant to use only generic coefficients and to remove
 the intercept :
 
 <<>>=
-m <- mlogit(choice~price+time+change+comfort | -1, Tr)
-summary(m)
+ml.Train <- mlogit(choice~price+time+change+comfort | -1, Tr)
+summary(ml.Train)
 @ 
 
 All the coefficients are highly significant and have the predicted
@@ -1269,7 +1266,7 @@ directly interpretable, but dividing them by the price coefficient, we
 get monetary values :
 
 <<>>=
-coef(m)[-1]/coef(m)[1]
+coef(ml.Train)[-1]/coef(ml.Train)[1]
 @ 
 
 We obtain the value of 26 euros for an hour of traveling, 5 euros for
@@ -1282,7 +1279,7 @@ before the estimation, \emph{i.e.} instead of using :
 
 <<>>=
 Fish <- mlogit.data(Fishing, shape="wide", varying=2:9, choice="mode")
-m <- mlogit(mode~price | income | catch, Fish)
+ml.Fish <- mlogit(mode~price | income | catch, Fish)
 @ 
 
 it is possible to use \Rf{mlogit} with the original \Rob{data.frame}
@@ -1290,8 +1287,8 @@ and the relevant arguments that will be internally passed to
 \Rf{mlogit.data} :
 
 <<>>=
-m <- mlogit(mode~price | income | catch, Fishing, shape = "wide", varying = 2:9)
-summary(m)
+ml.Fish <- mlogit(mode~price | income | catch, Fishing, shape = "wide", varying = 2:9)
+summary(ml.Fish)
 @
 
 Several methods can be used to extract some results from the estimated
@@ -1299,8 +1296,8 @@ model. \Rm{fitted}{mlogit} returns the predicted probabilities for the
 outcome or for all the alternatives if \Rcl!outcome = FALSE!.
 
 <<>>=
-head(fitted(m))
-head(fitted(m, outcome=FALSE))
+head(fitted(ml.Fish))
+head(fitted(ml.Fish, outcome=FALSE))
 @ 
 
 Finally, two further arguments can be usefully used while using
@@ -1317,121 +1314,10 @@ Finally, two further arguments can be usefully used while using
   alternatives are removed :
 \end{itemize}  
   
-  
 <<>>=
-m <- mlogit(mode~price | income | catch, Fish, reflevel='charter', alt.subset=c('beach', 'pier', 'charter'))
+mlogit(mode~price | income | catch, Fish, reflevel='charter', 
+       alt.subset=c('beach', 'pier', 'charter'))
 @ 
-
-
-\section{Tests}
-
-\subsection{The three tests}
-
-As all models estimated by maximum likelihood, three testing
-procedures may be applied to test hypothesis about models fitted using
-\Rf{mlogit}. The hypothesis tested define two models :
-
-\begin{itemize}
-\item the unconstrained model that doesn't take these hypothesis into
-  account,
-\item the constrained model that impose these hypothesis.
-\end{itemize}
-
-This in turns define three principles of tests :
-
-\begin{itemize}
-\item the Wald test is based only on the unconstrained model,
-\item the Lagrange multiplier tests is based only on the constrained
-  model,
-\item the Likelihood ratio test is based on the comparison of both
-  models.
-\end{itemize}
-
-The three principles of test are better understood using
-figure~\label{fig:threetests}
-
-\includegraphics{graph/threetests}
-
-In this one dimensional setting, the hypothesis is of the form $\theta
-= \theta_o$, which can be written $f(\theta) = \theta-\theta_o$, with
-$f(\theta)=0$ if the hypothesis is unforced. This is the equation of a
-straight line on~\ref{fig:threetests} . The constrained model is just
-$\hat{\theta}_{c}=\theta_o$, \emph{i.e.} the constrained model is not
-estimated. The unconstrained model corresponds to the maximum of the
-curve that represents the log-likelihood function.
-
-\begin{itemize}
-\item The Wald test is based on $f(\hat{\theta}_{nc})$ which is
-  depicted by the arrow in~\ref{fig:threetests}. More generally, it is
-  a vector of length $J$, whose expected value should be 0 if the
-  hypothesis is true.
-\item The Lagrange multiplier is based on the slope of the likelihood
-  curve evaluated at the constrained model : $\frac{\partial \ln
-    L}{\theta}(\hat{\theta}_c)$. Here again, this should be a random
-  vector with expected value equal to 0 if $H_o$ is true.
-\item Finally, the likelihood ratio test compares both models. More
-  specifically, the statistic is twice the value of the log-likelihood
-  for the two models.
-\end{itemize}
-
-Two of these tests are implemented in the \pkg{lmtest} package :
-\Rf{waldtest} et \Rf{lrtest}. The wald test is also implemented in
-\Rf{linearHypothesis} from package \pkg{car} with a fairly different
-syntax. We provide special methods of \Rm{waldtest}{mlogit} and
-\Rm{lrtest}{mlogit} for \Rob{mlogit} objects and we also provide a
-function for the lagrange multiplier (or score) test called
-\Rf{scoretest}.
-
-We'll see later on that the score test is especially usefull for
-\Rob{mlogit} objects when one is interested in extending the basic
-multinomial logit model. In this case, the unconstrained model is much
-more difficult to estimate than the constrainted model which is the
-basic multinomial logit model. The score test, which is based on the
-constrained model is therefore very simple to compute.
-
-For now, we'll just demonstrate the use of the testing in the usual
-setting where the two models are indicated. This can done by passing
-two fitted models to the testing function, or just one model and a
-formula which describes the second model. 
-
-We've previously estimated the following model :
-
-<<>>=
-m <- mlogit(mode~price | income | catch, Fishing, shape = "wide", varying = 2:9)
-@
-
-The hypothesis that the income doesn't influence the choice for a
-fishing mode is a joint hypothesis that three coefficients are
-zero. The constrained model can be obtained by updated the previous
-model :
-
-<<>>=
-mc <- update(m, . ~ . | . - income | .)
-@
-
-The wald and likelihood ratio tests are then obtained by provinding
-the two models as arguments :
-<<>>=
-waldtest(m, mc)
-lrtest(m, mc)
-scoretest(mc, m)
-@ 
-
-or just one of them and a formula that describes the second one :
-
-<<eval = FALSE>>=
-lrtest(m, . ~ . | . - income | .)
-lrtest(m, mode ~ price | 1 | catch)
-lrtest(mc, . ~ . | . + income | .)
-lrtest(mc, mode ~ price | income | catch)
-waldtest(m, . ~ . | . - income | .)
-waldtest(m, mode ~ price | 1 | catch)
-waldtest(mc, . ~ . | . + income | .)
-waldtest(mc, mode ~ price | income | catch)
-scoretest(mc, . ~ . | . + income | .)
-scoretest(mc, mode ~ price | income | catch)
-@ 
-
 
 \section{Relaxing the iid hypothesis}
 
@@ -1553,9 +1439,9 @@ Bhat <- mlogit.data(Bhat, shape='long', chid.var = 'case',
 This restricts the sample to 2769 users.
 
 <<>>=
-ml <- mlogit(choice ~ freq + cost + ivt + ovt | urban + income, Bhat, reflevel = 'car')
-hl <- mlogit(choice ~ freq + cost + ivt + ovt | urban + income, Bhat, reflevel = 'car', heterosc = TRUE)
-summary(hl)
+ml.MC <- mlogit(choice ~ freq + cost + ivt + ovt | urban + income, Bhat, reflevel = 'car')
+hl.MC <- mlogit(choice ~ freq + cost + ivt + ovt | urban + income, Bhat, reflevel = 'car', heterosc = TRUE)
+summary(hl.MC)
 @ 
 
 The results obtained by \cite{BHAT:95} can't be exactly reproduced
@@ -1573,8 +1459,8 @@ hypothesis that the user wants to test is the homoscedasticity
 hypothesis, \emph{i.e.}  \Rcl!sp.train=1! and \Rcl!sp.air=1!.
 
 <<>>=
-lrtest(hl)
-waldtest(hl)
+lrtest(hl.MC)
+waldtest(hl.MC)
 @ 
 
 The wald test can also be computed using the \Rf{linearHypothesis}
@@ -1582,7 +1468,7 @@ function from the \pkg{car} package :
 
 <<>>=
 library("car")
-linearHypothesis(hl, c('sp.air=1', 'sp.train=1'))
+linearHypothesis(hl.MC, c('sp.air=1', 'sp.train=1'))
 @ 
 
 For the score test, we provide the constrained model as argument,
@@ -1591,9 +1477,8 @@ argument which defines the unconstrained model, which is in this case
 \Rcl!heterosc = TRUE!.
 
 <<>>=
-scoretest(ml, heterosc = TRUE)
+scoretest(ml.MC, heterosc = TRUE)
 @ 
-
 
 The second example we provide reproduces the first column of table
 23.28 page 855 of \cite{GREEN:08}.
@@ -1603,11 +1488,11 @@ data("TravelMode",package="AER")
 TravelMode <- mlogit.data(TravelMode,choice="choice",shape="long",
                           alt.var="mode",chid.var="individual")
 TravelMode$avinc <- with(TravelMode,(mode=='air')*income)
-ml <- mlogit(choice ~ wait + gcost + avinc, TravelMode, 
-             reflevel = "car")
-hl <- mlogit(choice ~ wait + gcost + avinc, TravelMode, 
+ml.TM <- mlogit(choice ~ wait + gcost + avinc, TravelMode, 
+                reflevel = "car")
+hl.TM <- mlogit(choice ~ wait + gcost + avinc, TravelMode, 
              reflevel = "car", heterosc = TRUE)
-summary(hl)
+summary(hl.TM)
 @ 
 
 Note that the ranking of the scale parameters differs from the
@@ -1618,7 +1503,7 @@ The standard deviations print at the end of table 23.28 are obtained
 by multiplying the scale parameters by $\pi/\sqrt{6}$ :
 
 <<>>=
-c(coef(hl)[7:9], sp.car = 1)*pi/sqrt(6)
+c(coef(hl.TM)[7:9], sp.car = 1)*pi/sqrt(6)
 @ 
 
 Note that the standard deviations of the estimated scale parameters
@@ -1627,9 +1512,9 @@ confirmed by the fact that the homoscedasticity hypothesis is not
 rejected :
 
 <<>>=
-waldtest(hl)
-lrtest(hl)
-scoretest(ml, heterosc = TRUE)
+waldtest(hl.TM)
+lrtest(hl.TM)
+scoretest(ml.TM, heterosc = TRUE)
 @ 
 
 
@@ -1759,9 +1644,6 @@ weight average value of $x$ in nest $l$, $\bar{x} = \sum_{m=1}^M P_m
 \bar{x}_m$ the weight average of $x$ for all the nests and $\bar{V}_l
 = \sum_{k \in B_l} P_{k|l} V_k$
 
-
-
-
 $$
 \left\{
 \begin{array}{rcl}
@@ -1814,7 +1696,6 @@ $$
 P_j= \sum_{l \mid j \in B_l} \frac{e^{V_j/\lambda_l}}{N_l}\frac{N_l^{\lambda_l}}{\sum_m N_m^{\lambda_m}}=\sum_{l \mid j \in B_l} P_{j\mid l}{P_l}
 $$
 
-
 $$
 \left\{
 \begin{array}{rcl}
@@ -1830,7 +1711,6 @@ V_j -\left\{\lambda_l(1-P_j/P_{j\mid l})\lambda_l\ln N_l +
 \end{array}
 \right.
 $$
-
 
 For the unscaled version, the gradient is :
 
@@ -1872,10 +1752,10 @@ data("TravelMode",package="AER")
 TravelMode <- mlogit.data(TravelMode,choice="choice",shape="long",
                           alt.var="mode",chid.var="individual")
 TravelMode$avinc <- with(TravelMode,(mode=='air')*income)
-nl <- mlogit(choice ~ wait + gcost + avinc, TravelMode, reflevel = "car", 
-            nests = list(fly = "air", ground = c("train", "bus", "car")), 
-            unscaled=TRUE)
-summary(nl)
+nl.TM <- mlogit(choice ~ wait + gcost + avinc, TravelMode, reflevel = "car", 
+                nests = list(fly = "air", ground = c("train", "bus", "car")), 
+                unscaled=TRUE)
+summary(nl.TM)
 @ 
 
 Recall that the unscaled version version of the nested logit model is
@@ -1909,14 +1789,14 @@ HC$icca[!cooling.modes] <- HC$occa[!cooling.modes] <- 0
 We now estimate a nested logit model with two nests : the cooling /
 non-cooling systems :
 <<>>=
- ml <- mlogit(depvar~occa+icca+och+ich, HC)
- nl <- mlogit(depvar~occa+icca+och+ich, HC, 
-             nests = list(cooling = c('ecc', 'erc', 'gcc', 'hpc'), 
-                          noncool = c('ec', 'gc', 'er')))
+ml.HC <- mlogit(depvar~occa+icca+och+ich, HC)
+nl.HC <- mlogit(depvar~occa+icca+och+ich, HC, 
+                nests = list(cooling = c('ecc', 'erc', 'gcc', 'hpc'), 
+                  noncool = c('ec', 'gc', 'er')))
 ## nl <- mlogit(depvar~invcost+opcost, HC, 
 ##              nests = list(cooling = c('ecc', 'erc', 'gcc', 'hpc'), 
 ##                           noncool = c('ec', 'gc', 'er')))
-summary(nl)
+summary(nl.HC)
 @ 
 
 The two nest elasticities are about 0.3, which implies a correlation
@@ -1924,10 +1804,10 @@ of 0.7, which is quite high. The results of the three tests are given
 bellow :
 
 <<>>=
-lrtest(nl)
-waldtest(nl)
-scoretest(ml, nests = list(cooling = c('ecc', 'erc', 'gcc', 'hpc'), 
-                      noncool = c('ec', 'gc', 'er')))
+lrtest(nl.HC)
+waldtest(nl.HC)
+scoretest(ml.HC, nests = list(cooling = c('ecc', 'erc', 'gcc', 'hpc'), 
+                   noncool = c('ec', 'gc', 'er')))
 @ 
 
 The three tests reject the null hypothesis of no correlation at the
@@ -1936,7 +1816,7 @@ test equality between both elasticities. \Rf{linearHypothesis}
 provides a particular convenient interface for that :
 
 <<>>=
-linearHypothesis(nl, "iv.cooling = iv.noncool")
+linearHypothesis(nl.HC, "iv.cooling = iv.noncool")
 @ 
 
 Therefore the hypothesis is not rejected and can be unforced by
@@ -1944,16 +1824,16 @@ updating the model with the argument \Ra{un.nest.el}{mlogit} equal to
 \code{TRUE}.
 
 <<>>=
-nl2 <- update(nl, un.nest.el = TRUE)
+nl.HC.u <- update(nl.HC, un.nest.el = TRUE)
 @ 
 
 A likelihood ratio test confirms that the hypothesis is not rejected :
 
 <<>>=
-lrtest(nl,nl2)
+lrtest(nl.HC,nl.HC.u)
 @ 
 
-\section{The general extreme value model}
+\subsection{The general extreme value model}
 
 
 \cite{MCFAD:78} developed a general model that suppose that the join
@@ -2148,30 +2028,29 @@ nested logit models with overlapping nests \citet{KOPP:WEN:00} and
 
 A mixed logit model or random parameters logit model is a logit model
 for which the parameters are assumed to vary from one individual to
-another.
+another. It is therefore a model that takes the heterogeneity of the
+population into account.
 
 \subsection{The probabilities}
 
-The standard logit model is :
+For the standard logit model, the probabilities are :
 $$
 P_{il}=\frac{e^{\beta'x_{il}}}{\sum_j e^{\beta'x_{ij}}}
 $$
-
-The mixed logit model is :
+Suppose now that the coefficients are individual-specific. The
+probabilities are then :
 $$
 P_{il}=\frac{e^{\beta_i'x_{il}}}{\sum_j e^{\beta_i'x_{ij}}}
 $$
-
-Two strategies of estimation may be considered :
-
+Two strategies of estimation can then be considered :
 \begin{itemize}
 \item estimate the coefficients for each individual in the sample,
 \item consider the coefficients as random variables.
 \end{itemize}
 
-The first approach is of limited interest, because it would requires
-numerous observations for each individual.
-
+The first approach is of limited interest, because it would require
+numerous observations for each individual and because we are not
+interested on the value of the coefficients for a given individual.
 The second approach leads to the mixed logit model.
 
 The probability that individual $i$ will choose alternative $l$ is :
@@ -2181,46 +2060,58 @@ P_{il} \mid \beta_i =\frac{e^{\beta_i'x_{il}}}{\sum_j e^{\beta_i'x_{ij}}}
 $$
 
 This is the probability for individual $i$ conditional on the vector
-of coefficients $\beta_i$. To get the unconditional probability, we
-have the average probability for the different values of $\beta_i$.
+of individual-specific coefficients $\beta_i$. To get the
+unconditional probability, we have to compute the average of these
+conditional probabilities for all the values of $\beta_i$.
 
-If $V_{il}=\alpha_i+\beta_i x_{il}$ and the density of $\beta_i$ is
-$f(\beta_i,\theta)$ :
+Suppose that $V_{il}=\alpha+\beta_i x_{il}$, \emph{i.e.} there is only
+one individual-specific coefficient and that the density of $\beta_i$
+is $f(\beta,\theta)$, $\theta$ being the vector of the parameters of
+the distribution of $\beta$. The unconditionl probability is then :
 
 $$
 P_{il}= \mbox{E}(P_{il} \mid \beta_i) =
-\int_{-\infty}^{+\infty}(P_{il} \mid \beta_i)f(\beta_i,\theta)d\beta_i
+\int_{\beta}(P_{il} \mid \beta)f(\beta,\theta)d\beta
 $$
 
-which can be estimated efficiently by quadrature methods.
+which is a one-dimentional integral that can be efficiently estimated
+by quadrature methods.
 
-If $V_{il}=\alpha_i+\beta_i x_{il}+\gamma_i v_{il}$ and the density of
-$\beta_i$ and $\gamma_i$ is $f(\beta_i,\gamma_i,\theta)$
+If $V_{il}=\beta_i^{\top} x_{il}$ where $\beta_i$ is a vector of
+length $K$ and $f(\beta,\theta)$ is the joint density of the $K$
+individual-specific coefficients, the unconditionnal probability is :
 
 $$
-P_{il}= \mbox{E}(P_{il} \mid \beta_i, \gamma_i) =
-\int_{-\infty}^{+\infty}\int_{-\infty}^{+\infty}(P_{il} \mid \beta_i,
-\gamma_i)f(\beta_i,\gamma_i\theta)d\beta_i d\gamma_i
+P_{il}= \mbox{E}(P_{il} \mid \beta_i) =
+\int_{\beta_1}\int_{\beta_2}\ldots\int_{\beta_K}(P_{il} \mid
+\beta)f(\beta,\theta)d\beta_1d\beta_2\ldots d\beta_K
 $$
 
-can be estimated by simulations.
+This is a $K$-dimentional integral which cannot easily estimated by
+quatrature methods. In these kind of situations, the only practical
+method is to use simulations. More precisely, $R$ draws of the
+parameters are taken from the distribution of $\beta$, the probability
+is computed for every draw and the unconditional probability, which is
+the expected value of the conditional probabilities is estimated by
+the average of the $R$ probabilities.
 
 \subsection{Panel data}
+Often, especially in the case of stated preference survey, we have
+repeated observations for the same individuals. In this case, this
+panel dimension can be taken into account in the mixed logit
+model. More specifically, we'll compute one probability for each
+individual and this is these probabilities that are included in the
+log-likelihood function. For a given vector of coefficients $\beta_i$,
+the probability for alternative $k$ for the $l$th observation for the
+individual $i$ :
 
-Especially important for stated preference survey were several
-questions are asked to every individual.
-
-Joint probabilities for each individual are computed.
-
-$$P_{ikl}^r =\frac{e^{\beta_i^rx_{ikl}}}{\sum_j e^{\beta_i^rx_{ikj}}}$$
-
-$$P_{ik}^r=\prod_l {P_{ikl}^r}^{y_{ikl}}$$
-
-$$P_{i}^r=\prod_i \prod_l {P_{ikl}^r}^{y_{ikl}}$$
-
-$$
-\bar{P}_i=\frac{1}{R}P_{i}^r
-$$
+$$P_{ikl}=\frac{e^{\beta_ix_{ikl}}}{\sum_j e^{\beta_ix_{ikj}}}$$
+The probability for the chosen probability for the $l$the observation
+for the individual $i$ is :
+$$P_{il}=\prod_k {P_{ikl}}^{y_{ikl}}$$
+Finally, the joint probability for the $K$ observations of individual
+$i$ is :
+$$P_{i}=\prod_i \prod_k {P_{ikl}}^{y_{ikl}}$$
 
 \subsection{Simulations}
 
@@ -2228,84 +2119,88 @@ The probabilities for the random parameter logit are integrals with no
 closed form. Moreover, the degree of integration is the number of
 random parameters. In practice, these models are estimated using
 simulation techniques, \emph{i.e.} the expected value is replaced by
-an arithmetic mean. More precisely :
+an arithmetic mean. More precisely, the computation is done using the
+following steps :
 
 \begin{itemize}
 \item make an initial hypothesis about the distribution of the random
-  parameter : $\beta_i$ follows a normal distribution with mean $\mu$
-  and standard deviation $\sigma$,
+  parameters
 \item draw $R$ numbers on this distribution,
-\item for each draw $\beta_i^r$, compute the probability :
-  $P_{il}^r =\frac{e^{\beta_i^rx_{il}}}{\sum_j e^{\beta_i^rx_{ij}}}$
+\item for each draw $\beta^r$, compute the probability : $P_{il}^r
+  =\frac{e^{\beta^rx_{il}}}{\sum_j e^{\beta^rx_{ij}}}$
 \item compute the average of these probabilities :
   $\bar{\mbox{P}}_{il}=\sum_{r=1}^n\mbox{P}_{il}/R$ 
-\item compute the log--likelihood for these probabilities,
+\item compute the log-likelihood for these probabilities,
 \item iterate until the maximum.
 \end{itemize}
 
-
-
 \subsubsection{Drawing from densities}
+To estimate a model using simulations, one needs to draw pseudo random
+numbers from a specified distribution. For this purpose, what is
+actually needed is a function that draws pseudo random numbers from a
+uniform distribution between 0 and 1. These numbers are then
+transformed using the quantile function of the required distribution. 
 
-\begin{itemize}
-\item generate pseudo random-draws from a uniform distribution,
-\item transform this random numbers with the quantile function of the
-  required distribution.
-\end{itemize}
-
-ex: for the Gumbell distribution :
-
+For example, suppose one needs to drawn numbers from the Gumbell
+distribution. The cumumlative distribution of a Gumbell variable is
+$F(x)=e^{-e^{-x}}$. The quantile function is obtained by inverting
+this function :
 $$
-F(x)=e^{-e^{-x}}
-\Rightarrow F^{-1}(x)=-\ln(-\ln(x))
+\Rightarrow F^{-1}(x)=-\ln(-\ln x)
 $$
-
-Problem : not good coverage of the relevant interval instead numerous
-draws are made. More deterministic methods like Halton draws may be
-used instead.
-
-\subsubsection{Halton sequence}
-
-To generate a Halton sequence, use a prime (e.g. 3). The sequence is
-then :
-
-\begin{itemize}
-\item 0 --- 1/3 --- 2/3,
-\item 0+1/9 --- 1/3+1/9 --- 2/3+1/9 --- 0+2/9 --- 1/3+2/9  --- 2/3+2/9,
-\item 0+1/27 --- 1/3++1/27 --- 2/3+1/9+1/27 --- 1/3+2/9+1/27 --- 2/3+2/9+1/27
-  --- 1/3+1/9+2/27 --- 2/3+1/9+2/27 --- 1/3+2/9+2/27 --- 2/3+2/9+2/27
-\end{itemize}
+and $R$ draws from a Gumbell distribution are obtainde by computing
+$F^{-1}(x)$ for $R$ draws from the uniform distribution between 0 and
+1. This is illustrated on figure~\ref{fig:gumbell}.
 
 \begin{center}
-  \begin{figure}
-\caption{Halton sequences}
-\includegraphics[width=\textwidth]{./graph/halton3.pdf}
-  \end{figure}
-\end{center}
-
-\begin{center}
-  \begin{figure}
-\caption{Halton sequences vs random numbers in two dimensions}
-\includegraphics[width=\textwidth]{./graph/haltonvsrandom.pdf}
-  \end{figure}
-\end{center}
-
-\begin{center}
-  \begin{figure}
-\caption{uniform to Gumbell deviates}
+  \begin{figure}[hbtp]
+\caption{uniform to Gumbell deviates\label{fig:gumbell}}
 \includegraphics[width=0.7\textwidth]{./graph/draws.pdf}
   \end{figure}
 \end{center}
 
+The problem is that there may not be a good coverage of the relevant
+interval instead numerous draws are made. More deterministic methods
+like Halton draws may be used instead.
+
+\subsubsection{Halton sequence}
+
+To generate a Halton sequence, we use a prime (e.g. 3). The sequence is
+then :
+\begin{itemize}
+\item 0 --- 1/3 --- 2/3,
+\item 0+1/9 --- 1/3+1/9 --- 2/3+1/9 --- 0+2/9 --- 1/3+2/9  --- 2/3+2/9,
+\item 0+1/27 --- 1/3+1/27 --- 2/3+1/9+1/27 --- 1/3+2/9+1/27 --- 2/3+2/9+1/27
+  --- 1/3+1/9+2/27 --- 2/3+1/9+2/27 --- 1/3+2/9+2/27 --- 2/3+2/9+2/27
+\end{itemize}
+This Halton sequence is illustrated in figure~\ref{fig:halton}.
+\begin{center}
+  \begin{figure}[hbtp]
+\caption{Halton sequences\label{fig:halton}}
+\includegraphics[width=\textwidth]{./graph/halton3.pdf}
+  \end{figure}
+\end{center}
+The use of Halton sequences for two random coefficients is illustrated
+in figure~\ref{fig:halt2}.
+\begin{center}
+  \begin{figure}[hbtp]
+\caption{Halton sequences vs random numbers in two dimensions\label{fig:halt2}}
+\includegraphics[width=\textwidth]{./graph/haltonvsrandom.pdf}
+  \end{figure}
+\end{center}
+On this figure, one can see that, when using pseudo-random numbers, we
+have a bad coverage of the unit square, which means that there are
+some holes (some portions of the unit square where there are no
+observation and some redundancies (some portions of the unit square
+where there are almost identical observations). The coverage of the
+unit square is much better with Halton draws.
+
 \subsubsection{Correlation}
-
-Cholesky decomposition is used :
-
-$
-\Omega
-$ is the covariance matrix of two random parameters. 
-
-The Cholesky matrix is :
+It is often relevant to introduce correlations between random
+parameters. This is done using Cholesky decomposition.  Let $\Omega$
+be the covariance matrix of two random parameters. As a covariance
+matrix is necessarely positive definite, it can be writen
+$\Omega=C^{\top}C$, with $C$ an upper triangular matrix :
 $$
 C=
 \left(
@@ -2319,24 +2214,26 @@ $$
 so that 
 
 $$
-C^{\top} C = 
+\Omega = C^{\top} C = 
 \left(
 \begin{array}{cc}
 c_{11}^2 & c_{11} c_{12} \\
 c_{11} c_{12} & c_{12}^2+c_{22}^2
 \end{array}
 \right)
-=
-\Omega
 $$
+If $c_{12}=0$, $\Omega$ reduces to a diagonal matrix and the remaining
+two parameters $(c_{11},c_{22})$ are the standard deviations of the
+two random coefficients.
 
-if $\mbox{V}(\epsilon_1,\epsilon_2)=I$, then the variance of 
-$
-(\epsilon_1 \epsilon_2) C
-$ 
-is $\Omega$
+To obtain a couple of correlated coefficients, one has to
+post-multiply a matrix of uncorrelated coefficients by the Cholesky
+matrix.
 
-ex : 
+If $\mbox{V}(\epsilon_1,\epsilon_2)=I$, then the variance of $
+(\epsilon_1 \epsilon_2) C $ is $\Omega$
+
+As an example, suppose that the covariance matrix is :
 $$
 \Omega=
 \left(
@@ -2345,7 +2242,9 @@ $$
     0.8 & 2.0
   \end{array}
 \right)
-\mbox{  and  }
+$$
+The Cholesky matrix is :
+$$
 C=
 \left(
   \begin{array}{cc}
@@ -2354,7 +2253,9 @@ C=
   \end{array}
 \right)
 $$
-
+Starting with two uncorrelated parameters $(\epsilon_1,\epsilon_2)$,
+we obtain the following two correlated coefficients $(\nu_1,\nu_2)$
+with covariance matrix $\Omega$ :
 $$
 \left\{
   \begin{array}{rcl}
@@ -2363,17 +2264,32 @@ $$
   \end{array}
 \right.
 $$
+This situation is illustrated by the figure~\ref{fig:correlation}.
 \begin{center}
-  \begin{figure}
+  \begin{figure}[hbtp]
 \includegraphics[width=\textwidth]{./graph/correlation.pdf}
-\caption{Correlation}
+\caption{Correlation\label{fig:correlation}}
 \end{figure}
 \end{center}
 
 \subsection{Application}
+We use the \Rd{Train} data set to illustrate the estimation of a mixed
+logit model.  The random parameter logit model is estimated by
+providing a \Ra{rpar}{mlogit} argument to \Rf{mlogit}. This argument
+is a named vector, the names being the random coefficients and the
+values the name of the law (for example \texttt{'n'} for a normal
+distribution). \Ra{R}{mlogit} is the number of draws,
+\Ra{halton}{mlogit} indicates whether halton draws should be used
+(\texttt{NA} indicates that default halton draws are used),
+\Ra{panel}{mlogit} and \Ra{correlation}{mlogit} are logical values
+that indicate that the panel version of the mixed logit model is
+estimated and that the correlation between random coefficients is
+taken into account.
 
-The random parameter logit model is estimated by providing a
-\Ra{rpar}{mlogit} argument to \Rf{mlogit}.
+We estimate a model with three random parameters, \va{time},
+\va{change} and \va{comfort}. Two mixed logit models are estimated :
+\va{Train.mxlc} is a correlated model and \va{Train.mxlu} is an uncorrelated
+model. A basic multinomial model \va{ml} is also estimated.
 
 <<>>=
 data("Train", package = "mlogit")
@@ -2381,44 +2297,316 @@ Tr <- mlogit.data(Train, shape = "wide", varying = 4:11,
                   choice = "choice", sep = "", 
                   opposite = c("price", "time", "change", "comfort"),
                   alt.levels=c("choice1", "choice2"), id="id")
-ml <- mlogit(choice ~ price + time + change + comfort, 
-             Tr, panel = TRUE, rpar = c(time = "cn", change = "n", comfort = "ln"),
-             correlation = TRUE, R = 20, tol = 10, halton = NA)
-summary(ml)
+@ 
+<<echo = TRUE, eval = FALSE>>=
+Train.ml <- mlogit(choice ~ price + time + change + comfort, Tr)
+Train.mxlc <- mlogit(choice ~ price + time + change + comfort, Tr,
+               panel = TRUE, rpar = c(time = "cn", change = "n", comfort = "ln"),
+               correlation = TRUE, R = 100, halton = NA)
+Train.mxlu <- update(Train.mxlc, correlation = FALSE)
+@ 
+
+<<echo = FALSE>>=
+data("MixedExamples", package = "mlogit")
 @ 
 
 The summary method supplies the usual table of coefficients, and also
 some statistics about the random parameters. Random parameters may be
-extracted using the function \code{rpar} which take as first argument
-a \code{mlogit} object, as second argument the parameter(s) to be
-extracted and as third argument the coefficient that should be used
-for normalization. This is usually the coefficient of the price (taken
-as a non random parameter), so that the effects can be interpreted as
-monetary values. This function returns a \code{rpar} object, and
-several methods/functions are provided to describe it :
+extracted using the function \Rf{rpar} which take as first argument a
+\Rob{mlogit} object, as second argument \Ra{par} the parameter(s) to
+be extracted and as third argument \Ra{norm} the coefficient (if any)
+that should be used for normalization. This is usually the coefficient
+of the price (taken as a non random parameter), so that the effects
+can be interpreted as monetary values. This function returns a
+\Rob{rpar} object, and several methods/functions are provided to
+describe it :
 
 <<>>=
-tvalue <- rpar(ml, "time", norm = "price")
+tvalue <- rpar(Train.mxlc, "time", norm = "price")
 summary(tvalue)
 med(tvalue)
 mean(tvalue)
 stdev(tvalue)
 @ 
-
-
 In case of correlated random parameters further functions are provided
 to analyse the correlation of the coefficients :
+<<>>=
+cor.mlogit(Train.mxlc)
+cov.mlogit(Train.mxlc)
+stdev(Train.mxlc)
+@ 
+The three tests can be applied to test the specification of the
+model. Actually, three nested models can be considered :
+\begin{itemize}
+\item a model with no random effects,
+\item a model with random but uncorrelated effects,
+\item a model with random and correlated effects.
+\end{itemize}
+
+We first present the three tests of no random-uncorrelated effects. 
 
 <<>>=
-cor.mlogit(ml)
-cov.mlogit(ml)
-stdev(ml)
+lrtest(Train.mxlu, Train.ml)
+waldtest(Train.mxlu)
+scoretest(Train.ml, rpar = c(time = "n", change = "n", comfort = "n"), R = 100,     
+          correlation = FALSE, halton = NA, panel = TRUE)
 @ 
+
+Next, we present the three tests of no random-correlated effects. 
+
+<<>>=
+lrtest(Train.mxlc, Train.ml)
+waldtest(Train.mxlc)
+scoretest(Train.ml, rpar = c(time = "n", change = "n", comfort = "n"), R = 100,     
+          correlation = TRUE, halton = NA, panel = TRUE)
+@ 
+
+Finally, we presente the three tests of no correlation, the existence
+of random parameters being maintained.
+
+<<>>=
+lrtest(Train.mxlc, Train.mxlu)
+waldtest(Train.mxlc, hyp = "uncorrelated")
+scoretest(Train.mxlu, correlation = TRUE)
+@ 
+
+
+
+\section{Tests}
+
+\subsection{The three tests}
+
+As all models estimated by maximum likelihood, three testing
+procedures may be applied to test hypothesis about models fitted using
+\Rf{mlogit}. The hypothesis tested define two models :
+
+\begin{itemize}
+\item the unconstrained model that doesn't take these hypothesis into
+  account,
+\item the constrained model that impose these hypothesis.
+\end{itemize}
+
+This in turns define three principles of tests :
+
+\begin{itemize}
+\item the Wald test is based only on the unconstrained model,
+\item the Lagrange multiplier tests is based only on the constrained
+  model,
+\item the Likelihood ratio test is based on the comparison of both
+  models.
+\end{itemize}
+
+The three principles of test are better understood using
+figure~\label{fig:threetests}
+
+\includegraphics{graph/threetests}
+
+In this one dimensional setting, the hypothesis is of the form $\theta
+= \theta_o$, which can be written $f(\theta) = \theta-\theta_o$, with
+$f(\theta)=0$ if the hypothesis is unforced. This is the equation of a
+straight line on~\ref{fig:threetests} . The constrained model is just
+$\hat{\theta}_{c}=\theta_o$, \emph{i.e.} the constrained model is not
+estimated. The unconstrained model corresponds to the maximum of the
+curve that represents the log-likelihood function.
+
+\begin{itemize}
+\item The Wald test is based on $f(\hat{\theta}_{nc})$ which is
+  depicted by the arrow in~\ref{fig:threetests}. More generally, it is
+  a vector of length $J$, whose expected value should be 0 if the
+  hypothesis is true.
+\item The Lagrange multiplier is based on the slope of the likelihood
+  curve evaluated at the constrained model : $\frac{\partial \ln
+    L}{\theta}(\hat{\theta}_c)$. Here again, this should be a random
+  vector with expected value equal to 0 if $H_o$ is true.
+\item Finally, the likelihood ratio test compares both models. More
+  specifically, the statistic is twice the value of the log-likelihood
+  for the two models.
+\end{itemize}
+
+Two of these tests are implemented in the \pkg{lmtest} package :
+\Rf{waldtest} et \Rf{lrtest}. The wald test is also implemented in
+\Rf{linearHypothesis} from package \pkg{car} with a fairly different
+syntax. We provide special methods of \Rm{waldtest}{mlogit} and
+\Rm{lrtest}{mlogit} for \Rob{mlogit} objects and we also provide a
+function for the lagrange multiplier (or score) test called
+\Rf{scoretest}.
+
+We'll see later on that the score test is especially usefull for
+\Rob{mlogit} objects when one is interested in extending the basic
+multinomial logit model. In this case, the unconstrained model is much
+more difficult to estimate than the constrainted model which is the
+basic multinomial logit model. The score test, which is based on the
+constrained model is therefore very simple to compute.
+
+For now, we'll just demonstrate the use of the testing in the usual
+setting where the two models are indicated. This can done by passing
+two fitted models to the testing function, or just one model and a
+formula which describes the second model. 
+
+We've previously estimated the following model :
+
+<<>>=
+m <- mlogit(mode~price | income | catch, Fishing, shape = "wide", varying = 2:9)
+@
+
+The hypothesis that the income doesn't influence the choice for a
+fishing mode is a joint hypothesis that three coefficients are
+zero. The constrained model can be obtained by updated the previous
+model :
+
+<<>>=
+mc <- update(m, . ~ . | . - income | .)
+@
+
+The wald and likelihood ratio tests are then obtained by provinding
+the two models as arguments :
+<<>>=
+waldtest(m, mc)
+lrtest(m, mc)
+scoretest(mc, m)
+@ 
+
+or just one of them and a formula that describes the second one :
+
+<<eval = FALSE>>=
+lrtest(m, . ~ . | . - income | .)
+lrtest(m, mode ~ price | 1 | catch)
+lrtest(mc, . ~ . | . + income | .)
+lrtest(mc, mode ~ price | income | catch)
+waldtest(m, . ~ . | . - income | .)
+waldtest(m, mode ~ price | 1 | catch)
+waldtest(mc, . ~ . | . + income | .)
+waldtest(mc, mode ~ price | income | catch)
+scoretest(mc, . ~ . | . + income | .)
+scoretest(mc, mode ~ price | income | catch)
+@ 
+
+\subsection{Test of heteroscedasticity}
+
+The homoscedascticity hypothesis can be tested using any of the three
+tests. A particular convenient syntax is provided in this case. 
+
+For the likelihood ratio and the wald test, one can pass only the
+fitted model as argument. In this case, it is guessed that the
+hypothesis that the user wants to test is the homoscedasticity
+hypothesis, \emph{i.e.}  \Rcl!sp.train=1! and \Rcl!sp.air=1!.
+
+<<>>=
+lrtest(hl.MC)
+waldtest(hl.MC)
+@ 
+
+The wald test can also be computed using the \Rf{linearHypothesis}
+function from the \pkg{car} package :
+
+<<>>=
+library("car")
+linearHypothesis(hl.MC, c('sp.air=1', 'sp.train=1'))
+@ 
+
+For the score test, we provide the constrained model as argument,
+which is the standard multinomial logit model and the supplementary
+argument which defines the unconstrained model, which is in this case
+\Rcl!heterosc = TRUE!.
+
+<<>>=
+scoretest(ml.MC, heterosc = TRUE)
+@ 
+
+Note that the standard deviations of the estimated scale parameters
+are very high, which means that they are poorly identified. This is
+confirmed by the fact that the homoscedasticity hypothesis is not
+rejected :
+
+<<>>=
+waldtest(hl.TM)
+lrtest(hl.TM)
+scoretest(ml.TM, heterosc = TRUE)
+@ 
+
+\subsection{Test about the nesting structure}
+
+
+The two nest elasticities are about 0.3, which implies a correlation
+of 0.7, which is quite high. The results of the three tests are given
+bellow :
+
+<<>>=
+lrtest(nl.HC)
+waldtest(nl.HC)
+scoretest(ml.HC, nests = list(cooling = c('ecc', 'erc', 'gcc', 'hpc'), 
+                   noncool = c('ec', 'gc', 'er')))
+@ 
+
+The three tests reject the null hypothesis of no correlation at the
+1\% level. The two nests elasticities being very closed, we'd like to
+test equality between both elasticities. \Rf{linearHypothesis}
+provides a particular convenient interface for that :
+
+<<>>=
+linearHypothesis(nl.HC, "iv.cooling = iv.noncool")
+@ 
+
+Therefore the hypothesis is not rejected and can be unforced by
+updating the model with the argument \Ra{un.nest.el}{mlogit} equal to
+\code{TRUE}.
+
+<<>>=
+nl.HC.u <- update(nl.HC, un.nest.el = TRUE)
+@ 
+
+A likelihood ratio test confirms that the hypothesis is not rejected :
+
+<<>>=
+lrtest(nl.HC,nl.HC.u)
+@ 
+
+
+\subsection{Test of random parameters}
+
+The three tests can be applied to test the specification of the model,
+namely the presence of random coefficients and their
+correlation. Actually, three nested models can be considered :
+\begin{itemize}
+\item a model with no random effects,
+\item a model with random but uncorrelated effects,
+\item a model with random and correlated effects.
+\end{itemize}
+
+We first present the three tests of no random-uncorrelated effects. 
+
+<<>>=
+lrtest(Train.mxlu, Train.ml)
+waldtest(Train.mxlu)
+scoretest(Train.ml, rpar = c(time = "n", change = "n", comfort = "n"), R = 100,     
+          correlation = FALSE, halton = NA, panel = TRUE)
+@ 
+
+Next, we present the three tests of no random-correlated effects. 
+
+<<>>=
+lrtest(Train.mxlc, Train.ml)
+waldtest(Train.mxlc)
+scoretest(Train.ml, rpar = c(time = "n", change = "n", comfort = "n"), R = 100,     
+          correlation = TRUE, halton = NA, panel = TRUE)
+@ 
+
+Finally, we presente the three tests of no correlation, the existence
+of random parameters being maintained.
+
+<<>>=
+lrtest(Train.mxlc, Train.mxlu)
+waldtest(Train.mxlc, hyp = "uncorrelated")
+scoretest(Train.mxlu, correlation = TRUE)
+@ 
+
+
 
 \bibliography{bibmlogit}
 
-\newpage
 \printindex
+
+\tableofcontents
 
 \end{document}
 

@@ -214,7 +214,6 @@ mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
       ## names.sup.coef <- names.sup.coef[-1]
     }
   }
-  
   if (heterosc.logit){
     unalt <- levels(alt)
     J <- length(unalt)
@@ -337,8 +336,8 @@ mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
   n <- sum(freq)
   logLik <- structure( - as.numeric(x$optimum),
                       df = length(x$coefficients),
-                      null <- sum(freq * log(freq / n))
-                      class <- "logLik"
+                      null = sum(freq * log(freq / n)),
+                      class = "logLik"
                       )
   ## logLik <- - as.numeric(x$optimum)
   ## attr(logLik,"df") <- length(x$coefficients)
@@ -348,8 +347,8 @@ mlogit <- function(formula, data, subset, weights, na.action, start = NULL,
   
   if (heterosc){
     opt$gradient <- FALSE
-#    opt$logLik <- opt$iterlim <- opt$method <- opt$print.level <- opt$tol <- opt$constPar <- NULL
-    opt['logLik', 'iterlim', 'method', 'print.level', 'tol', 'constPar'] <- NULL
+    opt$logLik <- opt$iterlim <- opt$method <- opt$print.level <- opt$tol <- opt$constPar <- NULL
+#    opt['logLik', 'iterlim', 'method', 'print.level', 'tol', 'constPar'] <- NULL
     opt[[1]] <- as.name('lnl.hlogit')
     names(opt)[[2]] <- 'param'
     fit <- c()

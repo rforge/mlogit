@@ -194,7 +194,7 @@ m <- mlogit(mode ~ price+ catch | income, data = Fish, reflevel = "charter")
 m <- mlogit(mode ~ price+ catch | income, data = Fish,
             alt.subset = c("charter", "pier", "beach"))
 
-## model on 'unbalanced data i.e. for some observations, some
+## model on unbalanced data i.e. for some observations, some
 ## alternatives are missing
 
 # a data.frame in wide format with two missing prices
@@ -221,16 +221,26 @@ TravelMode$avincome <- with(TravelMode, income * (mode == "air"))
 TravelMode$time <- with(TravelMode, travel + wait)/60
 TravelMode$timeair <- with(TravelMode, time * I(mode == "air"))
 TravelMode$income <- with(TravelMode, income / 10)
+
 #Heiss p.231
 nl <- mlogit(choice ~ time + timeair | income, TravelMode, shape = "long",
              alt.var = "mode", print.level = 0, method = "bfgs",
              nests = list(public = c("train", "bus"), other = c("air","car")),
              tol = 1)
 
-## a mixed logit model
+# Hensher and Greene (2002), table 1 p.8-9 model 5
+TravelMode$incomeother <- with(TravelMode, ifelse(mode \%in\% c('air', 'car'), income, 0))
+nl <- mlogit(choice~gcost+wait+incomeother, TravelMode,
+             shape='long', alt.var='mode',
+             nests=list(plublic=c('train', 'bus'), other=c('car','air')))
 
-rpl <- mlogit(mode ~ price+ catch | income, Fishing, varying = 2:9, shape = 'wide',
-              rpar = c(price= 'n', catch = 'n'), correlation = TRUE, halton = NA,
+# same with a comon nest elasticity (model 1)
+nl2 <- update(nl, un.nest.el = TRUE)
+
+## a mixed logit model
+rpl <- mlogit(mode ~ price+ catch | income, Fishing, varying = 2:9,
+              shape = 'wide', rpar = c(price= 'n', catch = 'n'),
+              correlation = TRUE, halton = NA,
               R = 10, tol = 10, print.level = 0)
 summary(rpl)
 rpar(rpl)

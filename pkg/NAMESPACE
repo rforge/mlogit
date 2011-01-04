@@ -3,6 +3,9 @@ export(mlogit, mlogit.data, hmftest, mFormula, is.mFormula,
        med, rg, stdev, qrpar, prpar, drpar)
 importFrom(lmtest, lrtest)
 importFrom(lmtest, waldtest)
+importFrom(zoo, index)
+S3method(index, mlogit.data)
+S3method(index, mlogit)
 #mlogit methods
 S3method(scoretest, mlogit)
 S3method(waldtest, mlogit)

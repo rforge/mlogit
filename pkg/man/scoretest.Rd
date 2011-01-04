@@ -11,60 +11,18 @@
 }
 \usage{
 scoretest(object, ...)
-\method{scoretest}{mlogit}(object, ..., heterosc = FALSE, nests = NULL,
-        rpar = NULL, un.nest.el = FALSE, halton = NULL, panel = FALSE,
-        correlation = FALSE, R = 40)
-\method{waldtest}{mlogit}(object, ..., hyp = NULL)
+\method{scoretest}{mlogit}(object, ...)
+\method{waldtest}{mlogit}(object, ...)
 \method{lrtest}{mlogit}(object, ...)
 }
 \arguments{
   
   \item{object}{an object of class \code{mlogit} or a formula,}
-
-  \item{hyp}{the hypothesis to be tested in two settings. If
-  \code{object} is a correlated random parameter model, \code{hyp}
-  should be one of \code{"uncorrelated"} and \code{"fixed"} to test
-  respectively the hypothesis of uncorrelated random effects and no
-  random effects. If \code{object} is a nested logit model with
-  different nest elasticities, \code{hyp} should be one of
-  \code{"un.nest.el"} and \code{"no.nests"} to test respectively the
-  hypothesis of a unique nest elasticity and no nests.}
-
-  \item{nests}{a named list of characters vectors, each names being a
-    nest, the corresponding vector being the set of alternatives that
-    belong to this nest,}
-
-  \item{heterosc}{a boolean, if \code{TRUE}, the heteroscedastic logit
-    model is estimated,}
-  
-  \item{rpar}{a named vector whose names are the random parameters and
-    values the distribution : \code{'n'} for normal, \code{'l'} for
-    log-normal, \code{'t'} for truncated normal, \code{'u' } for uniform,}
-
-  \item{un.nest.el}{a boolean, if \code{TRUE}, the hypothesis of unique
-    elasticity is imposed for nested logit models,}
-
-  \item{halton}{only relevant if \code{rpar} is not \code{NULL}, if not
-    \code{NULL}, halton sequence is used instead of pseudo-random
-    numbers. If \code{halton=NA}, some default values are used for the
-    prime of the sequence (actually, the primes are used in order) and for
-    the number of elements droped. Otherwise, \code{halton} should be a
-    list with elements \code{prime} (the primes used) and \code{drop} (the
-    number of elements droped).}
-  
-  \item{panel}{only relevant if \code{rpar} is not \code{NULL} and if
-    the data are repeated observations of the same unit ; if \code{TRUE},
-    the mixed-logit model is estimated using panel techniques,}
-  
-  \item{correlation}{only relevant if \code{rpar} is not \code{NULL}, if
-    true, the correlation between random parameters is taken into
-    account,}
-
-  \item{R}{the number of function evaluation for the gaussian quadrature
-    method used if \code{heterosc=TRUE}, the number of draws of
-    pseudo-random numbers if \code{rpar} is not \code{NULL},}
-  
-  \item{...}{further arguments passed to the testing functions.}
+  \item{...}{two kinds of arguments can be used. If \code{"mlogit"}
+  arguments are introduced, initial model is updated using these
+  arguments. If \code{"formula"} or other \code{"mlogit"} models are
+  introduced, the standard behavior of \code{"waldtest"} and
+  \code{"lrtest"} is followed.}
   
 }
 \value{
@@ -95,7 +53,6 @@ scoretest(object, ...)
 
 \examples{
 library("mlogit")
-library("lmtest")
 data("TravelMode", package = "AER")
 ml <- mlogit(choice ~ wait + travel + vcost, TravelMode,
              shape = "long", chid.var = "individual", alt.var = "mode")

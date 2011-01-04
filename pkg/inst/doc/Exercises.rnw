@@ -897,7 +897,7 @@ Elec.mxl5 <- update(Elec.mxl4, correlation = TRUE)
 summary(Elec.mxl5)
 cor.mlogit(Elec.mxl5)
 lrtest(Elec.mxl5, Elec.mxl4)
-waldtest(Elec.mxl5, hyp = "uncorrelated")
+waldtest(Elec.mxl5, correlation = FALSE)
 scoretest(Elec.mxl4, correlation = TRUE)
 @ 
 Both tests clearly reject the hypothesis that the random parameters

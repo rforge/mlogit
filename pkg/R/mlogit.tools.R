@@ -231,6 +231,8 @@ mlogit.optim <- function(logLik, start,
 
   # construct a call for the function
   f <- callT
+  # if the model is updated based on a multinomial logit model, change the method to bfgs
+  # if (method == 'nr' && as.character(f[[1]]) != "lnl.mlogits") method <- 'bfgs'
   m <- match(optimoptions, names(callT), 0L)
   if (sum(m)) f <- f[-m]
   f[[1]] <- as.name(f[[2]])

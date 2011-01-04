@@ -1,16 +1,29 @@
-waldtest.mlogit <- function(object, ..., hyp = NULL){
+irrelevant.args.warning <- function(object, args){
+  if (any(!(names(object) %in% args))){
+    irrelevant.args <- !(names(object) %in% args)
+    be <- ifelse(sum(irrelevant.args) > 1, "are", "is")
+    irrelevant.args <- paste(names(object)[irrelevant.args], collapse = ", ")
+    warning(paste("arguments", irrelevant.args, be, "irrelevant and", be, "ignored", sep = " "))
+  }
+}
+
+waldtest.mlogit <- function(object, ...){
   objects <- list(object, ...)
+  margs <- c('nests', 'un.nest.el', 'unscaled', 'heterosc', 'rpar',
+                   'R', 'correlation', 'halton', 'random.nb', 'panel')
+  mlogit.args <- objects[names(objects) %in% margs]
+  if (!is.null(names(objects))) objects <- objects[!(names(objects) %in% margs)]
   nmodels <- length(objects)
   specific.computation <- FALSE
-  
   # if several models are provided, just use the default method
   if (nmodels > 1){
     return(waldtest.default(object, ...))
   }
+
   K <- length(colnames(model.matrix(object)))
   L <- length(object$freq)
   
-  # guess the nature of the fitted model
+  ###### guess the nature of the fitted model
   mixed.logit <- !is.null(object$call$rpar)
   heterosc.logit <- !is.null(object$call$heterosc) && object$call$heterosc
   nested.logit <- !is.null(object$call$nests)
@@ -20,33 +33,37 @@ waldtest.mlogit <- function(object, ..., hyp = NULL){
   if (heterosc.logit){
     su <- (K+1):(K+L-1)
     q <- rep(1, length(su))
+    hyp <- "homoscedasticity"
   }
   
   ###### Nested logit Models
-  # in case of nested model : is there a unique nest elasticity
-  # if un.nest.el = FALSE constrained model may be
-  #    - nested model with unique elasticity : hyp = "un.nest.el"
-  #    - multinomial : hyp = "multinomial"
-  # if un.nest.el = TRUE : constrained model is the multinomial logit model
   if (nested.logit){
+    J <- length(coef(object)) - K
+    # First check whether the fitted model has a unique nest
+    # elasticity or not
     if (is.null(object$call$un.nest.el)) un.nest.el <- FALSE
     else un.nest.el <- object$call$un.nest.el
-    if (!un.nest.el){
-      if (is.null(hyp)) hyp <- "no.nests"
-      if (!hyp %in% c("no.nests", "un.nest.el"))
-        stop("hyp should be one of no.nests or un.nest.el")
-    }
-    else{
-      if (!is.null(hyp)) warning("hyp is irrelevant in this setting and will be ignored")
-    }
+    # If the fitted model has a unique nest elasticity, the only
+    # relevant test is no nests : mlogit.args should be nests=NULL or
+    # nothing. A warning is returned in case of supplementary arguments
     if (un.nest.el){
+      if (!is.null(mlogit.args$nests)) stop("the nest argument should be NULL")
+      irrelevant.args.warning(mlogit.args, "nests")
       su <- K + 1
       q <- 1
-      data.name <- "no nests"
+      hyp <- "no nests"
     }
-    else{
-      su <- (K+1):length(coef(object))
-      if (!is.null(hyp) && hyp == "un.nest.el"){
+    # If the nests elasticities are different, two possible tests :
+    # 1. no nests (mlogit.args = (nests = NULL)) or nothing. stop if
+    # !is.null(nests) and warning if other arguments than nests.
+    # 2. unique nest elasticity (mlogit.args = (un.nest.el =
+    # TRUE)). stop if un.nest.el = FALSE and warning if other arguments
+    # are provided.
+    if (!un.nest.el){
+      if (!is.null(mlogit.args$nests)) stop("the nest argument should be NULL")
+      if (!is.null(mlogit.args$un.nest.el) && mlogit.args$un.nest.el){
+        irrelevant.args.warning(mlogit.args, "un.nest.el")
+        su <- (K+1):length(coef(object))
         R <- matrix(0, nrow = length(coef(object)), ncol = length(su) - 1)
         for (i in 1:ncol(R)){
           R[K + 1, i] <- 1
@@ -57,47 +74,64 @@ waldtest.mlogit <- function(object, ..., hyp = NULL){
         stat <- as.numeric(crossprod(Rb,solve(VRV, Rb)))
         df <- c(df = length(su) - 1)
         specific.computation <- TRUE
-        data.name <- "unique nest elasticity"
+        hyp <- "unique nest elasticity"
       }
       else{
-        q <- rep(1, length(su))
-        data.name <- "no nests"
+        if (length(mlogit.args) == 0 |
+            ("nests" %in% names(mlogit.args) & is.null(mlogit.args$nests))){
+          irrelevant.args.warning(mlogit.args, "nests")
+          su <- (K+1):(K+J)
+          q <- rep(1, length(su))
+          hyp <- "no nests"
+        }
+        else{
+          stop("irrelevant constrained model")
+        }
       }
     }
   }
-  
+
   ###### Mixed logit model
-  # in case of mixed model : is it correlated or not
-  # if correlated : constrained model may be
-  #    - uncorrelated random model : hyp = "uncorrelated"
-  #    - multinomial : hyp = "fixed"
-  # if uncorrelated : constrained model is the multinomial logit model
   if (mixed.logit){
+    J <- length(object$rpar)
+    # First check whether the random effects are correlated or not
     if (is.null(object$call$correlation)) correlation <- FALSE
     else correlation <- object$call$correlation
-    if (correlation){
-      if (is.null(hyp)) hyp <- "fixed"
-      if (!hyp %in% c("fixed", "uncorrelated")){
-        stop("hyp should be one of fixed or uncorrelated")
-      }
+    # If the fitted model is uncorrelated, the only relevant test is
+    # no random effects, mlogit.args = (rpar = NULL) ; stop if rpar is
+    # not NULL and warning if supplementary arguments are provided
+    if (!correlation){
+      if (!is.null(mlogit.args$rpar)) stop("rpar should be NULL")
+      irrelevant.args.warning(mlogit.args, "rpar")
+      su <- K + (1:J)
+      hyp <- "no random effects"
     }
     else{
-      if (!is.null(hyp)) warning("hyp is irrelevant in this setting and will be ignored")
-    }
-    J <- length(object$rpar)
-    if (correlation){
+      # if the fitted model is correlated, two possible tests :
+      # 1. uncorrelated random effects : mlogit.args = (correlation =
+      # FALSE), stop if (correlation = TRUE) and warning if
+      # supplementary aguments are provided
+      # 2. no random effects : mlogit.args = (rpar = NULL), stop if
+      # rpar not NULL and a warning if supplementary arguments are
+      # provided
       rd.el <- K+(1:(J*(J+1)/2))
       diag.el <- K + c(1, cumsum(J:2)+1)
-      if (hyp == "uncorrelated"){
-        if (!correlation) stop("no correlation")
-        rd.el <- K+(1:(J*(J+1)/2))
+      if (!is.null(mlogit.args$correlation) && mlogit.args$correlation)
+        stop("irrelevant constrained model")
+      if (!is.null(mlogit.args$correlation) && !mlogit.args$correlation){
+        irrelevant.args.warning(mlogit.args, "correlation")
         su <- rd.el[!(rd.el %in% diag.el)]
+        hyp <- "uncorrelated random effects"
       }
-      else su <- rd.el
+      else{
+        if (!is.null(mlogit.args$rpar)) stop("rpar should be NULL")
+        su <- rd.el
+        hyp <- "no random effects"
+      }
     }
-    else su <- K + (1:J)
     q <- rep(0, length(su))
   }
+  
   if (!specific.computation){
     if (is.null(q)) wq <- coef(object)[su] else wq <- coef(object)[su] - q
     stat <- as.numeric(crossprod(wq,
@@ -133,21 +167,26 @@ scoretest <- function(object, ...){
   UseMethod("scoretest")
 }
 
-scoretest.mlogit <- function(object, ...,
-                             heterosc = FALSE, nests = NULL, rpar = NULL,
-                             un.nest.el = FALSE, halton = NULL, panel = FALSE,
-                             correlation = FALSE, R = 40){
+scoretest.mlogit <- function(object, ...){
   objects <- list(object, ...)
+  margs <- c('nests', 'un.nest.el', 'unscaled', 'heterosc', 'rpar',
+             'R', 'correlation', 'halton', 'random.nb', 'panel')
+  mlogit.args <- objects[names(objects) %in% margs]
+  if (!is.null(names(objects))) objects <- objects[!(names(objects) %in% margs)]
   nmodels <- length(objects)
   start.values <- c(coef(object))
-
+  m <- list(nests = NULL, un.nest.el = FALSE, unscaled = FALSE, heterosc = FALSE,
+            rpar = NULL, R = 40, correlation = FALSE, halton = NULL,
+            random.nb = NULL, panel = FALSE)
+  m[names(mlogit.args)] <- mlogit.args
+  
   # if several models are provided, just use the default method
   if (nmodels > 1){
     return(scoretest.default(object, ...))
   }
-  heterosc.logit <- heterosc
-  nested.logit <- (!is.null(nests) || !is.null(object$nests))
-  mixed.logit <- (!is.null(rpar) || correlation)
+  heterosc.logit <- (m$heterosc)
+  nested.logit <- (!is.null(m$nests) || !is.null(object$nests))
+  mixed.logit <- (!is.null(m$rpar) || m$correlation)
   if (heterosc.logit + nested.logit + mixed.logit == 0)
     stop("an unconstrained model should be described")
   if (heterosc.logit + nested.logit + mixed.logit > 1)
@@ -168,12 +207,12 @@ scoretest.mlogit <- function(object, ...,
       alt.hyp <- "unique nest elasticity"
     }
     else{
-      alt.hyp <- ifelse(un.nest.el, "nested model with a unique nest elasticity",
+      alt.hyp <- ifelse(m$un.nest.el, "nested model with a unique nest elasticity",
                         "nested model")
       nest.list <- c()
-      for (i in 1:length(nests)){
-        anest <- paste("c(\'",paste(nests[[i]],collapse="\',\'"),"\')", sep="")
-        anest <- paste(names(nests)[i], " = ", anest, sep = "")
+      for (i in 1:length(m$nests)){
+        anest <- paste("c(\'",paste(m$nests[[i]],collapse="\',\'"),"\')", sep="")
+        anest <- paste(names(m$nests)[i], " = ", anest, sep = "")
         nest.list <- c(nest.list, anest)
       }
       data.name = paste("nests = list(", paste(nest.list, collapse = ", "), ")", sep = "")
@@ -185,14 +224,16 @@ scoretest.mlogit <- function(object, ...,
     if (init.mixed.model){
       if (!is.null(object$call$correlation) && object$call$correlation) stop("not a relevant model for a score test")
       alt.hyp <- "uncorrelated random effects"
+      data.name <- "correlation = TRUE"
     }
     else{
-      if (correlation) alt.hyp <- "no correlated random effects"
+      if (m$correlation)
+        alt.hyp <- "no correlated random effects"
       else alt.hyp <- "no uncorrelated random effects"
+      data.name <- paste(names(m$rpar), paste("\'",as.character(m$rpar),"\'", sep = ""),
+                         collapse = ",", sep = "=")
+      data.name <- paste("rpar", "(", data.name, ")", sep = "")
     }
-    data.name <- paste(names(rpar), paste("\'",as.character(rpar),"\'", sep = ""),
-      collapse = ",", sep = "=")
-    data.name <- paste("rpar", "(", data.name, ")", sep = "")
     if (init.mixed.model){
       J <- length(object$rpar)
       K <- ncol(model.matrix(object))

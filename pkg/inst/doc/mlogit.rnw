@@ -28,7 +28,7 @@
 
 
 \Abstract{ \pkg{mlogit} is a package for \proglang{R} which enables
-  the estimation the multinomial logit models with individual and/or
+  the estimation of the multinomial logit models with individual and/or
   alternative specific variables. The main extensions of the basic
   multinomial model (heteroscedastic, nested and random parameter
   models) are implemented.}
@@ -59,12 +59,12 @@ E-mail: \email{yves.croissant@univ-reunion.fr}
 
 \section*{An introductory example}
 
-
 The logit model is useful when one tries to explain discrete choices,
 \emph{i.e.} choices of one among several mutually exclusive
-alternatives. There are many useful applications of discrete choice
-modelling in different fields of applied econometrics, using individual
-data, which may be :
+alternatives\footnote{For an extensive presentations of the logit
+  model, see \citet{TRAI:03} and \citet{LOUI:HENS:SWAI:00}}.  There are
+many useful applications of discrete choice modelling in different
+fields of applied econometrics, using individual data, which may be :
 
 \begin{itemize}
 \item \emph{revealed preferences data} which means that the data are observed
@@ -84,25 +84,26 @@ data, which may be :
 \end{itemize}
 
 
-Suppose that we can define an index of satisfaction $V_j$ for each
-alternative which depends linearly on cost ($x$) and price ($z$) :
+Suppose that, in a transport mode situation, we can define an index of
+satisfaction $V_j$ for each alternative which depends linearly on cost
+($x$) and time ($z$) :
 
 $$
 \left\{
 \begin{array}{rcl}
-U_1&=&\alpha_1+\beta x_1+ \gamma z_1\\
-U_2&=&\alpha_2+\beta x_2+ \gamma z_2 \\
-U_3&=&\alpha_3+\beta x_3+ \gamma z_3\\
+V_1&=&\alpha_1+\beta x_1+ \gamma z_1\\
+V_2&=&\alpha_2+\beta x_2+ \gamma z_2 \\
+V_3&=&\alpha_3+\beta x_3+ \gamma z_3\\
 \end{array}
 \right.
 $$
 
-In this case, the choice of alternative $j$ is increasing with
-$V_j$. For sake of estimation, one has to transform $V_j$ which can
-take any real value so that it belongs to the unit interval and can be
-interpreted as a probability. The multinomial logit model is obtained
-by applying such a transformation to the $V_j$s. More specifically, we
-have :
+In this case, the probability of choosing the alternative $j$ is
+increasing with $V_j$. For sake of estimation, one has to transform
+the satisfaction index, which can take any real value so that it is
+restricted to the unit interval and can be interpreted as a
+probability. The multinomial logit model is obtained by applying such
+a transformation to the $V_j$s. More specifically, we have :
 $$
 \left\{
 \begin{array}{rcl}
@@ -116,7 +117,7 @@ $$
 The two characteristics of probabilities are satisfied :
 
 \begin{itemize}
-\item $0 \leq \mbox{P}_j \leq 1$,
+\item $0 \leq \mbox{P}_j \leq 1\;\forall i =1,2,3$,
 \item $\sum_{j=1}^{3} \mbox{P}_j =1$
 \end{itemize}
 
@@ -131,7 +132,7 @@ Once fitted, a logit model is useful for predictions :
   \end{itemize}
 \end{itemize}
 
-Consider, as an example interurban trips between two towns (Lyon and
+Consider, as an example, interurban trips between two towns (Lyon and
 Paris). Suppose that there are three modes (car, plane and train) and
 that the characteristics of the modes and the market shares are as
 follow :
@@ -149,8 +150,9 @@ With a sample of travellers, one can estimate the coefficients of the
 logit model, \emph{i.e.} the coefficients of time and price in the
 utility function.
 
-The fitted model can then be used to predict the impact of some chocks
-on the market shares, for example :
+The fitted model can then be used to predict the impact of some
+changes of the explanatory variables on the market shares, for example
+:
 
 \begin{itemize}
 \item the influence of train trips length on modal shares,
@@ -186,7 +188,7 @@ specific structure that can be characterised by three indexes :
 \begin{itemize}
 \item the alternative,
 \item the choice situation,
-\item the individual
+\item the individual.
 \end{itemize}
 
 the last one being only relevant if we have repeated observations for
@@ -199,12 +201,20 @@ Data sets can have two different shapes :
   choice situation,
 \item a \emph{long} shape : in this case, there is one row for each
   alternative and, therefore, as many rows as there are alternatives
-  for one each choice situation
+  for each choice situation.
 \end{itemize}
 
-This can be illustrated with two data sets. The first one,
-\Rd{Fishing} comes with \proglang{mlogit}. The second one
-\Rd{TravelMode} is from the \proglang{AER} package.
+This can be illustrated with three data sets. 
+\begin{itemize}
+\item \Rd{Fishing} is a revealed preferences data sets that deals with
+  the choice of a fishing mode,
+\item \Rd{TravelMode} (from the \proglang{AER} package) is also a
+  revealed preferences data sets which presents the choice of
+  individuals for a transport mode for inter-urban trips in Australia,
+\item \Rd{Train} is a stated preferences data sets for which
+  individuals faces repeated virtual situations of choice for train
+  tickets.
+\end{itemize}
 
 <<>>=
 data("Fishing", package = "mlogit")
@@ -230,7 +240,7 @@ There are four transport modes (\va{air}, \va{train},
 \va{bus} and \va{car})and most of the variable are alternative
 specific (\va{wait}, \va{vcost}, \va{travel},
 \va{gcost}). The only individual specific variables are
-\va{income} and \va{size}. This advantage of this shape is
+\va{income} and \va{size}. The advantage of this shape is
 that there are much fewer columns than in the wide format, the caveat
 being that values of \va{income} and \va{size} are repeated
 four times.
@@ -258,7 +268,6 @@ the form \va{var:alt}, one can add \Rcl!sep = ':'!.
 
 <<>>=
 head(Fish, 5)
-head(attr(Fish, "index"), 5)
 @ 
 
 The result is a \Rob{data.frame} in ``long format'' with one line for
@@ -266,19 +275,25 @@ each alternative. The ``choice'' variable is now a logical variable
 and the individual specific variable (\va{income}) is repeated 4
 times. An \Rat{index} attribute is added to the data, which contains
 the two relevant index : \code{chid} is the choice index and
-\code{alt} index.
+\code{alt} index. This attribute is a \Rob{data.frame} that can be
+extracted using the \Rf{index} function, which returns this
+\Rob{data.frame}.
+
+<<>>=
+head(index(Fish))
+@ 
 
 For data in ``long'' format like \Rd{TravelMode}, the
 \Ra{shape}{mlogit.data} (here equal to \Rv{long}) and the
 \Ra{choice}{mlogit.data} arguments are still mandatory.
 
 The information about the structure of the data can be explicitly
-indicated or, in part, guessed by the \Rf{mlogit.data}
-function. Here, we have 210 individuals which are indicated by a
-variable called \va{individual}. The information about individuals
-can also be guessed from the fact that the data frame is balanced
-(every individual face 4 alternatives) and that the rows are ordered
-first by individual and then by alternative.
+indicated or, in part, guessed by the \Rf{mlogit.data} function. Here,
+we have 210 choice situations which are indicated by a variable called
+\va{individual}. The information about choice situations can also be
+guessed from the fact that the data frame is balanced (every
+individual face 4 alternatives) and that the rows are ordered first by
+choice situations and then by alternative.
 
 Concerning the alternative, there are indicated by the \va{mode}
 variable and they can also be guessed thanks to the ordering of the
@@ -306,7 +321,8 @@ TM <- mlogit.data(TravelMode ,choice = "choice", shape = "long",
 @ 
 
 The name of the variable that contains the information about the
-choice can be indicated using the \Ra{chid.var}{mlogit.data} argument :
+choice situations can be indicated using the
+\Ra{chid.var}{mlogit.data} argument :
 
 <<>>=
 TM <- mlogit.data(TravelMode, choice = "choice",
@@ -321,7 +337,7 @@ TM <- mlogit.data(TravelMode, choice = "choice", shape = "long",
                  chid.var = "individual", alt.var = "mode")
 @ 
 
-and dropped from the data using the \Ra{drop.index}{mlogit.data}
+and dropped from the data frame using the \Ra{drop.index}{mlogit.data}
 argument :
 
 <<>>=
@@ -330,25 +346,25 @@ TM <- mlogit.data(TravelMode, choice = "choice", shape = "long",
 head(TM)
 @ 
 
-The final example is a data set called \Rd{Train} which contains
-data from a stated preference study. 
+The final example (\Rd{Train}) is in a ``wide'' format and contains
+panel data.
 
 <<>>=
 data("Train", package="mlogit")
 head(Train, 3)
 @ 
 
-These data are panel data, each individual has responded to several
-(up to 16) scenario. To take this panel dimension into account, one
-has to add an argument \Ra{id}{mlogit.data} which contains the
-individual variable. The \Rat{index} attribute has now a
-supplementary column, the individual index.
+Each individual has responded to several (up to 16) scenario. To take
+this panel dimension into account, one has to add an argument
+\Ra{id}{mlogit.data} which contains the individual variable. The
+\Rat{index} attribute has now a supplementary column, the individual
+index.
 
 <<>>=
 Tr <- mlogit.data(Train, shape = 'wide', choice="choice", 
                   varying=4:11, sep="", alt.levels=c(1, 2), id = "id")
 head(Tr, 3)
-head(attr(Tr, "index"), 3)
+head(index(Tr), 3)
 @ 
 
 \subsection{Model description}
@@ -356,13 +372,13 @@ head(attr(Tr, "index"), 3)
 \Rf{mlogit} use the standard \Ra{formula}{mlogit}, \Ra{data}{mlogit}
 interface to describe the model to be estimated. However, standard
 \code{formula}s are not very practical for such models. More
-precisely, when working with multinomial logit models, one has to
+precisely, while working with multinomial logit models, one has to
 consider three kinds of variables :
 
 \begin{itemize}
 \item alternative specific variables $x_{ij}$ with a generic
   coefficient $\beta$,
-\item individual specific variables $z_i$ with alternative specific
+\item individual specific variables $z_i$ with an alternative specific
   coefficients $\gamma_j$,
 \item alternative specific variables $w_{ij}$ with an alternative
   specific coefficient $\delta_j$.
@@ -375,8 +391,8 @@ V_{ij}=\alpha_j + \beta x_{ij} + \gamma_j z_i + \delta_j w_{ij}
 $$
 
 Satisfaction being ordinal, only differences are relevant to modelize
-the choice for one alternative. This means that, for example, we'll be
-interested in the difference between the satisfaction index of two different
+the choice for one alternative. This means that we'll be interested in
+the difference between the satisfaction index of two different
 alternatives $j$ and $k$ :
 
 $$
@@ -392,18 +408,18 @@ relevant and may be identified. For example, with three alternatives
 1, 2 and 3, the three coefficients $\gamma_1, \gamma_2, \gamma_3$
 associated to an individual specific variable cannot be identified,
 but only two linear combinations of them. Therefore, one has to make a
-choice of normalization and the most simple one is just to put
+choice of normalization and the most simple one is just to set
 $\gamma_1 = 0$.
 
 Coefficients for alternative specific variables may (or may not) be
 alternative specific. For example, transport time is alternative
-specific, but may be 10 mn in public transport don't have the same
-impact on utility than 10 mn in a car. In this case, alternative
-specific coefficients are relevant. Monetary time is also alternative
-specific, but in this case, one can consider than 1 euro is 1 euro
-whatever it is spent in car or in public transports\footnote{At least
-  if the monetary cost of using car is correctly calculated.}. In this
-case, a generic coefficient is relevant.
+specific, but 10 mn in public transport may not have the same impact
+on utility than 10 mn in a car. In this case, alternative specific
+coefficients are relevant. Monetary time is also alternative specific,
+but in this case, one can consider than 1 euro is 1 euro whatever it
+is spent in car or in public transports\footnote{At least if the
+  monetary cost of using car is correctly calculated.}. In this case,
+a generic coefficient is relevant.
 
 A model with only individual specific variables is sometimes called a
 \emph{multinomial logit model}, one with only alternative specific
@@ -528,7 +544,7 @@ U_J&=&\beta_J^\top x_J+\epsilon_J&=&V_J+\epsilon_J\\
 $$
 
 alternative $l$ will be chosen if and only if $\forall \;\; j \neq l
-\;\; U_j > U_l$ which leads to the following $J-1$ conditions :
+\;\; U_l > U_j$ which leads to the following $J-1$ conditions :
 
 $$
 \left\{
@@ -591,13 +607,14 @@ where $f_l$ is the marginal density function of $\epsilon_l$.
 
 \subsection{The distribution of the error terms}
 
-The multinomial logit model (\cite{MCFAD:74}) is a special case of the
+The multinomial logit model \citep{MCFAD:74} is a special case of the
 model developed in the previous section. It relies on three
 hypothesis :
 
 \textbf{H1 : independence of errors}
 
-If the hypothesis of independence of errors is made, we have :
+If the hypothesis of independence of errors is made, the univariate
+distribution of the errors can be used :
 
 $$
 \left\{
@@ -634,14 +651,14 @@ required to compute the probabilities.
 Each $\epsilon$ follows a \textsc{Gumbel} distribution :
 
 $$
-f(z)=\frac{1}{\theta}e^{\frac{\mu-z}{\theta}} e^{-e^{\frac{\mu-z}{\theta}}}
+f(z)=\frac{1}{\theta}e^{-\frac{z-\mu}{\theta}} e^{-e^{-\frac{z-\mu}{\theta}}}
 $$
 
 where $\mu$ is the location parameter and $\theta$ the scale parameter.
 
 $$
-P(z<t)=F(t)=\int_{-\infty}^t \frac{1}{\theta}e^{\frac{\mu-z}{\theta}}
-e^{-e^{\frac{\mu-z}{\theta}}} dz=e^{-e^{\frac{\mu-t}{\theta}}}
+P(z<t)=F(t)=\int_{-\infty}^t \frac{1}{\theta}e^{-\frac{z-\mu}{\theta}}
+e^{-e^{-\frac{z-\mu}{\theta}}} dz=e^{-e^{-\frac{t-\mu}{\theta}}}
 $$
 
 The first two moments of the \textsc{Gumbel} distribution are
@@ -649,7 +666,7 @@ $\mbox{E}(z)=\mu+\theta \gamma$, where $\gamma$ is the
 Euler-Mascheroni constant (0.577) and
 $\mbox{V}(z)=\frac{\pi^2}{6}\theta^2$.
 
-The mean of $\epsilon_j$s is not identified if $U_j$ contains an
+The mean of $\epsilon_j$s is not identified if $V_j$ contains an
 intercept. We can then, without loss of generality suppose that
 $\mu_j=0 \;\; \forall j$. Moreover, the overall scale of utility is
 not identified. Therefore, only $J-1$ scale parameters may be
@@ -658,7 +675,7 @@ one of the $\theta_j$ is equal to 1.
 
 \textbf{H3 identically distributed errors}
 
-As, the location parameter is not identified for any error term, this
+As the location parameter is not identified for any error term, this
 hypothesis is essentially an homoscedasticity hypothesis, which means
 that the scale parameter of \textsc{Gumbel} distribution is the same
 for all the alternatives. As one of them has been previously fixed to
@@ -687,7 +704,7 @@ scale parameters equal to 0 and 1).
 
 With these hypothesis on the distribution of the error terms, we can
 now show that the probabilities have very simple, closed forms, which
-correspond to the logit transformation of the deterministic parts of
+correspond to the logit transformation of the deterministic part of
 the utility. 
 
 Let's start with the probability that the alternative $l$ is better
@@ -757,7 +774,7 @@ and can be rewritten as the usual logit probability :
 
 \begin{equation}
   \label{eq:finprobml}
-  P_l=\frac{e^{V_i}}{\sum_j e^{V_j}}
+  P_l=\frac{e^{V_l}}{\sum_j e^{V_j}}
 \end{equation}
 
 % \subsection{Multinomial vs conditional logit models}
@@ -906,7 +923,7 @@ $$\mbox{L}= 0.5 \times 0.4 \times 0.1 \times 0.6$$
 
 A compact expression of the probabilities that enter the likelihood
 function is obtained by denoting $y_{ij}$ a dummy variable which is
-equal to one if individual $i$ made choice $j$ and 0 otherwise.
+equal to $1$ if individual $i$ made choice $j$ and $0$ otherwise.
 
 The probability of the choice made for one individual is then :
 
@@ -926,54 +943,65 @@ $$
 \ln L = \sum_i \ln \mbox{P}_i=\sum_i \sum_j y_{ij} \ln \mbox{P}_{ij}
 $$
 
+\subsubsection{Properties of the maximum likelihood estimator}
+
+Under regularity conditions, the maximum likelihood estimator is
+consistent and has an asymptotic normal distribution. The variance of
+the estimator is :
+$$
+\mbox{V}(\hat{\theta})=\mbox{E}\left(\left(-\frac{\partial^2\ln L}{\partial \theta \partial \theta^\top}(\theta)\right)^{-1}\right)
+$$
+This expression can not be computed because it depends on the thrue
+values of the parameters. Three estimators have been proposed :
+\begin{itemize}
+\item $\hat{\mbox{V}}_1(\hat{\theta})=\mbox{E}
+  \left(\left(-\frac{\partial^2\ln L}{\partial \theta \partial
+        \theta^\top} (\hat{\theta})\right)^{-1}\right)$ : this
+  expression can be computed if the expected value is computable,
+\item $\hat{\mbox{V}}_2(\hat{\theta})= \left(-\frac{\partial^2\ln
+      L}{\partial \theta \partial \theta^\top}
+    (\hat{\theta})\right)^{-1}$
+\item $\hat{\mbox{V}}_3(\hat{\theta})= \sum_{i=1}^n \left(\frac{\partial \ln
+    l_i}{\partial \theta}(\hat{\theta})\right) \left(\frac{\partial \ln
+    l_i}{\partial \theta}(\hat{\theta})\right)^\top$ : this expression is
+  called the BHHH expression and doesn't require the computation of
+  the hessian. 
+\end{itemize}
+
+
 \subsubsection{Numerical optimization}
 
 We seek to calculate the maximum of a function $f(x)$. This first
 order condition for a maximum is $f'(x_o)=0$, but in general, there is
 no explicit solution for $x_o$, which then must be numerically
-approximated. 
+approximated. In this case, the following algorithm can be used :
 
 \begin{enumerate}
 \item Start with a value $x$ called $x_t$, 
 \item Approximate the function around $x_t$ using a second order
-  \textsc{Taylor} series : $l(x)=f(x_t)+(x-x_t)g(x_t)+0.5
-  (x-x_t)^2h(x_t)$ where $g$ and $h$ are the first two derivatives of
-  $f$,
+  Taylor serie : $l(x)=f(x_t)+(x-x_t)g(x_t)+0.5 (x-x_t)^2h(x_t)$ where
+  $g$ and $h$ are the first two derivatives of $f$,
 \item find the maximum of $l(x)$. The first order condition is :
 $\frac{\partial{l(x)}}{\partial{x}}=g(x_t)+
 (x-x_t)h(x_t)=0$. The solution is : $x_t-\frac{g(x_t)}{h(x_t)}$ 
 \item call this value $x_{t+1}$ and iterate until you get as close as
   required to the maximum.
 \end{enumerate}
+This algorithm is illustrated on figure~\ref{fig:opt}.
 
   \begin{center}
     \begin{figure}[hbtp]
-      \includegraphics[width=.75\textwidth]{./graph/opt1}
-      \caption{Numerical optimization}
+      \includegraphics[width=.75\textwidth]{./graph/opt}
+      \caption{Numerical optimization\label{fig:opt}}
     \end{figure}
   \end{center}
-
-  \begin{center}
-    \begin{figure}[hbtp] 
-      \includegraphics[width=.75\textwidth]{./graph/opt2}
-      \caption{Numerical optimization}
-    \end{figure}
-  \end{center}
-
-  \begin{center}
-    \begin{figure}[hbtp]
-    \includegraphics[width=.75\textwidth]{./graph/opt3}
-    \caption{Numerical optimization}
-    \end{figure}
-  \end{center}
-
 
 Consider now a function of several variables $f(x)$. The vector of
 first derivatives (called the gradient) is denoted $g$ and the matrix of
 second derivatives (called the hessian) is denoted $H$. The second order
 approximation is :
 
-$$l(x)=f(x_t)+(x-x_t)g(x_t)+0.5 (x-x_t)'H(x_t)(x-x_t)$$
+$$l(x)=f(x_t)+(x-x_t)g(x_t)+0.5 (x-x_t)^\top H(x_t)(x-x_t)$$
 
 The vector of first derivatives is :
 
@@ -989,8 +1017,8 @@ this case, at each iteration, an estimation of the hessian is
 calculated, whether using the second derivatives of the function
 (Newton-Ralphson method) or using the outer product of the gradient
 (BHHH). This approach is very powerful if the function is
-well-behaved, but it may performs poorly otherwise and scratch after a
-few iterations.
+well-behaved, but it may perform poorly otherwise and fail after a few
+iterations.
 
 The second one, called BFGS, updates at each iteration the estimation
 of the hessian. It is often more robust and may performs well in cases
@@ -1025,7 +1053,7 @@ $$
 $$
 \frac{\partial^2 \ln L}{\partial \beta\partial \beta'}=\sum_i \sum_j
 P_{ij}\left(x_{ij}-\sum_l P_{il}x_{il}\right) \left(x_{ij}-\sum_l
-  P_{il}x_{il}\right)'
+  P_{il}x_{il}\right)^\top
 $$
 
 Moreover, the log-likelihood function is globally concave, which mean
@@ -1035,7 +1063,7 @@ is achieved after just a few iterations.
 
 \subsection{Interpretation}
 
-In a linear model, the coefficients can be directly interpretable as
+In a linear model, the coefficients can be directly considered as
 marginal effects of the explanatory variables on the explained
 variable. This is not the case for the multinomial models. However,
 meaningful results can be obtained using relevant transformations of
@@ -1044,7 +1072,7 @@ the coefficients.
 \subsubsection{Marginal effects}
 
 The marginal effects are the derivatives of the probabilities with
-respect with the explanatory variables, which can be be
+respect to the explanatory variables, which can be be
 individual-specific ($z_i$) or alternative specific ($x_{ij}$) :
 $$
 \frac{\partial P_{ij}}{\partial z_{i}}=P_{ij}\left(\beta_j-\sum_l
@@ -1071,8 +1099,10 @@ $$
   of the marginal effect is given by $\left(\beta_j-\sum_l
     P_{il}\beta_l\right)$, which is positive if the coefficient for
   the $j$ alternative is greater than a weighted average of the
-  coefficients for all the alternative, the weights being the
-  probabilities of choosing the alternatives.
+  coefficients for all the alternatives, the weights being the
+  probabilities of choosing the alternatives. In this case, the sign
+  of the marginal effect can be established with no ambiguity only for
+  the alternatives with the lowest and the greatest coefficients.
 \end{itemize}
 
 \subsubsection{Marginal rates of substitution}
@@ -1081,7 +1111,7 @@ Coefficients are marginal utilities, which are not interpretable
 because utility is ordinal. However, ratios of coefficients are
 marginal rates of substitution, which are interpretable. For example,
 if the observable part of utility is : $V=\beta_o +\beta_1 x_1 +\beta
-x_2 + \beta x_3$ ; join variations of $x_1$ and $x_2$ which ensure the
+x_2 + \beta x_3$, join variations of $x_1$ and $x_2$ which ensure the
 same level of utility are such that : $dV=\beta_1 dx_1+\beta_2 dx_2=0$
 so that :
 
@@ -1098,7 +1128,7 @@ euros more.
 
 \subsubsection{Consumer's surplus}
 
-Consumer's surplus is a very simple expression with multinomial logit
+Consumer's surplus has a very simple expression with multinomial logit
 models. It was first derived by \citet{SMAL:ROSE:81}.
 
 The level of utility attained by an individual is
@@ -1309,9 +1339,9 @@ Finally, two further arguments can be usefully used while using
   coefficients are 0,
 \item \Ra{altsubset}{mlogit} indicates a subset on which the
   estimation has to be performed ; in this case, only the lines that
-  corresponds to the selected alternatives are used and all the
-  observations which corresponds to choices for unselected
-  alternatives are removed :
+  correspond to the selected alternatives are used and all the
+  observations which correspond to choices for unselected alternatives
+  are removed :
 \end{itemize}  
   
 <<>>=
@@ -1325,7 +1355,7 @@ With hypothesis 1 and 3, the error terms are \emph{iid} (identically
 and independently distributed), \emph{i.e.} not correlated and
 homoscedastic. Extensions of the basic multinomial logit model have
 been proposed by relaxing one of these two hypothesis while
-maintaining the second hypothesis of \textsc{Gumbell} distribution. 
+maintaining the second hypothesis of Gumbell distribution. 
 
 \subsection{The heteroskedastic logit model}
 
@@ -1388,8 +1418,9 @@ G_l=e^{-A_l}\;\;\;A_l=\sum_{j\neq
     u}{\theta_j}}
 $$
 
-This one-dimensional integral can be efficiently computed using a Gauss
-quadrature method, and more precisely a Gauss-Laguerre quadrature method :
+This one-dimensional integral can be efficiently computed using a
+Gauss quadrature method, and more precisely the Gauss-Laguerre
+quadrature method :
 
 $$
 \int_0^{+\infty}f(u)e^{-u}du=\sum_t f(u_t) w_t
@@ -1424,7 +1455,7 @@ data("ModeCanada", package = "mlogit")
 
 As done in the article, we first restrict the sample to the user who
 don't choose the bus and choose a mode among the four modes available
-(\va{train}, \va{air}, \va{bus} and \va{car}.
+(\va{train}, \va{air}, \va{bus} and \va{car}).
 
 <<>>=
 busUsers <- with(ModeCanada, case[choice == 1 & alt == 'bus'])
@@ -1450,38 +1481,8 @@ set. However, we obtain very close values for the two estimated scale
 parameters for the train \va{sp.train} and for the air mode
 \va{sp.air}.
 
-The homoscedascticity hypothesis can be tested using any of the three
-tests. A particular convenient syntax is provided in this case. 
-
-For the likelihood ratio and the wald test, one can pass only the
-fitted model as argument. In this case, it is guessed that the
-hypothesis that the user wants to test is the homoscedasticity
-hypothesis, \emph{i.e.}  \Rcl!sp.train=1! and \Rcl!sp.air=1!.
-
-<<>>=
-lrtest(hl.MC)
-waldtest(hl.MC)
-@ 
-
-The wald test can also be computed using the \Rf{linearHypothesis}
-function from the \pkg{car} package :
-
-<<>>=
-library("car")
-linearHypothesis(hl.MC, c('sp.air=1', 'sp.train=1'))
-@ 
-
-For the score test, we provide the constrained model as argument,
-which is the standard multinomial logit model and the supplementary
-argument which defines the unconstrained model, which is in this case
-\Rcl!heterosc = TRUE!.
-
-<<>>=
-scoretest(ml.MC, heterosc = TRUE)
-@ 
-
-The second example we provide reproduces the first column of table
-23.28 page 855 of \cite{GREEN:08}.
+The second example uses the \Rd{TravelMode} data set and reproduces
+the first column of table 23.28 page 855 of \cite{GREEN:08}.
 
 <<>>=
 data("TravelMode",package="AER")
@@ -1507,22 +1508,13 @@ c(coef(hl.TM)[7:9], sp.car = 1)*pi/sqrt(6)
 @ 
 
 Note that the standard deviations of the estimated scale parameters
-are very high, which means that they are poorly identified. This is
-confirmed by the fact that the homoscedasticity hypothesis is not
-rejected :
-
-<<>>=
-waldtest(hl.TM)
-lrtest(hl.TM)
-scoretest(ml.TM, heterosc = TRUE)
-@ 
-
+are very high, which means that they are poorly identified.
 
 \subsection{The nested logit model}
 
 The nested logit model was first proposed by \cite{MCFAD:78}. It is a
-generalization of the multinomial logit model that rests on the idea
-that some alternatives may be joined in several groups (called
+generalization of the multinomial logit model that is based on the
+idea that some alternatives may be joined in several groups (called
 nests). The error terms may then present some correlation in the same
 nest, whereas error terms of different nests are still uncorrelated.
 
@@ -1539,7 +1531,8 @@ The marginal distributions of the $\epsilon$s are still univariate
 extreme value, but there is now some correlation within
 nests. $1-\lambda_m$ is a measure of the correlation, \emph{i.e.}
 $\lambda_m = 1$ implies no correlation. It can then be shown that the
-probability of choosing alternative $j$ that is part of nest $l$ is :
+probability of choosing alternative $j$ that belongs to the nest $l$
+is :
 
 $$
 P_j = \frac{e^{V_j/\lambda_l}\left(\sum_{k \in B_l}
@@ -1547,15 +1540,21 @@ P_j = \frac{e^{V_j/\lambda_l}\left(\sum_{k \in B_l}
       \in B_m} e^{V_k/\lambda_m}\right)^{\lambda_m}}
 $$
 
-Let write : $V_j=Z_j+W_l$
+and that this model is comptatible with the random utility
+maximisation hypothesis if all the nest elasticities are in the $0-1$
+interval.
 
-
+Let us now write the determistic part of the utility of the
+alternative $j$ as the sum of two terms : the first one being specific
+to the alternative and the second one to the nest it belongs to :
+$$V_j=Z_j+W_l$$
+We can then rewrite the probabilities as follow :
 $$
 P_j=\frac{e^{(Z_j+W_l)/\lambda_l}}{\sum_{k \in B_l}
-    e^{(Z_k+W_l)/\lambda_l}}\times 
-\frac{\left(\sum_{k \in B_l} e^{(Z_k+W_l)/\lambda_l}\right)^{\lambda_l}}
-{\sum_{m=1}^M\left(\sum_{k
-      \in B_m} e^{(Z_k+W_m)/\lambda_m}\right)^{\lambda_m}}
+  e^{(Z_k+W_l)/\lambda_l}}\times \frac{\left(\sum_{k \in B_l}
+    e^{(Z_k+W_l)/\lambda_l}\right)^{\lambda_l}}
+{\sum_{m=1}^M\left(\sum_{k \in B_m}
+    e^{(Z_k+W_m)/\lambda_m}\right)^{\lambda_m}}
 $$
 
 $$
@@ -1574,7 +1573,7 @@ $$
 $$
 
 with $I_l=\ln \sum_{k \in B_l} e^{Z_k/\lambda_l}$ which is often
-denoted as the inclusive value or inclusive utility. 
+called the inclusive value or the inclusive utility.
 
 
 We then can write the probability of choosing alternative $j$ as :
@@ -1585,30 +1584,24 @@ P_j=\frac{e^{Z_j/\lambda_l}}{\sum_{k \in B_l}
 \frac{e^{W_l+\lambda_l I_l}}{\sum_{m=1}^Me^{W_m+\lambda_m I_m}}
 $$
 
-
 The first term $\mbox{P}_{j\mid l}$ is the conditional probability of
-choosing alternative $j$ if nest $l$ is chosen. It is often referred as
-the \emph{lower model}. The second term $\mbox{P}_l$ is the marginal
-probability of choosing the nest $l$ and is referred as the \emph{upper
-  model}. 
-
-$W_m+\lambda_m I_m$ can be interpreted as the expected utility of
-choosing the best alternative of the nest $m$, $W_m$ being the
-expected utility of choosing an alternative in this nest (whatever
-this alternative is) and $\lambda_m I_m$ being the expected extra
-utility he receives by being able to choose the best alternative in
-the nest.
-
-The inclusive values links the two models. 
-
+choosing alternative $j$ if the nest $l$ is chosen. It is often
+referred as the \emph{lower model}. The second term $\mbox{P}_l$ is
+the marginal probability of choosing the nest $l$ and is referred as
+the \emph{upper model}.  $W_m+\lambda_m I_m$ can be interpreted as the
+expected utility of choosing the best alternative of the nest $m$,
+$W_m$ being the expected utility of choosing an alternative in this
+nest (whatever this alternative is) and $\lambda_m I_m$ being the
+expected extra utility he receives by being able to choose the best
+alternative in the nest.  The inclusive values links the two models.
 It is then straightforward to show that IIA applies within nests, but
 not for two alternatives in different nests.
 
 A slightly different version of the nested logit model \citep{DALY:87}
 is often used, but is not compatible with the random utility
 maximization hypothesis. Its difference with the previous expression
-is that the determinist parts of the utility for each alternative is
-not normalized by the nest elasticity :
+is that the deterministic parts of the utility for each alternative is
+not divided by the nest elasticity :
 
 $$
 P_j = \frac{e^{V_j}\left(\sum_{k \in B_l}
@@ -1617,7 +1610,7 @@ P_j = \frac{e^{V_j}\left(\sum_{k \in B_l}
 $$
 
 The differences between the two versions have been discussed in
-\citet{KOPP:WEN:98} and \citet{HEIS:02}.
+\citet{KOPP:WEN:98}, \citet{HEIS:02} and \citet{HENS:GREEN:02}.
 
 The gradient is, for the first version of the model and denoting $N_m
 = \sum_{k \in B_m}e^{V_k/\lambda_m}$ :
@@ -1686,14 +1679,19 @@ x_j - (1- \lambda_l) \bar{x}_l-\sum_m\lambda_mP_m\bar{x}_m\\
 \right.
 $$
 
-With overlapping nests, the notations are slightly modified :
+Until now, we have supposed that every alternative belongs to one and
+only one nest. If some alternatives belong to several nests, we get an
+overlapping nests model. In this case, the notations should be
+slightly modified :
 
 $$
 P_j = \frac{\sum_{l \mid j \in B_l} e^{V_j/\lambda_l}N_l^{\lambda_l-1}}{\sum_m N_m^{\lambda_m}}
 $$
 
 $$
-P_j= \sum_{l \mid j \in B_l} \frac{e^{V_j/\lambda_l}}{N_l}\frac{N_l^{\lambda_l}}{\sum_m N_m^{\lambda_m}}=\sum_{l \mid j \in B_l} P_{j\mid l}{P_l}
+P_j= \sum_{l \mid j \in B_l}
+\frac{e^{V_j/\lambda_l}}{N_l}\frac{N_l^{\lambda_l}}{\sum_m
+  N_m^{\lambda_m}}=\sum_{l \mid j \in B_l} P_{j\mid l}{P_l}
 $$
 
 $$
@@ -1712,7 +1710,7 @@ V_j -\left\{\lambda_l(1-P_j/P_{j\mid l})\lambda_l\ln N_l +
 \right.
 $$
 
-For the unscaled version, the gradient is :
+For the unscaled version of the model, the gradient is :
 
 $$
 \left\{
@@ -1730,7 +1728,7 @@ $$
 We illustrate the estimation of the unscaled nested logit model with
 an example used in \citep{GREEN:08}. The dataset, called
 \Rd{TravelMode} has already been used. Four transport modes are
-available and two nests are considered : 
+available and two nests are considered :
 
 \begin{itemize}
 \item the \emph{ground} nest with bus, train and car modes,
@@ -1739,8 +1737,8 @@ available and two nests are considered :
 
 Note that the second nest is a ``degenerate'' nest, which means that
 it contains only one alternative. In this case, the nest elasticity is
-somewhat meaningless, as it is related to the degree of correlation of
-the alternatives within the nests and that there is only on
+difficult to interpret, as it is related to the degree of correlation
+of the alternatives within the nests and that there is only one
 alternative in this nest. This parameter can only be identified in a
 very special case : the use of the unscaled version of the nested
 logit model with generic variable. This is exactly the situation
@@ -1758,79 +1756,48 @@ nl.TM <- mlogit(choice ~ wait + gcost + avinc, TravelMode, reflevel = "car",
 summary(nl.TM)
 @ 
 
-Recall that the unscaled version version of the nested logit model is
-not compatible with the hypothesis of random utility maximisation. The
-parameters associated with the inclusive values are far more difficult
-to interpret in this case.
-
 The second example deals with a choice of a heating mode. The data set
-is called \Rd{HC}. There are five alternatives, four of them provide
+is called \Rd{HC}. There are seven alternatives, four of them provide
 also cooling : gaz central with cooling \Rv{gcc}, electric central
 with cooling \Rv{ecc}, electric room with cooling \Rv{erc} and heat
-pump with cooling \Rv{hpc} the other three provide only heating, these
+pump with cooling \Rv{hpc} ; the other three provide only heating, these
 are electric central \Rv{ec}, electric room \Rv{er} and gaz central
 \Rv{gc}.
 
 <<>>= 
 data("HC", package = "mlogit")
 HC <- mlogit.data(HC, varying = c(2:8, 10:16), choice = "depvar", shape = "wide")
-cooling.modes <- HC$alt %in% c("gcc", "ecc", "erc","hpc")
 head(HC)
 @ 
 
 \Rv{icca} and \Rv{occa} are the investment and the operating cost of
 the cooling part of the system. This is only relevant for the cooling
+modes and therefore we have to set the value to 0 for non-cooling
 modes.
 
 <<>>=
+cooling.modes <- HC$alt %in% c("gcc", "ecc", "erc","hpc")
 HC$icca[!cooling.modes] <- HC$occa[!cooling.modes] <- 0
 @ 
 
-We now estimate a nested logit model with two nests : the cooling /
-non-cooling systems :
+We now estimate a nested logit model with two nests : the
+cooling/non-cooling systems :
 <<>>=
 ml.HC <- mlogit(depvar~occa+icca+och+ich, HC)
 nl.HC <- mlogit(depvar~occa+icca+och+ich, HC, 
                 nests = list(cooling = c('ecc', 'erc', 'gcc', 'hpc'), 
                   noncool = c('ec', 'gc', 'er')))
-## nl <- mlogit(depvar~invcost+opcost, HC, 
-##              nests = list(cooling = c('ecc', 'erc', 'gcc', 'hpc'), 
-##                           noncool = c('ec', 'gc', 'er')))
 summary(nl.HC)
 @ 
 
 The two nest elasticities are about 0.3, which implies a correlation
-of 0.7, which is quite high. The results of the three tests are given
-bellow :
-
-<<>>=
-lrtest(nl.HC)
-waldtest(nl.HC)
-scoretest(ml.HC, nests = list(cooling = c('ecc', 'erc', 'gcc', 'hpc'), 
-                   noncool = c('ec', 'gc', 'er')))
-@ 
-
-The three tests reject the null hypothesis of no correlation at the
-1\% level. The two nests elasticities being very closed, we'd like to
-test equality between both elasticities. \Rf{linearHypothesis}
-provides a particular convenient interface for that :
-
-<<>>=
-linearHypothesis(nl.HC, "iv.cooling = iv.noncool")
-@ 
-
-Therefore the hypothesis is not rejected and can be unforced by
-updating the model with the argument \Ra{un.nest.el}{mlogit} equal to
+of 0.7, which is quite high.  The two nest elasticities are very close
+to each other, and it is possible to unforce the equality by updating
+the model with the argument \Ra{un.nest.el}{mlogit} set to
 \code{TRUE}.
 
 <<>>=
 nl.HC.u <- update(nl.HC, un.nest.el = TRUE)
-@ 
-
-A likelihood ratio test confirms that the hypothesis is not rejected :
-
-<<>>=
-lrtest(nl.HC,nl.HC.u)
 @ 
 
 \subsection{The general extreme value model}
@@ -1838,11 +1805,11 @@ lrtest(nl.HC,nl.HC.u)
 
 \cite{MCFAD:78} developed a general model that suppose that the join
 distribution of the error terms follow a a multivariate extreme value
-distribution. Let $G$ be a function with $J$ arguments $y_j \geq 0$. $G$ has
-the following characteristics :
+distribution. Let $G$ be a function with $J$ arguments $y_j \geq
+0$. $G$ has the following characteristics :
 
 \begin{enumerate}[i)]
-\item it is non negative $G(y_1, \ldots, y_J)\geq 0 \forall j$ ,
+\item it is non negative $G(y_1, \ldots, y_J)\geq 0 \; \forall j$ ,
 \item it is homogeneous of degree 1 in all its arguments $G(\lambda
   y_1, \ldots \lambda y_J) = \lambda G(y_1, \ldots, y_J)$,
 \item for all its argument, $\lim_{y_j \rightarrow
@@ -1886,7 +1853,7 @@ For point 1, if $\epsilon_j \rightarrow -\infty$, $y_j \rightarrow
 For point 2, if $(\epsilon_1, \ldots, \epsilon_J) \rightarrow
 +\infty$, $G \rightarrow 0$ and then $F \rightarrow 1$.
 
-For point 3, let denote\footnote{citation from Mc Fadden.} :
+For point 3, let denote\footnote{cited from \cite{MCFAD:78}.} :
 
 $$Q_k = Q_{k-1} G_k - \frac{\partial Q_{k-1}}{\partial y_k}\;\mbox{and} \; Q_1=G_1$$
 
@@ -2024,6 +1991,58 @@ Among this vast family of models, several authors have proposed some
 nested logit models with overlapping nests \citet{KOPP:WEN:00} and
 \citet{WEN:KOPP:01}
 
+\citet{KOPP:WEN:00} proposed the \emph{paired combinatorial logit
+  model}, which is a nested logit model with nests composed by every
+combination of two alternatives. This model is obtained by using the
+following $G$ function :
+$$
+G(y_1, y_2, \ldots,
+y_n)=\sum_{k=1}^{J-1}\sum_{l=k+1}^J\left(y_k^{1/\lambda_{kl}}+y_l^{1/\lambda_{kl}}
+\right)^{\lambda_{kl}}
+$$
+
+The \emph{pcl} model is consistent with random utility maximisation if
+$0<\lambda_{kl}\leq 1$ and the multinomial logit results if
+$\lambda_{kl}=1 \;\forall (k,l)$. The resulting probabilities are :
+
+$$
+P_l = \frac{\sum_{k\neq l}e^{V_l/\lambda_{lk}}\left(e^{V_k/\lambda_{lk}} + e^{V_l/\lambda_{lk}}\right)^{\lambda_{lk}-1}}
+{\sum_{k=1}^{J-1}\sum_{l=k+1}^{J}\left(e^{V_k/\lambda_{lk}} + e^{V_l/\lambda_{lk}}\right)^{\lambda_{lk}}}
+$$
+
+which can be expressed as a sum of $J-1$ product of a conditional
+probability of choosing the alternative and the marginal probability
+of choosing the nest :
+
+$$
+P_l=\sum_{k\neq l}=P_{l\mid lk} P_{lk}
+$$
+
+with :
+
+$$
+P_{l \mid lk} = \frac{e^{V_l/\lambda_{lk}}}{e^{V_k/\lambda_{lk}} + e^{V_l/\lambda_{lk}}}
+$$
+$$
+P_{lk}= \frac{\left(e^{V_k/\lambda_{lk}} + e^{V_l/\lambda_{lk}}\right)^{\lambda_{lk}}}{\sum_{k=1}^{J-1}\sum_{l=k+1}^{J}\left(e^{V_k/\lambda_{lk}} + e^{V_l/\lambda_{lk}}\right)^{\lambda_{lk}}}
+$$
+
+We reproduce the example used by \citet{KOPP:WEN:00} on the same
+substet of the \Rd{ModeCanada} than the one used by
+\citet{BHAT:95}. Three modes are considered and there are therefore
+three nests. The elasticity of the train-air nest is set to one. To
+estimate this model, one has to set the \Ra{nests}{mlogit} to
+\Rv{pcl}. All the nests of two alternatives are then automatically
+created. The restriction on the nest elasticity for the train-air nest
+is performed by using the \Ra{constPar}{mlogit.optim} argument.
+
+
+<<>>=
+pcl <- mlogit(choice~freq+cost+ivt+ovt, Bhat, reflevel='car',
+              nests='pcl', constPar=c('iv_train_air'))
+summary(pcl)
+@ 
+
 \section{The random parameters (or mixed) logit model}
 
 A mixed logit model or random parameters logit model is a logit model
@@ -2096,22 +2115,21 @@ the expected value of the conditional probabilities is estimated by
 the average of the $R$ probabilities.
 
 \subsection{Panel data}
-Often, especially in the case of stated preference survey, we have
-repeated observations for the same individuals. In this case, this
-panel dimension can be taken into account in the mixed logit
-model. More specifically, we'll compute one probability for each
-individual and this is these probabilities that are included in the
-log-likelihood function. For a given vector of coefficients $\beta_i$,
-the probability for alternative $k$ for the $l$th observation for the
-individual $i$ :
-
+It is often the case, especially with stated preference survey, that
+we have repeated observations for the same individuals. This panel
+dimension can be taken into account in the mixed logit model. More
+specifically, we'll compute one probability for each individual and
+this is this probability that is included in the log-likelihood
+function. For a given vector of coefficients $\beta_i$, the
+probability that alternative $l$ is chosen for the $k$th observation
+of the individual $i$ is :
 $$P_{ikl}=\frac{e^{\beta_ix_{ikl}}}{\sum_j e^{\beta_ix_{ikj}}}$$
-The probability for the chosen probability for the $l$the observation
+The probability for the chosen probability for the $k$th observation
 for the individual $i$ is :
-$$P_{il}=\prod_k {P_{ikl}}^{y_{ikl}}$$
+$$P_{ik}=\prod_l {P_{ikl}}^{y_{ikl}}$$
 Finally, the joint probability for the $K$ observations of individual
 $i$ is :
-$$P_{i}=\prod_i \prod_k {P_{ikl}}^{y_{ikl}}$$
+$$P_{i}=\prod_k \prod_l {P_{ikl}}^{y_{ikl}}$$
 
 \subsection{Simulations}
 
@@ -2148,7 +2166,7 @@ this function :
 $$
 \Rightarrow F^{-1}(x)=-\ln(-\ln x)
 $$
-and $R$ draws from a Gumbell distribution are obtainde by computing
+and $R$ draws from a Gumbell distribution are obtained by computing
 $F^{-1}(x)$ for $R$ draws from the uniform distribution between 0 and
 1. This is illustrated on figure~\ref{fig:gumbell}.
 
@@ -2174,21 +2192,25 @@ then :
   --- 1/3+1/9+2/27 --- 2/3+1/9+2/27 --- 1/3+2/9+2/27 --- 2/3+2/9+2/27
 \end{itemize}
 This Halton sequence is illustrated in figure~\ref{fig:halton}.
+
 \begin{center}
   \begin{figure}[hbtp]
 \caption{Halton sequences\label{fig:halton}}
 \includegraphics[width=\textwidth]{./graph/halton3.pdf}
   \end{figure}
 \end{center}
+
 The use of Halton sequences for two random coefficients is illustrated
 in figure~\ref{fig:halt2}.
+
 \begin{center}
   \begin{figure}[hbtp]
 \caption{Halton sequences vs random numbers in two dimensions\label{fig:halt2}}
 \includegraphics[width=\textwidth]{./graph/haltonvsrandom.pdf}
   \end{figure}
 \end{center}
-On this figure, one can see that, when using pseudo-random numbers, we
+
+On figure~\ref{fig:halt2}, one can see that, when using pseudo-random numbers, we
 have a bad coverage of the unit square, which means that there are
 some holes (some portions of the unit square where there are no
 observation and some redundancies (some portions of the unit square
@@ -2211,7 +2233,7 @@ C=
 \right)
 $$
 
-so that 
+so that :
 
 $$
 \Omega = C^{\top} C = 
@@ -2224,14 +2246,12 @@ c_{11} c_{12} & c_{12}^2+c_{22}^2
 $$
 If $c_{12}=0$, $\Omega$ reduces to a diagonal matrix and the remaining
 two parameters $(c_{11},c_{22})$ are the standard deviations of the
-two random coefficients.
+two random coefficients.  To obtain a couple of correlated
+coefficients, one has to post-multiply a matrix of uncorrelated
+coefficients by the Cholesky matrix.
 
-To obtain a couple of correlated coefficients, one has to
-post-multiply a matrix of uncorrelated coefficients by the Cholesky
-matrix.
-
-If $\mbox{V}(\epsilon_1,\epsilon_2)=I$, then the variance of $
-(\epsilon_1 \epsilon_2) C $ is $\Omega$
+If $\mbox{V}(\eta_1,\eta_2)=I$, then the variance of $
+(\nu_1, \nu_2) = (\eta_1 \eta_2) C $ is $\Omega$
 
 As an example, suppose that the covariance matrix is :
 $$
@@ -2253,14 +2273,14 @@ C=
   \end{array}
 \right)
 $$
-Starting with two uncorrelated parameters $(\epsilon_1,\epsilon_2)$,
+Starting with two uncorrelated parameters $(\eta_1,\eta_2)$,
 we obtain the following two correlated coefficients $(\nu_1,\nu_2)$
 with covariance matrix $\Omega$ :
 $$
 \left\{
   \begin{array}{rcl}
-    \beta_1 &=& 0.71 \epsilon_1 \\
-    \beta_2 &=& 1.13 \epsilon_1+0.85 \epsilon_2
+    \nu_1 &=& 0.71 \eta_1 \\
+    \nu_2 &=& 1.13 \eta_1+0.85 \eta_2
   \end{array}
 \right.
 $$
@@ -2313,20 +2333,20 @@ data("MixedExamples", package = "mlogit")
 The summary method supplies the usual table of coefficients, and also
 some statistics about the random parameters. Random parameters may be
 extracted using the function \Rf{rpar} which take as first argument a
-\Rob{mlogit} object, as second argument \Ra{par} the parameter(s) to
-be extracted and as third argument \Ra{norm} the coefficient (if any)
-that should be used for normalization. This is usually the coefficient
-of the price (taken as a non random parameter), so that the effects
-can be interpreted as monetary values. This function returns a
-\Rob{rpar} object, and several methods/functions are provided to
-describe it :
+\Rob{mlogit} object, as second argument \Ra{par}{mlogit} the
+parameter(s) to be extracted and as third argument \Ra{norm}{mlogit}
+the coefficient (if any) that should be used for normalization. This
+is usually the coefficient of the price (taken as a non random
+parameter), so that the effects can be interpreted as monetary
+values. This function returns a \Rob{rpar} object, and several
+methods/functions are provided to describe it :
 
 <<>>=
-tvalue <- rpar(Train.mxlc, "time", norm = "price")
-summary(tvalue)
-med(tvalue)
-mean(tvalue)
-stdev(tvalue)
+time.value <- rpar(Train.mxlc, "time", norm = "price")
+summary(time.value)
+med(time.value)
+mean(time.value)
+stdev(time.value)
 @ 
 In case of correlated random parameters further functions are provided
 to analyse the correlation of the coefficients :
@@ -2335,48 +2355,12 @@ cor.mlogit(Train.mxlc)
 cov.mlogit(Train.mxlc)
 stdev(Train.mxlc)
 @ 
-The three tests can be applied to test the specification of the
-model. Actually, three nested models can be considered :
-\begin{itemize}
-\item a model with no random effects,
-\item a model with random but uncorrelated effects,
-\item a model with random and correlated effects.
-\end{itemize}
-
-We first present the three tests of no random-uncorrelated effects. 
-
-<<>>=
-lrtest(Train.mxlu, Train.ml)
-waldtest(Train.mxlu)
-scoretest(Train.ml, rpar = c(time = "n", change = "n", comfort = "n"), R = 100,     
-          correlation = FALSE, halton = NA, panel = TRUE)
-@ 
-
-Next, we present the three tests of no random-correlated effects. 
-
-<<>>=
-lrtest(Train.mxlc, Train.ml)
-waldtest(Train.mxlc)
-scoretest(Train.ml, rpar = c(time = "n", change = "n", comfort = "n"), R = 100,     
-          correlation = TRUE, halton = NA, panel = TRUE)
-@ 
-
-Finally, we presente the three tests of no correlation, the existence
-of random parameters being maintained.
-
-<<>>=
-lrtest(Train.mxlc, Train.mxlu)
-waldtest(Train.mxlc, hyp = "uncorrelated")
-scoretest(Train.mxlu, correlation = TRUE)
-@ 
-
-
 
 \section{Tests}
 
 \subsection{The three tests}
 
-As all models estimated by maximum likelihood, three testing
+As for all models estimated by maximum likelihood, three testing
 procedures may be applied to test hypothesis about models fitted using
 \Rf{mlogit}. The hypothesis tested define two models :
 
@@ -2389,49 +2373,82 @@ procedures may be applied to test hypothesis about models fitted using
 This in turns define three principles of tests :
 
 \begin{itemize}
-\item the Wald test is based only on the unconstrained model,
-\item the Lagrange multiplier tests is based only on the constrained
-  model,
-\item the Likelihood ratio test is based on the comparison of both
+\item the \emph{Wald test} is based only on the unconstrained model,
+\item the \emph{Lagrange multiplier test} (or \emph{score test}) is
+  based only on the constrained model,
+\item the \emph{Likelihood ratio test} is based on the comparison of both
   models.
 \end{itemize}
 
 The three principles of test are better understood using
-figure~\label{fig:threetests}
+figure~\ref{fig:threetests}.
 
-\includegraphics{graph/threetests}
+\begin{center}
+  \begin{figure}[hbtp]
+\includegraphics[width=\textwidth]{./graph/threetests.pdf}
+\caption{The three tests\label{fig:threetests}}
+\end{figure}
+\end{center}
 
 In this one dimensional setting, the hypothesis is of the form $\theta
 = \theta_o$, which can be written $f(\theta) = \theta-\theta_o$, with
 $f(\theta)=0$ if the hypothesis is unforced. This is the equation of a
-straight line on~\ref{fig:threetests} . The constrained model is just
-$\hat{\theta}_{c}=\theta_o$, \emph{i.e.} the constrained model is not
-estimated. The unconstrained model corresponds to the maximum of the
-curve that represents the log-likelihood function.
+straight line on figure~\ref{fig:threetests} . The constrained model
+is just $\hat{\theta}_{c}=\theta_o$, \emph{i.e.} the constrained model
+is not estimated. The unconstrained model corresponds to the maximum
+of the curve that represents the log-likelihood function.
 
 \begin{itemize}
-\item The Wald test is based on $f(\hat{\theta}_{nc})$ which is
-  depicted by the arrow in~\ref{fig:threetests}. More generally, it is
-  a vector of length $J$, whose expected value should be 0 if the
-  hypothesis is true.
-\item The Lagrange multiplier is based on the slope of the likelihood
-  curve evaluated at the constrained model : $\frac{\partial \ln
-    L}{\theta}(\hat{\theta}_c)$. Here again, this should be a random
-  vector with expected value equal to 0 if $H_o$ is true.
+\item The Wald test is based on
+  $f(\hat{\theta}_{nc})=R\hat{\theta}_{nc}-q$ which is depicted by the
+  arrow in figure~\ref{fig:threetests}. More generally, it is a vector
+  of length $J$, whose expected value should be 0 if the hypothesis is
+  true : $\mbox{E}(R\hat{\theta}_{nc}-q)=R\theta-q$. Its variance is :
+  $\mbox{V}(R\hat{\theta}_{nc}-q)=R\mbox{V}(\hat{\theta}_{nc})R^\top$.
+  $(R\hat{\theta}_{nc}-q)\sim N\left(R\theta-q,
+    R\mbox{V}(\hat{\theta}_{nc})R^\top\right)$. If the hypothesis are
+  true, the quadratic form is a chi-squared with $J$ degrees of
+  freedom :
+  $$t_{\mbox{wald}}=(R\hat{\theta}_{nc}-q)^{\top}
+  \left(R\mbox{V}(\hat{\theta}_{nc})R^\top\right)^{-1}(R\hat{\theta}_{nc}-q)
+  $$
+\item The Lagrange multiplier is based on the gradient (the slope of
+  the likelihood curve) evaluated at the constrained model :
+  $\frac{\partial \ln L}{\partial \theta}(\hat{\theta}_c)$. Here
+  again, this should be a random vector with expected value equal to
+  $0$ if $H_o$ is true. The variance of the gradient is :
+  $\mbox{V}\left(\frac{\partial \ln L}{\partial
+      \theta}(\hat{\theta}_c)\right) 
+  =\mbox{E}\left(\frac{\partial^2
+      \ln L}{\partial \theta \partial \theta^\top}(\theta)\right)$.
+  $\frac{\partial \ln L}{\partial \theta}(\hat{\theta}_c)\sim N(0,
+  \mbox{E}\left(\frac{\partial^2 \ln L}{\partial \theta \partial
+      \theta^\top}\right))$. If the hypothesis are true, the quadratic
+  form is a chi-squared with $J$ degrees of freedom :
+  $$
+  t_{\mbox{score}} = \left(\frac{\partial \ln L}{\partial \theta}(\hat{\theta}_c)\right)^\top
+  \mbox{V}\left(\frac{\partial \ln L}{\partial
+      \theta}(\hat{\theta}_c)\right)^{-1}
+  \left(\frac{\partial \ln L}{\partial \theta}(\hat{\theta}_c)\right)
+  $$
 \item Finally, the likelihood ratio test compares both models. More
   specifically, the statistic is twice the value of the log-likelihood
-  for the two models.
+  for the two models and, if the hypothesis are true, is a chi-squared
+  with $J$ degrees of freedom :
+  $$
+  t_{\mbox{lr}}=2\left(\ln L_{nc}-\ln L_{c}\right)
+  $$
 \end{itemize}
 
-Two of these tests are implemented in the \pkg{lmtest} package :
-\Rf{waldtest} et \Rf{lrtest}. The wald test is also implemented in
-\Rf{linearHypothesis} from package \pkg{car} with a fairly different
-syntax. We provide special methods of \Rm{waldtest}{mlogit} and
-\Rm{lrtest}{mlogit} for \Rob{mlogit} objects and we also provide a
-function for the lagrange multiplier (or score) test called
-\Rf{scoretest}.
+Two of these tests are implemented in the \pkg{lmtest} package
+\citep{ZEIL:HOTH:02} : \Rf{waldtest} and \Rf{lrtest}. The wald test
+is also implemented in \Rf{linearHypothesis} from package \pkg{car}
+with a fairly different syntax. We provide special methods of
+\Rm{waldtest}{mlogit} and \Rm{lrtest}{mlogit} for \Rob{mlogit} objects
+and we also provide a function for the lagrange multiplier (or score)
+test called \Rf{scoretest}.
 
-We'll see later on that the score test is especially usefull for
+We'll see later that the score test is especially usefull for
 \Rob{mlogit} objects when one is interested in extending the basic
 multinomial logit model. In this case, the unconstrained model is much
 more difficult to estimate than the constrainted model which is the
@@ -2439,71 +2456,75 @@ basic multinomial logit model. The score test, which is based on the
 constrained model is therefore very simple to compute.
 
 For now, we'll just demonstrate the use of the testing in the usual
-setting where the two models are indicated. This can done by passing
+setting where the two models are provided. This can done by passing
 two fitted models to the testing function, or just one model and a
-formula which describes the second model. 
+formula which describes the second model.
 
 We've previously estimated the following model :
 
 <<>>=
-m <- mlogit(mode~price | income | catch, Fishing, shape = "wide", varying = 2:9)
+ml.Fish <- mlogit(mode~price | income | catch, Fishing, shape = "wide", varying = 2:9)
 @
 
 The hypothesis that the income doesn't influence the choice for a
 fishing mode is a joint hypothesis that three coefficients are
-zero. The constrained model can be obtained by updated the previous
+zero. The constrained model can be obtained by updating the previous
 model :
 
 <<>>=
-mc <- update(m, . ~ . | . - income | .)
+ml.Fish.c <- update(ml.Fish, . ~ . | . - income | .)
 @
 
 The wald and likelihood ratio tests are then obtained by provinding
 the two models as arguments :
+
 <<>>=
-waldtest(m, mc)
-lrtest(m, mc)
-scoretest(mc, m)
+waldtest(ml.Fish, ml.Fish.c)
+lrtest(ml.Fish, ml.Fish.c)
+scoretest(ml.Fish.c, ml.Fish)
 @ 
 
 or just one of them and a formula that describes the second one :
 
 <<eval = FALSE>>=
-lrtest(m, . ~ . | . - income | .)
-lrtest(m, mode ~ price | 1 | catch)
-lrtest(mc, . ~ . | . + income | .)
-lrtest(mc, mode ~ price | income | catch)
-waldtest(m, . ~ . | . - income | .)
-waldtest(m, mode ~ price | 1 | catch)
-waldtest(mc, . ~ . | . + income | .)
-waldtest(mc, mode ~ price | income | catch)
-scoretest(mc, . ~ . | . + income | .)
-scoretest(mc, mode ~ price | income | catch)
+lrtest(ml.Fish, . ~ . | . - income | .)
+lrtest(ml.Fish, mode ~ price | 1 | catch)
+lrtest(ml.Fish.c, . ~ . | . + income | .)
+lrtest(ml.Fish.c, mode ~ price | income | catch)
+waldtest(ml.Fish, . ~ . | . - income | .)
+waldtest(ml.Fish, mode ~ price | 1 | catch)
+waldtest(ml.Fish.c, . ~ . | . + income | .)
+waldtest(ml.Fish.c, mode ~ price | income | catch)
+scoretest(ml.Fish.c, . ~ . | . + income | .)
+scoretest(ml.Fish.c, mode ~ price | income | catch)
 @ 
 
 \subsection{Test of heteroscedasticity}
 
 The homoscedascticity hypothesis can be tested using any of the three
-tests. A particular convenient syntax is provided in this case. 
-
-For the likelihood ratio and the wald test, one can pass only the
-fitted model as argument. In this case, it is guessed that the
-hypothesis that the user wants to test is the homoscedasticity
-hypothesis, \emph{i.e.}  \Rcl!sp.train=1! and \Rcl!sp.air=1!.
+tests. A particular convenient syntax is provided in this case.  For
+the likelihood ratio and the wald test, one can pass only the fitted
+model as argument. In this case, it is guessed that the hypothesis
+that the user wants to test is the homoscedasticity hypothesis. We'll
+test the homoscedasticity hypothesis for the two heteroscedastic
+models (\va{hl.MC} and \va{hl.TM} estimated previously, with the
+Rd{ModeCanada} and the \Rd{TravelMode} and data sets.
 
 <<>>=
+lrtest(hl.MC, ml.MC)
+waldtest(hl.MC, heterosc = FALSE)
+@ 
+or, more simply :
+<<results=hide>>=
 lrtest(hl.MC)
 waldtest(hl.MC)
 @ 
-
 The wald test can also be computed using the \Rf{linearHypothesis}
-function from the \pkg{car} package :
-
+function from the \pkg{car} package \citep{FOX:WEIS:10} :
 <<>>=
 library("car")
 linearHypothesis(hl.MC, c('sp.air=1', 'sp.train=1'))
 @ 
-
 For the score test, we provide the constrained model as argument,
 which is the standard multinomial logit model and the supplementary
 argument which defines the unconstrained model, which is in this case
@@ -2513,23 +2534,38 @@ argument which defines the unconstrained model, which is in this case
 scoretest(ml.MC, heterosc = TRUE)
 @ 
 
-Note that the standard deviations of the estimated scale parameters
-are very high, which means that they are poorly identified. This is
-confirmed by the fact that the homoscedasticity hypothesis is not
-rejected :
+The homoscedasticity hypothesis is strongly rejected using any of the
+three tests.
+
+For the \va{hl.TM} model, the standard deviations of the estimated
+scale parameters are very high, which means that they are poorly
+identified. This is confirmed by the fact that the homoscedasticity
+hypothesis is not rejected :
 
 <<>>=
-waldtest(hl.TM)
-lrtest(hl.TM)
-scoretest(ml.TM, heterosc = TRUE)
+c(wald = waldtest(hl.TM)$statistic, 
+  lr = lrtest(hl.TM)$Chisq[2],
+  score = scoretest(ml.TM, heterosc = TRUE)$statistic)
 @ 
 
 \subsection{Test about the nesting structure}
 
+For the nested logit models, two tests are of particular interest :
+\begin{itemize}
+\item the test of no nests, which means that all the nest elasticities
+  are equal to 1,
+\item the test of unique nest elasticities, which means that all the
+  nest elasticities are equal to each other.
+\end{itemize}
+To illustrate the use of these tests, we'll use the \va{nl.HC} model
+estimated using the \Rd{HC} data set.
 
-The two nest elasticities are about 0.3, which implies a correlation
-of 0.7, which is quite high. The results of the three tests are given
-bellow :
+For the test of no nests, the nested model is provided as the unique
+argument for the \Rf{lrtests} and the \Rf{waldtest} function. For the
+\Rf{scoretest}, the constrainted model (\emph{i.e.} the multinomial
+logit model is provided as the first argument and the second argument
+is \Ra{nests}{mlogit}, which describes the nesting structure that one
+wants to test.
 
 <<>>=
 lrtest(nl.HC)
@@ -2538,27 +2574,23 @@ scoretest(ml.HC, nests = list(cooling = c('ecc', 'erc', 'gcc', 'hpc'),
                    noncool = c('ec', 'gc', 'er')))
 @ 
 
+The wald test can also be performed using the \Rf{linearHypothesis}
+function :
+<<>>=
+linearHypothesis(nl.HC, c("iv.cooling=1", "iv.noncool=1"))
+@ 
+
 The three tests reject the null hypothesis of no correlation at the
 1\% level. The two nests elasticities being very closed, we'd like to
-test equality between both elasticities. \Rf{linearHypothesis}
-provides a particular convenient interface for that :
-
-<<>>=
-linearHypothesis(nl.HC, "iv.cooling = iv.noncool")
-@ 
-
-Therefore the hypothesis is not rejected and can be unforced by
-updating the model with the argument \Ra{un.nest.el}{mlogit} equal to
-\code{TRUE}.
-
-<<>>=
-nl.HC.u <- update(nl.HC, un.nest.el = TRUE)
-@ 
-
-A likelihood ratio test confirms that the hypothesis is not rejected :
+test the equality between both elasticities. This can be performed
+using the three tests. For the score test, we provide the constrained
+model that is called \va{nl.HC.u}
 
 <<>>=
 lrtest(nl.HC,nl.HC.u)
+waldtest(nl.HC, un.nest.el = TRUE)
+scoretest(nl.HC.u, un.nest.el = FALSE)
+linearHypothesis(nl.HC, "iv.cooling=iv.noncool")
 @ 
 
 
@@ -2572,8 +2604,11 @@ correlation. Actually, three nested models can be considered :
 \item a model with random but uncorrelated effects,
 \item a model with random and correlated effects.
 \end{itemize}
+These three models have been previously estimated for the example
+based on the \Rd{Train} data set under the names of \va{Train.ml},
+\va{Train.mxlu} and \va{Train.mxlc}.
 
-We first present the three tests of no random-uncorrelated effects. 
+We first present the three tests of no random-uncorrelated effects.
 
 <<>>=
 lrtest(Train.mxlu, Train.ml)
@@ -2596,7 +2631,7 @@ of random parameters being maintained.
 
 <<>>=
 lrtest(Train.mxlc, Train.mxlu)
-waldtest(Train.mxlc, hyp = "uncorrelated")
+waldtest(Train.mxlc, correlation = FALSE)
 scoretest(Train.mxlu, correlation = TRUE)
 @ 
 
@@ -2607,7 +2642,7 @@ scoretest(Train.mxlu, correlation = TRUE)
 \printindex
 
 \tableofcontents
-
+\tableoffigures
 \end{document}
 
 % <!-- Local IspellDict: english --> <!-- Local IspellPersDict: ~/emacs/.ispell-english -->

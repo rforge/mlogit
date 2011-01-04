@@ -177,7 +177,7 @@ summary(mlogit(mode ~ 0 | income, data = Fish))
 
 ## which can also be estimated using multinom (package nnet)
 
-library(nnet)
+library("nnet")
 summary(multinom(mode ~ income, data = Fishing))
 
 ## a "mixed" model

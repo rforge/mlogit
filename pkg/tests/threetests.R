@@ -1,7 +1,6 @@
 data("MixedExamples", package = "mlogit")
 library("lmtest")
-#library("mlogit")
-source("~/Forge/mlogit/chargement.R")
+library("mlogit")
 data("Train", package = "mlogit")
 Tr <- mlogit.data(Train, shape = "wide", varying = 4:11, 
                   choice = "choice", sep = "", 

@@ -219,12 +219,7 @@ $wtp=8.33$). Test the hypothesis that $r=0.12$.
 <<>>=
 H$lcc=H$ic+H$oc/0.12
 mlcc <- mlogit(depvar~lcc|0, H)
-library("lmtest")
 lrtest(m, mlcc)
-# or 'by hand'
-lrstat <- 2*(logLik(m)-logLik(mlcc))
-lrstat
-pchisq(lrstat, df = 1, lower.tail = FALSE)
 qchisq(0.05, df = 1, lower.tail = FALSE)
 @   
 We perform a likelihood ratio test. The LL for this constrained model
@@ -260,27 +255,24 @@ shares.
 
 (b) Calculate the $wtp$ and discount rate $r$ that is implied by the
 estimates. Are these reasonable?
-
 \begin{answer}[5]
 <<>>=
 wtp <- coef(mc)["oc"]/coef(mc)["ic"]
 wtp
 r <- 1/wtp
 r
-@   
+@ 
 The decision-maker is willing to pay \$4.56 for a \$1 year stream of
 savings. This implies $r = 0.22$. The decision-maker applies a 22\%
-discount rate.
-
-These results are certainly more reasonable that in the previous
-model. The decision-maker is still estimated to be valuing saving
-somewhat less than would seem rational (ie applying a higher discount
-rate than seems reasonable). However, we need to remember that the
-decision-maker here is the builder. If home buyers were perfectly
-informed, then the builder would adopt the buyer's discount
-rate. However, the builder would adopt a higher discount rate if home
-buyers were not perfectly informed about (or believed) the stream of
-saving.
+discount rate.  These results are certainly more reasonable that in
+the previous model. The decision-maker is still estimated to be
+valuing saving somewhat less than would seem rational (ie applying a
+higher discount rate than seems reasonable). However, we need to
+remember that the decision-maker here is the builder. If home buyers
+were perfectly informed, then the builder would adopt the buyer's
+discount rate. However, the builder would adopt a higher discount rate
+if home buyers were not perfectly informed about (or believed) the
+stream of saving.
 \end{answer}
 
 (c) This model contains constants for all alternatives
@@ -349,13 +341,8 @@ family that lives in the house, whereas the builder made decision of
 which system to install.
 <<>>=
 lrtest(mc, mi2)
-stat <- 2 * as.numeric(logLik(mi2) - logLik(mc))
-stat
-pchisq(stat, df = 3)
 waldtest(mc, mi2)
-# or 'by hand'
-icoef <- 7:10
-as.numeric(coef(mi2)[icoef]%*%solve(vcov(mi2)[icoef, icoef], coef(mi2)[icoef]))
+scoretest(mc, mi2)
 @ 
 \end{answer}
 
@@ -375,8 +362,8 @@ are the same as you got in exercise 4.
 \begin{answer}[5]
 <<>>=
 X <- model.matrix(mc)
-alt <- attr(H, "index")[["alt"]]
-chid <- attr(H, "index")[["chid"]]
+alt <- index(H)$alt
+chid <- index(H)$chid
 eXb <- as.numeric(exp(X %*% coef(mc)))
 SeXb <- tapply(eXb, chid, sum)
 P <- eXb / SeXb[chid]
@@ -398,7 +385,7 @@ share of houses with heat pumps?
 \begin{answer}[5]
 <<>>=
 X <- model.matrix(mc)
-X[alt == "hp", "ic"] <- X[alt == "hp", "ic"]*0.90
+X[alt == "hp", "ic"] <- X[alt == "hp", "ic"] * 0.90
 eXb <- as.numeric(exp(X %*% coef(mc)))
 SeXb <- tapply(eXb, chid, sum)
 P <- eXb / SeXb[chid]
@@ -432,15 +419,15 @@ X <- model.matrix(mc)
 Xn <- X[alt == "ec",]
 Xn[, "ic"] <- Xn[, "ic"] + 200
 Xn[, "oc"] <- Xn[, "oc"] * 0.75
-n <- length(unique(chid))
-altb <- c(alt, rep(6, n))
-chidb <- c(chid, unique(chid))
+unchid <- unique(index(H)$chid)
+rownames(Xn) <- paste(unchid, 'new', sep = ".")
+chidb <- c(chid, unchid)
 X <- rbind(X, Xn)
-X <- X[order(chidb, altb), ]
+X <- X[order(chidb), ]
 eXb <- as.numeric(exp(X %*% coef(mc)))
 SeXb <- as.numeric(tapply(eXb, sort(chidb), sum))
 P <- eXb / SeXb[sort(chidb)]
-P <- matrix(P, ncol = 6, byrow=TRUE)
+P <- matrix(P, ncol = 6, byrow = TRUE)
 apply(P, 2, mean)
 @   
 The new technology captures a market share of 0.1036. That is, it gets
@@ -489,32 +476,31 @@ The variables are:
 
 \begin{itemize}
 \item \va{depvar} gives the name of the chosen alternative,
-\item \va{ich.alt} are the installation cost for the heating portion of the
-  system,
+\item \va{ich.alt} are the installation cost for the heating portion
+  of the system,
 \item \va{icca} is the installation cost for cooling
-\item \va{och.alt} are the operating cost for the heating portion of the
-  system
+\item \va{och.alt} are the operating cost for the heating portion of
+  the system
 \item \va{occa} is the operating cost for cooling
 \item \va{income} is the annual income of the household
 \end{itemize}
 
 Note that the full installation cost of alternative \va{gcc} is
-\va{ich.gcc+icca}, and similarly for the operating cost and for
-the other alternatives with cooling.
+\va{ich.gcc+icca}, and similarly for the operating cost and for the
+other alternatives with cooling.
 
 1. Run a nested logit model on the data for two nests and one log-sum
 coefficient that applies to both nests. Note that the model is
-specified to have the cooling alternatives (\va{gcc},
-\va{ecc}, \va{erc}, \va{hpc}) in one nest and the
-non-cooling alternatives (\va{gc}, \va{ec}, \va{er}) in
-another nest.
+specified to have the cooling alternatives (\va{gcc}, \va{ecc},
+\va{erc}, \va{hpc}) in one nest and the non-cooling alternatives
+(\va{gc}, \va{ec}, \va{er}) in another nest.
 \begin{answer}[5]
 <<>>=
 library("mlogit")
 data("HC", package = "mlogit")
 HC <- mlogit.data(HC, varying = c(2:8, 10:16), choice = "depvar", shape = "wide")
-cooling.modes <- attr(HC, "index")$alt %in% c('gcc', 'ecc', 'erc', 'hpc')
-room.modes <- attr(HC, "index")$alt %in% c('erc', 'er')
+cooling.modes <- index(HC)$alt %in% c('gcc', 'ecc', 'erc', 'hpc')
+room.modes <- index(HC)$alt %in% c('erc', 'er')
 # installation / operating costs for cooling are constants, 
 # only relevant for mixed systems
 HC$icca[!cooling.modes] <- 0
@@ -528,17 +514,17 @@ HC$int.cooling <- as.numeric(cooling.modes)
 # estimate the model with only one nest elasticity
 nl <- mlogit(depvar ~ ich + och +icca + occa + inc.room + inc.cooling + int.cooling | 0, HC,
              nests = list(cooling = c('gcc','ecc','erc','hpc'), 
-             other = c('gc', 'ec', 'er')), un.nest.el = TRUE, print.level = 0)
+             other = c('gc', 'ec', 'er')), un.nest.el = TRUE)
 summary(nl)
 @ 
 \end{answer}
 
-(a) The estimated log-sum coefficient is -0.59. What does this
+(a) The estimated log-sum coefficient is $-0.59$. What does this
 estimate tell you about the degree of correlation in unobserved
 factors over alternatives within each nest?
 
 \begin{answer}[5]
-  The correlation is approximately 1-0.59=.41. It's a moderate
+  The correlation is approximately $1-0.59=0.41$. It's a moderate
   correlation.
 \end{answer}
   
@@ -559,12 +545,8 @@ true model is standard logit be rejected?
  is a special case of the nested model.
 <<>>=
 # First estimate the multinomial logit model
-ml <- update(nl, nests=NULL)
-library(lmtest)
+ml <- update(nl, nests = NULL)
 lrtest(nl, ml)
-stat <- as.numeric(2 * (logLik(nl) - logLik(ml)) )
-stat
-pchisq(stat, df = 1, lower.tail = FALSE)
 @  
 
 Note that the hypothesis is rejected at 95\% confidence, but not at
@@ -599,9 +581,6 @@ across alternatives? Do you think the estimate is plausible?
 <<>>=
  (coef(nl2)['iv']-1)/sqrt(vcov(nl2)['iv', 'iv'])
 lrtest(nl2, ml)
-stat <- as.numeric(2 * (logLik(nl2) - logLik(ml)) )
-stat
-pchisq(stat, df = 1, lower.tail = FALSE)
 @   
 We cannot reject the hypothesis at standard confidence levels.
 \end{answer}
@@ -648,10 +627,6 @@ exercise 1 is the true model?
   \texttt{nl3}.
 <<>>=
 lrtest(nl, nl3)
-stat <- as.numeric(2 * (logLik(nl) - logLik(nl3)) )
-stat
-pchisq(stat, df = 1, lower.tail = FALSE)
-qchisq(0.05, df = 1, lower.tail=FALSE)
 @   
 The restricted model is the one from exercise 1 that has one log-sum
 coefficient. The unrestricted model is the one we just estimated. The

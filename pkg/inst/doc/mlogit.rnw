@@ -58,6 +58,7 @@ E-mail: \email{yves.croissant@univ-reunion.fr}
 %\maketitle
 
 \section*{An introductory example}
+\addcontentsline{toc}{section}{An introductory example}
 
 The logit model is useful when one tries to explain discrete choices,
 \emph{i.e.} choices of one among several mutually exclusive
@@ -164,8 +165,10 @@ time or plane price and compute the new probabilities, which can be
 interpreted at the aggregate level as predicted market shares.
 
 \section{Data management and model description}
+\addcontentsline{toc}{section}{Data management and model description}
 
 \subsection{Data management}
+\addcontentsline{toc}{subsection}{Data management}
 
 <<echo=FALSE,results=hide>>=
 options(prompt= "R> ", useFancyQuotes = FALSE)
@@ -368,6 +371,8 @@ head(index(Tr), 3)
 @ 
 
 \subsection{Model description}
+\addcontentsline{toc}{subsection}{Model description}
+
 
 \Rf{mlogit} use the standard \Ra{formula}{mlogit}, \Ra{data}{mlogit}
 interface to describe the model to be estimated. However, standard
@@ -503,8 +508,10 @@ alternative specific variable for which we want an alternative
 specific coefficient.
 
 \section{Random utility model and the multinomial logit model}
+\addcontentsline{toc}{section}{Random utility model and the multinomial logit model}
 
 \subsection{Random utility model}
+\addcontentsline{toc}{subsection}{Random utility model}
 
 The individual must choose one alternative among $J$ different and
 exclusive alternatives. A level of utility may be defined for each
@@ -606,6 +613,7 @@ $$
 where $f_l$ is the marginal density function of $\epsilon_l$.
 
 \subsection{The distribution of the error terms}
+\addcontentsline{toc}{subsection}{The distribution of the error terms}
 
 The multinomial logit model \citep{MCFAD:74} is a special case of the
 model developed in the previous section. It relies on three
@@ -701,6 +709,7 @@ standard \textsc{Gumbel} distribution (\emph{i.e.} with position and
 scale parameters equal to 0 and 1).
 
 \subsection{Computation of the probabilities}
+\addcontentsline{toc}{subsection}{Computation of the probabilities}
 
 With these hypothesis on the distribution of the error terms, we can
 now show that the probabilities have very simple, closed forms, which
@@ -809,6 +818,7 @@ and can be rewritten as the usual logit probability :
 
 
 \subsection{IIA hypothesis}
+\addcontentsline{toc}{subsection}{IIA hypothesis}
 
 If we consider the probabilities of choice for two alternatives $l$
 and $m$, we have :
@@ -895,11 +905,13 @@ omitted variables.
 % This is the base of the Hausman McFadden IIA test. 
 
 \subsection{Estimation}
+\addcontentsline{toc}{subsection}{Estimation}
 
 The coefficients of the multinomial logit model are estimated by full
 information maximum likelihood.
 
 \subsubsection{The likelihood function}
+\addcontentsline{toc}{subsubsection}{The likelihood function}
 
 Let's start with a very simple example. Suppose there are four
 individuals. For given parameters and explanatory variables, we can
@@ -944,6 +956,7 @@ $$
 $$
 
 \subsubsection{Properties of the maximum likelihood estimator}
+\addcontentsline{toc}{subsubsection}{Properties of the maximum likelihood estimator}
 
 Under regularity conditions, the maximum likelihood estimator is
 consistent and has an asymptotic normal distribution. The variance of
@@ -970,6 +983,7 @@ values of the parameters. Three estimators have been proposed :
 
 
 \subsubsection{Numerical optimization}
+\addcontentsline{toc}{subsubsection}{Numerical optimization}
 
 We seek to calculate the maximum of a function $f(x)$. This first
 order condition for a maximum is $f'(x_o)=0$, but in general, there is
@@ -991,7 +1005,7 @@ This algorithm is illustrated on figure~\ref{fig:opt}.
 
   \begin{center}
     \begin{figure}[hbtp]
-      \includegraphics[width=.75\textwidth]{./graph/opt}
+\centering  \includegraphics[width=.75\textwidth]{./graph/opt}
       \caption{Numerical optimization\label{fig:opt}}
     \end{figure}
   \end{center}
@@ -1037,6 +1051,7 @@ to 2-verbal), \Ra{iterlim}{maxLik} (the maximum number of iterations),
 \Rv{bhhh} or \Rv{bfgs}) that are passed to \Rf{maxLik}.
 
 \subsubsection{Gradient and Hessian for the logit model}
+\addcontentsline{toc}{subsubsection}{Gradient and Hessian for the logit model}
 
 For the multinomial logit model, the gradient and the hessian have
 very simple expressions.
@@ -1062,6 +1077,7 @@ case, the Newton-Ralphson method is very efficient and the convergence
 is achieved after just a few iterations.
 
 \subsection{Interpretation}
+\addcontentsline{toc}{subsection}{Interpretation}
 
 In a linear model, the coefficients can be directly considered as
 marginal effects of the explanatory variables on the explained
@@ -1070,6 +1086,7 @@ meaningful results can be obtained using relevant transformations of
 the coefficients.
 
 \subsubsection{Marginal effects}
+\addcontentsline{toc}{subsubsection}{Marginal effects}
 
 The marginal effects are the derivatives of the probabilities with
 respect to the explanatory variables, which can be be
@@ -1106,6 +1123,7 @@ $$
 \end{itemize}
 
 \subsubsection{Marginal rates of substitution}
+\addcontentsline{toc}{subsubsection}{Marginal rates of substitution}
 
 Coefficients are marginal utilities, which are not interpretable
 because utility is ordinal. However, ratios of coefficients are
@@ -1127,6 +1145,7 @@ travel time of one hour, the individual is willing to pay at most 30
 euros more.
 
 \subsubsection{Consumer's surplus}
+\addcontentsline{toc}{subsubsection}{Consumer's surplus}
 
 Consumer's surplus has a very simple expression with multinomial logit
 models. It was first derived by \citet{SMAL:ROSE:81}.
@@ -1252,6 +1271,7 @@ $$
 $$
 
 \subsection{Application}
+\addcontentsline{toc}{subsection}{Application}
 
 \Rd{Train} contains data about a stated preference survey in
 Netherlands. Users are asked to choose between two train trips
@@ -1350,6 +1370,7 @@ mlogit(mode~price | income | catch, Fish, reflevel='charter',
 @ 
 
 \section{Relaxing the iid hypothesis}
+\addcontentsline{toc}{section}{Relaxing the iid hypothesis}
 
 With hypothesis 1 and 3, the error terms are \emph{iid} (identically
 and independently distributed), \emph{i.e.} not correlated and
@@ -1358,6 +1379,7 @@ been proposed by relaxing one of these two hypothesis while
 maintaining the second hypothesis of Gumbell distribution. 
 
 \subsection{The heteroskedastic logit model}
+\addcontentsline{toc}{subsection}{The heteroskedastic logit model}
 
 The heteroskedastic logit model was proposed by \citet{BHAT:95}.
 
@@ -1511,6 +1533,7 @@ Note that the standard deviations of the estimated scale parameters
 are very high, which means that they are poorly identified.
 
 \subsection{The nested logit model}
+\addcontentsline{toc}{subsection}{The nested logit model}
 
 The nested logit model was first proposed by \cite{MCFAD:78}. It is a
 generalization of the multinomial logit model that is based on the
@@ -1801,7 +1824,11 @@ nl.HC.u <- update(nl.HC, un.nest.el = TRUE)
 @ 
 
 \subsection{The general extreme value model}
+\addcontentsline{toc}{subsection}{The general extreme value model}
 
+\subsubsection{Derivation of the general extreme value model}
+\addcontentsline{toc}{subsubsection}{Derivation of the general extreme
+  value model}
 
 \cite{MCFAD:78} developed a general model that suppose that the join
 distribution of the error terms follow a a multivariate extreme value
@@ -1989,7 +2016,10 @@ $$
 
 Among this vast family of models, several authors have proposed some
 nested logit models with overlapping nests \citet{KOPP:WEN:00} and
-\citet{WEN:KOPP:01}
+\citet{WEN:KOPP:01}.
+
+\subsubsection{Paired combinatorial logit model}
+\addcontentsline{toc}{subsubsection}{Paired combinatorial logit model}
 
 \citet{KOPP:WEN:00} proposed the \emph{paired combinatorial logit
   model}, which is a nested logit model with nests composed by every
@@ -2015,7 +2045,7 @@ probability of choosing the alternative and the marginal probability
 of choosing the nest :
 
 $$
-P_l=\sum_{k\neq l}=P_{l\mid lk} P_{lk}
+P_l=\sum_{k\neq l}P_{l\mid lk} P_{lk}
 $$
 
 with :
@@ -2024,7 +2054,9 @@ $$
 P_{l \mid lk} = \frac{e^{V_l/\lambda_{lk}}}{e^{V_k/\lambda_{lk}} + e^{V_l/\lambda_{lk}}}
 $$
 $$
-P_{lk}= \frac{\left(e^{V_k/\lambda_{lk}} + e^{V_l/\lambda_{lk}}\right)^{\lambda_{lk}}}{\sum_{k=1}^{J-1}\sum_{l=k+1}^{J}\left(e^{V_k/\lambda_{lk}} + e^{V_l/\lambda_{lk}}\right)^{\lambda_{lk}}}
+P_{lk}= \frac{\left(e^{V_k/\lambda_{lk}} +
+    e^{V_l/\lambda_{lk}}\right)^{\lambda_{lk}}}{\sum_{k=1}^{J-1}\sum_{l=k+1}^{J}\left(e^{V_k/\lambda_{lk}}
+    + e^{V_l/\lambda_{lk}}\right)^{\lambda_{lk}}}
 $$
 
 We reproduce the example used by \citet{KOPP:WEN:00} on the same
@@ -2043,7 +2075,52 @@ pcl <- mlogit(choice~freq+cost+ivt+ovt, Bhat, reflevel='car',
 summary(pcl)
 @ 
 
+\subsubsection{The generalized nested logit model}
+\addcontentsline{toc}{subsubsection}{The generalized nested logit model}
+
+\citet{WEN:KOPP:01} proposed the \emph{generalized nested logit
+  model}. This model is obtained by using the following $G$ function :
+
+$$
+G(y_1, y_2, \ldots, y_n)=\sum_m\left(\sum_{j \in B_m}
+  \left(\alpha_{jm}y_j\right)^{1/\lambda_m}\right)^{\lambda_m}
+$$
+
+with $\alpha_{jm}$ the allocation parameter which indicates which part
+of alternative $j$ is assigned to nest $m$, with the condition
+$\sum_m\alpha_{jm}=1\;\forall j$ and $\lambda_m$ the logsum parameter
+for nets $m$, with $0<\lambda_m\leq 1$.
+
+The resulting probabilities are :
+
+$$
+P_j=\frac{\sum_m\left[\left(\alpha_{jm}e^{V_j}\right)^{1/\lambda_m}
+    \left(\sum_{k \in N_m} \left(\alpha_{km}e^{V_k}\right)^{1/\lambda_m}\right)^{\lambda_m-1}\right]}
+{\sum_m\left(\sum_{k \in B_m}\left(\alpha_{km}e^{V_k}\right)^{1/\lambda_m}\right)^{\lambda_m}}
+$$
+
+which can be expressed as a sum of products of a conditional
+probability of choosing the alternative and the marginal probability
+of choosing the nest :
+
+$$
+P_j=\sum_{m}P_{j\mid m} P_m
+$$
+
+with :
+
+$$
+P_{j \mid m} = \frac{\left(\alpha_{jm}e^{V_j}\right)^{1/\lambda_m}}
+{\sum_{k \in B_m}\left(\alpha_{km}e^{V_k}\right)^{1/\lambda_m}}
+$$
+$$
+P_m= 
+\frac{\left(\sum_{k \in N_m} \left(\alpha_{km}e^{V_k}\right)^{1/\lambda_m}\right)^{\lambda_m}}
+{\sum_m\left(\sum_{k \in B_m}\left(\alpha_{km}e^{V_k}\right)^{1/\lambda_m}\right)^{\lambda_m}}
+$$
+
 \section{The random parameters (or mixed) logit model}
+\addcontentsline{toc}{section}{The random parameter logit model}
 
 A mixed logit model or random parameters logit model is a logit model
 for which the parameters are assumed to vary from one individual to
@@ -2051,6 +2128,7 @@ another. It is therefore a model that takes the heterogeneity of the
 population into account.
 
 \subsection{The probabilities}
+\addcontentsline{toc}{subsection}{The probabilities}
 
 For the standard logit model, the probabilities are :
 $$
@@ -2115,6 +2193,8 @@ the expected value of the conditional probabilities is estimated by
 the average of the $R$ probabilities.
 
 \subsection{Panel data}
+\addcontentsline{toc}{subsection}{Panel data}
+
 It is often the case, especially with stated preference survey, that
 we have repeated observations for the same individuals. This panel
 dimension can be taken into account in the mixed logit model. More
@@ -2132,6 +2212,7 @@ $i$ is :
 $$P_{i}=\prod_k \prod_l {P_{ikl}}^{y_{ikl}}$$
 
 \subsection{Simulations}
+\addcontentsline{toc}{subsection}{Simulations}
 
 The probabilities for the random parameter logit are integrals with no
 closed form. Moreover, the degree of integration is the number of
@@ -2153,6 +2234,8 @@ following steps :
 \end{itemize}
 
 \subsubsection{Drawing from densities}
+\addcontentsline{toc}{subsection}{Drawing from densities}
+
 To estimate a model using simulations, one needs to draw pseudo random
 numbers from a specified distribution. For this purpose, what is
 actually needed is a function that draws pseudo random numbers from a
@@ -2172,8 +2255,8 @@ $F^{-1}(x)$ for $R$ draws from the uniform distribution between 0 and
 
 \begin{center}
   \begin{figure}[hbtp]
-\caption{uniform to Gumbell deviates\label{fig:gumbell}}
-\includegraphics[width=0.7\textwidth]{./graph/draws.pdf}
+\centering \includegraphics[width=0.7\textwidth]{./graph/draws.pdf}
+\caption{Uniform to Gumbell deviates\label{fig:gumbell}}
   \end{figure}
 \end{center}
 
@@ -2182,6 +2265,7 @@ interval instead numerous draws are made. More deterministic methods
 like Halton draws may be used instead.
 
 \subsubsection{Halton sequence}
+\addcontentsline{toc}{subsubsection}{Halton sequence}
 
 To generate a Halton sequence, we use a prime (e.g. 3). The sequence is
 then :
@@ -2195,8 +2279,8 @@ This Halton sequence is illustrated in figure~\ref{fig:halton}.
 
 \begin{center}
   \begin{figure}[hbtp]
+\centering \includegraphics[width=\textwidth]{./graph/halton3.pdf}
 \caption{Halton sequences\label{fig:halton}}
-\includegraphics[width=\textwidth]{./graph/halton3.pdf}
   \end{figure}
 \end{center}
 
@@ -2205,8 +2289,8 @@ in figure~\ref{fig:halt2}.
 
 \begin{center}
   \begin{figure}[hbtp]
-\caption{Halton sequences vs random numbers in two dimensions\label{fig:halt2}}
-\includegraphics[width=\textwidth]{./graph/haltonvsrandom.pdf}
+    \centering \includegraphics[width=\textwidth]{./graph/haltonvsrandom.pdf}
+    \caption{Halton sequences vs random numbers in two dimensions\label{fig:halt2}}
   \end{figure}
 \end{center}
 
@@ -2218,6 +2302,8 @@ where there are almost identical observations). The coverage of the
 unit square is much better with Halton draws.
 
 \subsubsection{Correlation}
+\addcontentsline{toc}{subsubsection}{Correlation}
+
 It is often relevant to introduce correlations between random
 parameters. This is done using Cholesky decomposition.  Let $\Omega$
 be the covariance matrix of two random parameters. As a covariance
@@ -2287,12 +2373,14 @@ $$
 This situation is illustrated by the figure~\ref{fig:correlation}.
 \begin{center}
   \begin{figure}[hbtp]
-\includegraphics[width=\textwidth]{./graph/correlation.pdf}
+\centering \includegraphics[width=\textwidth]{./graph/correlation.pdf}
 \caption{Correlation\label{fig:correlation}}
 \end{figure}
 \end{center}
 
 \subsection{Application}
+\addcontentsline{toc}{subsection}{Application}
+
 We use the \Rd{Train} data set to illustrate the estimation of a mixed
 logit model.  The random parameter logit model is estimated by
 providing a \Ra{rpar}{mlogit} argument to \Rf{mlogit}. This argument
@@ -2357,8 +2445,10 @@ stdev(Train.mxlc)
 @ 
 
 \section{Tests}
+\addcontentsline{toc}{section}{Tests}
 
 \subsection{The three tests}
+\addcontentsline{toc}{subsection}{The three tests}
 
 As for all models estimated by maximum likelihood, three testing
 procedures may be applied to test hypothesis about models fitted using
@@ -2385,9 +2475,9 @@ figure~\ref{fig:threetests}.
 
 \begin{center}
   \begin{figure}[hbtp]
-\includegraphics[width=\textwidth]{./graph/threetests.pdf}
-\caption{The three tests\label{fig:threetests}}
-\end{figure}
+    \centering \includegraphics[width=\textwidth]{./graph/threetests.pdf}
+    \caption{The three tests\label{fig:threetests}}
+  \end{figure}
 \end{center}
 
 In this one dimensional setting, the hypothesis is of the form $\theta
@@ -2500,6 +2590,7 @@ scoretest(ml.Fish.c, mode ~ price | income | catch)
 @ 
 
 \subsection{Test of heteroscedasticity}
+\addcontentsline{toc}{subsection}{Test of heteroscedasticity}
 
 The homoscedascticity hypothesis can be tested using any of the three
 tests. A particular convenient syntax is provided in this case.  For
@@ -2549,6 +2640,7 @@ c(wald = waldtest(hl.TM)$statistic,
 @ 
 
 \subsection{Test about the nesting structure}
+\addcontentsline{toc}{subsection}{Test about the nesting structure}
 
 For the nested logit models, two tests are of particular interest :
 \begin{itemize}
@@ -2595,6 +2687,7 @@ linearHypothesis(nl.HC, "iv.cooling=iv.noncool")
 
 
 \subsection{Test of random parameters}
+\addcontentsline{toc}{subsection}{Test of random parameters}
 
 The three tests can be applied to test the specification of the model,
 namely the presence of random coefficients and their
@@ -2642,7 +2735,7 @@ scoretest(Train.mxlu, correlation = TRUE)
 \printindex
 
 \tableofcontents
-\tableoffigures
+\listoffigures
 \end{document}
 
 % <!-- Local IspellDict: english --> <!-- Local IspellPersDict: ~/emacs/.ispell-english -->

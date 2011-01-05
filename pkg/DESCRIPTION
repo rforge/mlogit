@@ -5,7 +5,7 @@ Title: multinomial logit model
 Author: Yves Croissant <yves.croissant@univ-reunion.fr>
 Maintainer: Yves Croissant <yves.croissant@univ-reunion.fr>
 Depends: R (>= 1.8.0), Formula, statmod, lmtest, maxLik, zoo
-Suggests: car, nnest
+Suggests: car, nnet
 Description: Estimation of the multinomial logit model
 License: GPL (>=2)
 URL: http://www.r-project.org

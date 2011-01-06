@@ -9,4 +9,3 @@ Suggests: car, nnet
 Description: Estimation of the multinomial logit model
 License: GPL (>=2)
 URL: http://www.r-project.org
-

@@ -8,7 +8,7 @@ Elec.mxl <- mlogit(choice~pf+cl+loc+wk+tod+seas|0, Electr,
               R=100, halton=NA, print.level=0, panel=TRUE)
 
 Elec.mxl2 <- mlogit(choice~pf+cl+loc+wk+tod+seas|0, Electr, 
-               rpar=c(pf='n', cl='n', loc='n', wk='n', tod='n', seas='n'), 
+               rpar=c(cl='n', loc='n', wk='n', tod='n', seas='n'), 
                R=100, halton=NA, print.level=0, panel=TRUE)
 
 Elec.mxl3 <- update(Elec.mxl, rpar=c(cl='n', loc='n', wk='u', tod='n', seas='n'))

@@ -51,6 +51,7 @@ options(prompt= "R> ", useFancyQuotes = FALSE)
 %\maketitle
 
 \section{Multinomial logit model}
+\addcontentsline{toc}{section}{Multinomial logit model}
 
 1. The problem set uses data on choice of heating system in California
 houses. The data set \Rd{Heating} from the \pkg{mlogit} package
@@ -118,7 +119,6 @@ alternative, etc.
 2. Run a model with installation cost and operating cost, without intercepts
 
 (a) Do the estimated coefficients have the expected signs?  
-
 \begin{answer}[5]
 <<>>=
 library("mlogit")
@@ -136,13 +136,12 @@ probability of that system being chosen falls.
 (b) Are both coefficients significantly different from zero?  
 
 \begin{answer}[5]
-Yes, the t-statistics are greater than 1.96, which is the critical
+\noindent Yes, the t-statistics are greater than 1.96, which is the critical
 level for 95\% confidence level.
 \end{answer}
 
 (c) How closely do the average probabilities match the shares of
 customers choosing each alternative?
-
 \begin{answer}[5]
 <<>>=
 apply(fitted(m, outcome=FALSE), 2, mean)
@@ -159,7 +158,6 @@ information. The willingness to pay ($wtp$) through higher installation
 cost for a one-dollar reduction in operating costs is the ratio of the
 operating cost coefficient to the installation cost coefficient. What
 is the estimated $wtp$ from this model? Is it reasonable in magnitude?
-
 \begin{answer}[5]
 $$
 U = \beta_{ic} ic + \beta_{oc} oc
@@ -241,7 +239,6 @@ the alternative \va{hp} to 0.
 
 (a) How well do the estimated probabilities match the shares of
 customers choosing each alternative? 
-
 \begin{answer}[5]
 <<>>=
 mc <- mlogit(depvar~ic+oc, H, reflevel = 'hp')
@@ -285,16 +282,16 @@ logically rather than actually estimating the model.
 
 \begin{answer}[5]
   We know that when the hp is left out, the constant for alternative
-  \va{gc} is $1.71074$ meaning that the average impact of unicluded factors
-  is $1.71074$ higher for alternative \va{gc} than for alternative
-  hp. Similarly, the constant for alternative \va{gr} is $0.30777$. If \va{gr}
-  were left out instead of \va{hp}, then all the constants would be
-  relative to alternative \va{gr}. The constant for alternative \va{gc} would
-  the be $1.71074-.30777=1.40297$. That is, the average impact of
-  unincluded factors is $1.40297$ higher for alt \va{gc} than alt
-  \va{gr}. Similarly for the other alternatives.  Note the the constant for
-  alt 5 would be $0-.30777=-.3077$, since \va{hp} is normalized to zero in
-  the model with \va{hp} left out.
+  \va{gc} is $1.71074$ meaning that the average impact of unicluded
+  factors is $1.71074$ higher for alternative \va{gc} than for
+  alternative hp. Similarly, the constant for alternative \va{gr} is
+  $0.30777$. If \va{gr} were left out instead of \va{hp}, then all the
+  constants would be relative to alternative \va{gr}. The constant for
+  alternative \va{gc} would the be $1.71074-.30777=1.40297$. That is,
+  the average impact of unincluded factors is $1.40297$ higher for alt
+  \va{gc} than alt \va{gr}. Similarly for the other alternatives.
+  Note the the constant for alt 5 would be $0-.30777=-.3077$, since
+  \va{hp} is normalized to zero in the model with \va{hp} left out.
 <<>>=
 update(mc, reflevel="gr")
 @ 
@@ -308,7 +305,6 @@ coefficient is inversely related to income, such that high income
 households are less concerned with installation costs than lower
 income households. Does dividing installation cost by income seem to
 make the model better or worse?
-
 \begin{answer}[5]
 <<>>=
 mi <- mlogit(depvar~oc+I(ic/income), H)
@@ -323,7 +319,6 @@ coefficient on installation cost becomes insignificant (t-stat below
 alternative-specific income effects.  What do the estimates imply
 about the impact of income on the choice of central systems versus
 room system? Do these income terms enter significantly?
-
 \begin{answer}[5]
 <<>>=
 mi2 <- mlogit(depvar~oc+ic|income, H, reflevel="hp")
@@ -349,8 +344,8 @@ scoretest(mc, mi2)
 (c) Try other models. Determine which model you think is best from these data.
 
 \begin{answer}[5]
-I'm not going to give what I consider my best model: your ideas on
-what's best are what matter here.
+  I'm not going to give what I consider my best model: your ideas on
+  what's best are what matter here.
 \end{answer}
 
 6. We now are going to consider the use of logit model for
@@ -358,7 +353,6 @@ prediction. Estimate a model with installation costs, operating costs,
 and alternative specific constants. Calculate the probabilities for
 each house explicitly. Check to be sure that the mean probabilities
 are the same as you got in exercise 4.
-
 \begin{answer}[5]
 <<>>=
 X <- model.matrix(mc)
@@ -381,7 +375,6 @@ cost. Using the estimated coefficients from the model in exercise 6,
 calculate new probabilities and predicted shares using the new
 installation cost of heat pump. How much do the rebates raise the
 share of houses with heat pumps?
-
 \begin{answer}[5]
 <<>>=
 X <- model.matrix(mc)
@@ -412,7 +405,6 @@ alternatives. (Be sure to use the original installation cost for heat
 pumps, rather than the reduced cost in exercise 7.) What is the
 predicted market share for the new technology? From which of the
 original five systems does the new technology draw the most customers?
-
 \begin{answer}[5]
 <<>>=
 X <- model.matrix(mc)
@@ -452,13 +444,13 @@ patterns.
 \end{answer}
 
 \section{Nested logit model}
+\addcontentsline{toc}{section}{Nested logit model}
 
 The data set \Rd{HC} from \pkg{mlogit} contains data in \proglang{R}
 format on the choice of heating and central cooling system for 250
 single-family, newly built houses in California.
 
 The alternatives are:
-
 \begin{enumerate}
 \item Gas central heat with cooling (\va{gcc})
 \item Electric central resistence heat with cooling (\va{ecc})
@@ -473,7 +465,6 @@ Heat pumps necessarily provide both heating and cooling such that heat
 pump without cooling is not an alternative.
 
 The variables are:
-
 \begin{itemize}
 \item \va{depvar} gives the name of the chosen alternative,
 \item \va{ich.alt} are the installation cost for the heating portion
@@ -572,7 +563,6 @@ across alternatives? Do you think the estimate is plausible?
   very reasonable, but people can differ on their concepts of what's
   reasonable.
 \end{answer}
-  
 
 (b) Is the log-sum coefficient significantly different from 1?
 
@@ -589,7 +579,6 @@ We cannot reject the hypothesis at standard confidence levels.
 model relative to the model in exercise 1, where the cooling
 alternatives are in one nest and the heating alternatives in the other
 nest.
-
 \begin{answer}[5]
 <<>>=
 logLik(nl)
@@ -598,7 +587,6 @@ logLik(nl2)
 The LL is worse (more negative.) All in all, this seems like a less
 appropriate nesting structure.
 \end{answer}
-  
 
 3. Rerun the model that has the cooling alternatives in one nest and
 the non-cooling alternatives in the other nest (like for exercise 1),
@@ -643,7 +631,6 @@ nests. Estimate a model with alternatives \va{gcc}, \va{ecc} and
 \va{gc}, \va{ec} and \va{er} in a nest. Does this model seem better or
 worse than the model in exercise 1, which puts alternative \va{hpc} in
 the same nest as alternatives \va{gcc}, \va{ecc} and \va{erc}?
-
 \begin{answer}[5]
 <<>>=
 nl4 <- update(nl, nests=list(n1 = c('gcc', 'ecc', 'erc'), n2 = c('hpc'),
@@ -655,6 +642,7 @@ than for the model with two nests, which got $-178.12$.
 \end{answer}
 
 \section{Mixed logit model}
+\addcontentsline{toc}{section}{Mixed logit model}
 
 A sample of residential electricity customers were asked a series of
 choice experiments. In each experiment, four hypothetical electricity
@@ -662,10 +650,8 @@ suppliers were described. The person was asked which of the four
 suppliers he/she would choose. As many as 12 experiments were
 presented to each person. Some people stopped before answering all
 12. There are 361 people in the sample, and a total of 4308
-experiments.
-
-In the experiments, the characteristics of each supplier were
-stated. The price of the supplier was either :
+experiments.  In the experiments, the characteristics of each supplier
+were stated. The price of the supplier was either :
 
 \begin{enumerate}
 \item a fixed price at a stated cents per kWh, with the price varying
@@ -689,16 +675,13 @@ offer no contract in which case either side could stop the agreement
 at any time. This is recorded as a contract length of 0.
 
 Some suppliers were also described as being a local company or a
-``"well-known'' company. If the supplier was not local or well-known,
-then nothing was said about them in this regard.
-
-Note: these are the data used in Revelt and Train (2000, not 1998) and
-Huber and Train (2000), on the reading list.
+``well-known'' company. If the supplier was not local or well-known,
+then nothing was said about them in this regard \footnote{These are
+  the data used in \citet{REVE:TRAI:00} and \citet{HUBE:TRAI:01}.}.
 
 1. Run a mixed logit model without intercepts and a normal
 distribution for the 6 parameters of the model, using 100 draws,
 halton sequences and taking into account the panel data structure.
-
 <<>>=
 library("mlogit")
 data("Electricity", package = "mlogit")
@@ -720,7 +703,6 @@ summary(Elec.mxl)
 2. (a) Using the estimated mean coefficients, determine the amount
 that a customer with average coefficients for price and length is
 willing to pay for an extra year of contract length.
-
 \begin{answer}[5]
 <<>>=
 coef(Elec.mxl)['cl']/coef(Elec.mxl)['pf']
@@ -735,7 +717,6 @@ contract that is one year shorter.
 
 (b) Determine the share of the population who are estimated to dislike
 long term contracts (ie have a negative coefficient for the length.)
-
 \begin{answer}[5]
 <<>>=
 pnorm(-coef(Elec.mxl)['cl']/coef(Elec.mxl)['sd.cl'])
@@ -751,31 +732,22 @@ long-term contracts.
 
 3. The price coefficient is assumed to be normally distributed in
 these runs. This assumption means that some people are assumed to have
-positive price coefficients, since the normal distribution has
-supposrt on both sides of zero. Using your estimates from exercise 1,
-determine the share of customers with positive price coefficients. As
-you can see, this is pretty small share and can probably be
-ignored. However, in some situations, a normal distribution for the
-price coefficient will give a fairly large share with the wrong
-sign. Revise the program to make the price coefficient fixed rather
-than random. A fixed price coefficient also makes it easier to
-calculate the distribution of willingness to pay (wtp) for each
-non-price attribute. If the price coefficient is fixed, the
-distribtion of wtp for an attribute has the same distribution as the
-attribute's coefficient, simply scaled by the price
-coefficient. However, when the price coefficient is random, the
+positive price coefficients, since the normal distribution has support
+on both sides of zero. Using your estimates from exercise 1, determine
+the share of customers with positive price coefficients. As you can
+see, this is pretty small share and can probably be ignored. However,
+in some situations, a normal distribution for the price coefficient
+will give a fairly large share with the wrong sign. Revise the program
+to make the price coefficient fixed rather than random. A fixed price
+coefficient also makes it easier to calculate the distribution of
+willingness to pay (wtp) for each non-price attribute. If the price
+coefficient is fixed, the distribtion of wtp for an attribute has the
+same distribution as the attribute's coefficient, simply scaled by the
+price coefficient. However, when the price coefficient is random, the
 distribution of wtp is the ratio of two distributions, which is harder
 to work with.
-
 \begin{answer}[5]
-  
-<<eval=FALSE>>=
-Elec.mxl2 <- mlogit(choice~pf+cl+loc+wk+tod+seas|0, Electr, 
-                   rpar=c(pf='n', cl='n', loc='n', wk='n', tod='n', seas='n'), 
-                   R=100, halton=NA, print.level=0, panel=TRUE)
-@
 <<>>=
-summary(Elec.mxl2)
 pnorm(-coef(Elec.mxl)['pf']/coef(Elec.mxl)['sd.pf'])
 @ 
 The price coefficient is distributed normal with mean -0.97 and
@@ -784,6 +756,14 @@ evaluated at 0.97/0.20=4.85 is more than 0.999, which means that more
 than 99.9\% of the population are estimated to have negative price
 coefficients. Essentially no one is estimated to have a positive price
 coefficient.
+<<eval=FALSE>>=
+Elec.mxl2 <- mlogit(choice~pf+cl+loc+wk+tod+seas|0, Electr, 
+                   rpar=c(cl='n', loc='n', wk='n', tod='n', seas='n'), 
+                   R=100, halton=NA, print.level=0, panel=TRUE)
+@
+<<>>=
+summary(Elec.mxl2)
+@ 
 \end{answer}
 
 4. You think that everyone must like using a known company rather than
@@ -792,7 +772,6 @@ people dislike using a known company. Revise the program to give the
 coefficient of \va{wk} a uniform distribution 
 %between zero and b,where b is estimated 
 (do this with the price coefficient fixed).
-
 \begin{answer}[5]
 <<eval=FALSE>>=
 Elec.mxl3 <- update(Elec.mxl, rpar=c(cl='n', loc='n', wk='u', tod='n', seas='n'))
@@ -806,7 +785,8 @@ summary(rpar(Elec.mxl3, 'wk'))
 @ 
 <<fig=TRUE>>=
 plot(rpar(Elec.mxl3, 'wk'))
-@ 
+@
+
 The upper bound is 3.13. The estimated price coefficient is -0.88 and
 so the willingness to pay for a known provided ranges uniformly from
 -0.05 to 3.55 cents per kWh.
@@ -843,7 +823,6 @@ A lognormal is specified as $\exp(b+se)$ where $e$ is a standard
 normal deviate. The parameters of the lognormal are $b$ and $s$. The
 mean of the lognormal is $\exp(b+0.5s^2)$ and the standard deviation
 is the mean times $\sqrt{(\exp(s^2))-1}$.
-
 <<eval=FALSE>>=
 Electr <- mlogit.data(Electricity, id="id", choice="choice", 
                       varying=3:26, shape="wide", sep="",
@@ -863,7 +842,6 @@ plot(rpar(Elec.mxl4, 'seas'))
 correlation between random parameters. Compute the correlation matrix
 of the random parameters. Test the hypothesis that the random
 parameters are uncorrelated.
-
 \begin{answer}[5]
 <<eval=FALSE>>=
 Elec.mxl5 <- update(Elec.mxl4, correlation = TRUE)
@@ -875,8 +853,10 @@ lrtest(Elec.mxl5, Elec.mxl4)
 waldtest(Elec.mxl5, correlation = FALSE)
 scoretest(Elec.mxl4, correlation = TRUE)
 @ 
-Both tests clearly reject the hypothesis that the random parameters
-are uncorrelated.
+The three tests clearly reject the hypothesis that the random
+parameters are uncorrelated.
 \end{answer}
-
+\clearpage
+\bibliography{bibmlogit}
+\tableofcontents
 \end{document}

@@ -7,7 +7,8 @@
 \usage{
 mlogit.data(data, choice, shape = c("wide","long"), varying = NULL,
             sep=".",alt.var = NULL, chid.var = NULL, alt.levels = NULL,
-            id.var = NULL, opposite = NULL, drop.index = FALSE, ...)
+            id.var = NULL, opposite = NULL, drop.index = FALSE,
+            ranked = FALSE, ...)
 }
 
 \arguments{
@@ -46,7 +47,9 @@ mlogit.data(data, choice, shape = c("wide","long"), varying = NULL,
   \item{opposite}{returns the opposite of the specified variables,}
   
   \item{drop.index}{should the index variables be dropped from the
-  \code{data.frame},}
+    \code{data.frame},}
+
+  \item{ranked}{a logical value which is true if the response is a rank.}
   
   \item{...}{further arguments passed to \code{reshape}.}
 }
@@ -114,6 +117,16 @@ Car <- mlogit.data(Car, varying = 5:70, shape = "wide", sep = "",
 data("HC", package = "mlogit")
 HC <- mlogit.data(HC, choice = "depvar", varying=c(2:8, 10:16), shape="wide")
 
+# Game is a data.frame in wide format for which the response is a
+#  ranking variable
+
+data("Game", package = "mlogit")
+G <- mlogit.data(Game, shape="wide", varying = 1:12, alt.var = 'platform',
+                 drop.index = TRUE, choice="ch", ranked =TRUE)
+
+# Game2 contains the same data, but in long format 
+data("Game2", package = "mlogit")
+G2 <- mlogit.data(Game2,  shape='long', choice="ch", alt.var = 'platform', ranked = TRUE)
 }
   
 \author{Yves Croissant}

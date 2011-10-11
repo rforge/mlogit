@@ -14,7 +14,7 @@
 
   This file contains several fitted mixed logit models. These examples
   are used in the vignettes and in the man page and are stored in this
-  file because there are pretty long to compute
+  file because they are pretty long to compute
 
 }
 \usage{data(MixedExamples)}

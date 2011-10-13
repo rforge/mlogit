@@ -187,8 +187,12 @@ mlogit.optim <- function(logLik, start,
     oldg <- g
 
     # Compute the direction, ie d = H^-1 g
-    if (method == "bfgs") d[!fixed] <- - as.vector(Hm1 %*% g[!fixed])
-    else d[!fixed] <- - as.vector(solve(H, g[!fixed]))
+    
+    # For the predict method, I don't want the solve
+    if (iterlim > 0){
+      if (method == "bfgs") d[!fixed] <- - as.vector(Hm1 %*% g[!fixed])
+      else d[!fixed] <- - as.vector(solve(H, g[!fixed]))
+    }
     i <- i + 1
     
     if (i > iterlim){

@@ -55,11 +55,13 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
   m <- match(c("formula", "data", "subset", "na.action", "weights"),
              names(mf), 0L)
   mf <- mf[c(1L, m)]
-  mf$drop.unused.levels <- TRUE
+  # Est-ce important ??
+#  mf$drop.unused.levels <- TRUE
   mf$formula <- formula
   mf[[1L]] <- as.name("model.frame")
   mf$data <- data # fix the bug when the data is called mldata
   mf <- eval(mf, sys.frame(which = nframe))
+
   # change the reference level of the response if required
   if (!is.null(reflevel)) attr(mf, "index")[["alt"]] <- relevel(attr(mf, "index")[["alt"]], reflevel)
   index <- attr(mf, "index")

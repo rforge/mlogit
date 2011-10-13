@@ -18,19 +18,6 @@
 ##    * coef                  |
 ##----------------------------
 
-fitted.mlogit <- function(object, outcome = TRUE, ...){
-  if (!outcome){
-    result <- object$fitted.values
-  }
-  else{
-    index <- attr(object$model, "index")
-    J <- length(levels(index[[2]]))
-    y <- matrix(model.response.mlogit(object), ncol = J, byrow = T)
-    result <- apply(y * object$fitted.values, 1, sum)
-  }
-  result
-}
-
 residuals.mlogit <- function(object, outcome = TRUE, ...){
   if (!outcome){
     result <- object$residuals
@@ -195,9 +182,36 @@ index.mlogit <- function(x, ...){
   index(model.frame(x))
 }
 
-predict.mlogit <- function(object, newdata, ...){
+predict.mlogit <- function(object, newdata = NULL, returnData = FALSE, ...){
+  # if no newdata is provided, use the mean of the model.frame
+  if (is.null(newdata)) newdata <- mean(model.frame(object))
+  # if newdata is not a mlogit.data, it is coerced below
+  if (!inherits(newdata, "mlogit.data")){
+    rownames(newdata) <- NULL
+    lev <- colnames(object$probabilities)
+    J <- length(lev)
+    choice.name <- attr(model.frame(object), "choice")
+    if (nrow(newdata) %% J)
+      stop("the number of rows of the data.frame should be a multiple of the number of alternatives")
+    attr(newdata, "index") <- data.frame(chid = rep(1:(nrow(newdata)%/%J), each = J), alt = rep(lev, J))
+    if (is.null(newdata[['choice.name']])) newdata[[choice.name]] <- TRUE
+  }
+  # if the updated model requires the use of mlogit.data, suppress all
+  # the relevant arguments
+  m <- match(c("choice", "shape", "varying", "sep",
+               "alt.var", "chid.var", "alt.levels",
+               "opposite", "drop.index", "id", "ranked"),
+             names(object$call), 0L)
+  if (sum(m) > 0) object$call <- object$call[ - m]
+  # update the model and get the probabilities
   newobject <- update(object, start = coef(object), data = newdata, iterlim = 0, print.level = 0)
-  newobject$probabilities
+  result <- newobject$probabilities
+  if (nrow(result) == 1){
+    result <- as.numeric(result)
+    names(result) <- colnames(object$probabilities)
+  }
+  if (returnData) attr(result, "data") <- newdata
+  result
 }
 
 # Nouvelle version de fitted qui permet de construire les proba
@@ -213,3 +227,72 @@ coef.mlogit <- function(object, ...){
   result
 }
 
+effects.mlogit <- function(object, data = NULL, covariate = NULL,
+                           type = c("aa", "ar", "rr", "ra"), ...){
+  type <- match.arg(type)
+  if (is.null(data)){
+    P <- predict(object, returnData = TRUE)
+    data <- attr(P, "data")
+    attr(P, "data") <- NULL
+  }
+  else P <- predict(object, data)
+  J <- length(P)
+  alt.levels <- names(P)
+  pVar <- substr(type, 1, 1)
+  xVar <- substr(type, 2, 2)
+  cov.list <- lapply(attr(formula(object), "rhs"), as.character)
+  rhs <- sapply(cov.list, function(x) length(na.omit(match(x, covariate))) > 0)
+  rhs <- (1:length(cov.list))[rhs]
+  if (rhs %in% c(1, 3)){
+    if (rhs == 3){
+      theCoef <- paste(alt.levels, covariate, sep = ":")
+      theCoef <- coef(object)[theCoef]
+    }
+    else theCoef <- coef(object)[covariate]
+    if (pVar == "a"){
+      PP <- - tcrossprod(P)
+      diag(PP) <- P * (1 - P)
+    }
+    else{
+      PP <- - matrix(rep(P, J), J)
+      diag(PP) <- 1 + diag(PP)
+    }
+    dimnames(PP) <- list(alt.levels, alt.levels)
+    me <- theCoef * PP
+    if (xVar == "r") me <- me * matrix(rep(data[[covariate]], J), J)
+  }
+  if (rhs == 2){
+    theCoef <- paste(alt.levels[- 1], covariate, sep = ":")
+    theCoef <- c(0, coef(object)[theCoef])
+    meanCoef <- sum(theCoef * P)
+    me <- (theCoef - meanCoef)
+    if (pVar == "a") me <- me * P
+    if (xVar == "r") me <- me * data[[covariate]]
+    names(me) <- alt.levels
+  }
+  me
+}
+
+mean.mlogit.data <- function(x, ...){
+  alt <- index(x)$alt
+  J <- length(unique(alt))
+  result <- data.frame(lapply(x,
+                              function(x){
+                                if(is.character(x)){
+                                  x <- factor(x, levels = unique(x))
+                                }
+                                if (is.factor(x)){
+                                  result <- factor(names(which.max(table(x))), levels = levels(x))
+                                }
+                                else{
+                                  result <- tapply(x, alt, mean)
+                                }
+                                result
+                              }
+                              )
+                       )
+  attr(result, "index") <- data.frame(alt = unique(alt), chid = rep(1, J))
+  rownames(result) <- rownames(attr(result, "index")) <- paste(rep(1, J), unique(alt), sep = ".")
+  class(result) <- c("mlogit.data", "data.frame")
+  result
+}

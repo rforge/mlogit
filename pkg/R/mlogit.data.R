@@ -56,6 +56,7 @@ mlogit.data <- function(data, choice, shape = c("wide","long"), varying = NULL,
   
   if (shape == "wide"){
     if (!ranked){
+      choice.name <- choice
       if (is.ordered(data[[choice]])) class(data[[choice]]) <- "factor"
       else data[[choice]] <- as.factor(data[[choice]])
     }
@@ -113,6 +114,7 @@ mlogit.data <- function(data, choice, shape = c("wide","long"), varying = NULL,
   attr(data, "index") <- index
   attr(data, "class") <- c("mlogit.data", "data.frame")
   if (ranked) data <- mlogit2rank(data, choicename = choice)
+  if (!ranked) attr(data, "choice") <- choice.name
   data
 }
 

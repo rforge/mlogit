@@ -138,3 +138,13 @@ Changes since version 0.2-1
 	probabilities : fitted is the estimated probability for the
 	outcome and probabilities contains the fitted probabilities for
 	all the alternatives
+
+	* mentions to 'alt' in the names of the effects is canceled ;
+	moreover, the intercepts are now called altname:('intercept')
+
+	* a 'choice' attribute is added to mlogit.data objects
+
+	* an effects method is provided, which computes the marginal
+	effects of a covariate
+
+	

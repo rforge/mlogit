@@ -3,6 +3,7 @@
 \alias{print.mlogit}
 \alias{suml}
 \alias{fitted.mlogit}
+\alias{predict.mlogit}
 \alias{residuals.mlogit}
 \alias{df.residual.mlogit}
 \alias{terms.mlogit}
@@ -34,6 +35,7 @@ mlogit(formula, data, subset, weights, na.action, start = NULL,
 \method{logLik}{mlogit}(object, ...)
 \method{residuals}{mlogit}(object, outcome = TRUE, ...)
 \method{fitted}{mlogit}(object, outcome = TRUE, ...)
+\method{predict}{mlogit}(object, newdata, ...)
 \method{df.residual}{mlogit}(object, ...)
 \method{terms}{mlogit}(x, ...)
 \method{model.matrix}{mlogit}(object, ...)
@@ -44,6 +46,7 @@ mlogit(formula, data, subset, weights, na.action, start = NULL,
   \item{x, object}{an object of class \code{mlogit}}
   \item{formula}{a symbolic description of the model to be estimated,}
   \item{new}{an updated formula for the \code{update} method,}
+  \item{newdata}{a \code{data.frame} for the \code{predict} method,}
   \item{data}{the data: an \code{mlogit.data} object or an ordinary
   \code{data.frame},}
   \item{subset}{an optional vector specifying a subset of observations,}

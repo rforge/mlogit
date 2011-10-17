@@ -148,6 +148,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
   }
   yl <- split(y, alt)
   yl <- lapply(yl, function(x){x[is.na(x)] <- FALSE ; x})
+
   if (probit){
     # for probit the response is a vector that contains the chosen
     # alternative as a numeric
@@ -353,6 +354,9 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
                       null = sum(freq * log(freq / n)),
                       class = "logLik"
                       )
+  if (mixed.logit) rpar <- make.rpar(rpar, correlation, x$coefficients, NULL) else rpar <- NULL
+  if (!(nested.logit | pair.comb.logit)) nests <- NULL
+  
   # if no hessian is returned, use the BHHH approximation
   if (is.null(attr(x$optimum, 'hessian'))) hessian <- - crossprod(attr(x$optimum, 'gradi'))
   else hessian <- - attr(x$optimum, 'hessian')
@@ -362,8 +366,6 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
   attr(x$coefficients, "fixed") <- attr(x$optimum, "fixed")
   gradient <- -  attr(x$optimum, "gradient")
 
-  if (mixed.logit) rpar <- make.rpar(rpar, correlation, x$coefficients, NULL) else rpar <- NULL
-  if (!(nested.logit | pair.comb.logit)) nests <- NULL
   
   # compute the probabilities for all the alternatives for
   # heteroscedastic and the probit model
@@ -478,9 +480,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
                            call          = callT),
                       class = 'mlogit'
                       ) 
-
   #result$Mi <- Mi
   #result$alt.lev <- alt.lev
-
   result
 }

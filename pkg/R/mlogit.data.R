@@ -209,6 +209,25 @@ print.mlogit.data <- function(x, ...){
   "[["(x, paste(as.name(y)))
 }
 
+"$<-.mlogit.data" <- function(object, x, value){
+  # object : le data.frame
+  # x : la variable
+  # value : la nouvelle valeur
+  object[[x]] <- value
+  object
+}
+
+"[[<-.mlogit.data" <- function(object, x, value){
+  if (class(value)[1] == "pseries"){
+    class(value) <- class(value)[-1]
+    attr(value, "index") <- NULL
+  }
+  object <- "[[<-.data.frame"(object, x, value = value)
+  object
+}
+
+
+
 print.pseries <- function(x, ...){
   attr(x, "index") <- NULL
   attr(x, "class") <- attr(x, "class")[-1]

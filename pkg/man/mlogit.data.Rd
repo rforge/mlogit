@@ -1,5 +1,11 @@
 \name{mlogit.data}
 \alias{mlogit.data}
+\alias{[[<-.mlogit.data}
+\alias{$<-.mlogit.data}
+\alias{print.pseries}
+\alias{mean.mlogit.data}
+
+
 \title{data.frame for logit model}
 \description{
   shape a \code{data.frame} in a suitable form for the use of the \code{mlogit} function.
@@ -9,12 +15,17 @@ mlogit.data(data, choice, shape = c("wide","long"), varying = NULL,
             sep=".",alt.var = NULL, chid.var = NULL, alt.levels = NULL,
             id.var = NULL, opposite = NULL, drop.index = FALSE,
             ranked = FALSE, ...)
+\method{mean}{mlogit.data}(x, ...)
+\method{print}{pseries}(x, ...)
+
 }
 
 \arguments{
 
   \item{data}{a \code{data.frame},}
 
+  \item{x}{a \code{mlogit.data} or a \code{pseries} object,}
+  
   \item{choice}{the variable indicating the choice made: it can be
   either a logical vector, a numerical vector with 0 where the
   alternative is not chosen, a factor with level 'yes' when the

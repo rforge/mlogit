@@ -273,6 +273,7 @@ lnl.mprobit <- function(param, y, X, weights = NULL,
     beta <- param[1:K] + step * direction[1:K]
     corrCoef <- param[- c(1:K)] + step * direction[- c(1:K)]
     DV <- sapply(X, function(x) crossprod(t(x), beta))
+    if (!is.matrix(DV)) DV <- matrix(DV, nrow = 1)
     S <- matrix(0, J - 1, J - 1)
     ####S[!upper.tri(S)] <- c(1, corrCoef)
     S[!upper.tri(S)] <- corrCoef

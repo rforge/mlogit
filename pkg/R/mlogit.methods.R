@@ -231,7 +231,7 @@ coef.mlogit <- function(object, ...){
 
 mean.mlogit.data <- function(x, ...){
   alt <- index(x)$alt
-  J <- length(unique(alt))
+  J <- length(levels(alt))
   result <- data.frame(lapply(x,
                               function(x){
                                 if (is.numeric(x)) result <- as.numeric(tapply(x, alt, mean))
@@ -251,15 +251,16 @@ mean.mlogit.data <- function(x, ...){
                               }
                               )
                        )
-  attr(result, "index") <- data.frame(alt = unique(alt), chid = rep(1, J))
+  attr(result, "index") <- data.frame(alt = factor(levels(alt), levels =  levels(alt)), chid = rep(1, J))
   rownames(result) <- rownames(attr(result, "index")) <- paste(rep(1, J), levels(alt), sep = ".")
   class(result) <- c("mlogit.data", "data.frame")
   result
 }
 
 
-effects.mlogit <- function(object, data = NULL, covariate = NULL,
-                           type = c("aa", "ar", "rr", "ra"), ...){
+effects.mlogit <- function(object, covariate = NULL,
+                           type = c("aa", "ar", "rr", "ra"),
+                           data = NULL, ...){
   type <- match.arg(type)
   if (is.null(data)){
     P <- predict(object, returnData = TRUE)

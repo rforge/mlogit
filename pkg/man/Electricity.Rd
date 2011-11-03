@@ -39,6 +39,18 @@ time. This is recorded as a contract length of 0}
   distribution, which is supplied by the local regulated utility.}
   }
 }
+
+\source{
+
+  Hubert J, Train K (2001). "On the similarity of classical and Bayesian
+  estimates of individual mean pathworths." Marketing Letters, 12,
+  259–269.
+  
+  Revelt D, Train K (2000). "Customer-speciﬁc taste parameters and mixed
+  logit", Working Paper no. E00-274, Department of Economics, University
+  of California, Berkeley.
+
+  }
 \references{
   Kenneth Train's home page :  \url{http://elsa.berkeley.edu/~train/}.
 }

@@ -149,14 +149,19 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
   yl <- split(y, alt)
   yl <- lapply(yl, function(x){x[is.na(x)] <- FALSE ; x})
 
+  
   if (probit){
     # for probit the response is a vector that contains the chosen
-    # alternative as a numeric
-    yv <- as.numeric(alt[y])
+    # alternative as a numeric ; NA values of y are replaced by FALSE
+    # so that the chosen alternative is correctly returned
+    y2 <- y
+    y2[is.na(y2)] <- FALSE
+    yv <- as.numeric(alt[y2])
     # DX is a list of covariates first differenced with respect with the
     # chosen alternative
     DX <- vector("list", length = J - 1)
     DX <- lapply(DX, function(x) return(matrix(NA, nrow = n, ncol = K)))
+    
     for (i in 1:n){
       any <- yv[i]
       j <- 1
@@ -389,7 +394,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
           newj <- 1
           for (j in 1:J){
             if (j != any){
-              DX[[newj]][i,] <- Xl[[j]][i, ] - Xl[[any]][i,]
+              DX[[newj]][i, ] <- Xl[[j]][i, ] - Xl[[any]][i, ]
               newj <- newj + 1
             }
           }

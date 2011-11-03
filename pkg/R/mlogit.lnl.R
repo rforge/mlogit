@@ -228,162 +228,6 @@ lnl.hlogit <- function(param, X, y, weights = NULL,
   lnl
 }
 
-lnl.mprobit <- function(param, y, X, weights = NULL,
-                        gradient = FALSE, hessian = FALSE, opposite = TRUE,
-                        direction = rep(0, length(param)), initial.value = NULL, stptol = 1E-1,
-                        R, seed){
-  names(direction) <- names(param)
-  mills <- function(x) exp(dnorm(x, log = TRUE) - pnorm(x, log.p = TRUE))
-  opposite <- ifelse(opposite, - 1, 1)
-  K <- ncol(X[[1]])
-  J <- length(X) + 1
-  n <- length(y)
-  step <- 2
-  
-  # Mi is a list containing the linear transformation of the utility
-  # differences with respect to the first alternative
-  Mi <- list()
-  M <- rbind(0, diag(J - 2))
-  Mi[[1]] <- diag(J-1)
-  for (i in 2:(J-1)){
-    Mi[[i]] <- cbind(M[, 0:(i-2), drop = FALSE], -1, M[, ((i-1):(J-2))])
-  }
-  Mi[[J]] <- cbind(M, -1)
-  
-  # Two matrices VK and VL span vec(S) and vec(Si) to s and si ; used
-  # to compute the jacobian of the transformation from S to Si
-  M <- matrix(NA, J - 1, J - 1)
-  M[!upper.tri(M)] <- 1:(J * (J - 1) / 2)
-  m <- c(M)
-  mp <- c(t(M))
-  Id <- diag(J * (J - 1) / 2)
-  VK <- VL <- matrix(0, (J - 1) ^ 2, J * (J - 1) / 2)
-  for (i in 1:length(m)){
-    if (!is.na(m[i]))  VL[i, ] <- Id[m[i],]
-    if (!is.na(mp[i])) VK[i, ] <- Id[mp[i],]
-  }
-  VK <- t(VK)
-  VL <- t(VL)
-  
-  repeat{
-    step <- step / 2
-    if (step < stptol) break
-    theAs <- vector("list", length = J * (J - 1) / 2)
-    for (u in 1:(J * (J - 1) / 2)) theAs[[u]] <- matrix(0, R, 3)
-    beta <- param[1:K] + step * direction[1:K]
-    corrCoef <- param[- c(1:K)] + step * direction[- c(1:K)]
-    DV <- sapply(X, function(x) crossprod(t(x), beta))
-    if (!is.matrix(DV)) DV <- matrix(DV, nrow = 1)
-    S <- matrix(0, J - 1, J - 1)
-    ####S[!upper.tri(S)] <- c(1, corrCoef)
-    S[!upper.tri(S)] <- corrCoef
-    
-    omega <- S %*% t(S)
-    # Si is a list containing the cholesky decomposition of the
-    # covariance matrix of utility differences
-    Si <- lapply(Mi, function(x) t(chol(x %*% omega %*% t(x))))
-    A <- vector("list", length = J - 1)
-    ETA <- vector("list", length = J - 2)
-    set.seed(seed)
-    for (id in 1:n){
-      RN <- matrix(runif((J - 2) * R), R, J - 2)
-      ay <- y[id]
-      dv <- DV[id, ]
-      si <- Si[[ay]]
-      A[[1]] <- rbind(A[[1]], rep(- dv[1] / si[1, 1], R))
-      eta <- qnorm(RN[, 1, drop = FALSE] * pnorm(A[[1]][id,]))
-      ETA[[1]] <- rbind(ETA[[1]], t(eta))
-      for (l in 2:(J - 1)){
-        A[[l]] <- rbind(A[[l]], t(- (dv[l] + eta[, 1:(l-1), drop = FALSE] %*% si[l, 1:(l-1)]) / si[l, l]))
-        if (l != (J - 1)){
-          etai <- qnorm(RN[, l] * pnorm(A[[l]][id, ]))
-          ETA[[l]] <- rbind(ETA[[l]], etai)
-          eta <- cbind(eta, etai)
-        }
-      }
-    }
-    PR <- lapply(A, pnorm)
-    probai <- Reduce("*", PR)
-    P <- apply(probai, 1, mean)
-    lnl <- opposite * sum(log(P))
-    if (is.null(initial.value) || lnl <= initial.value) break
-  }
-  if (gradient){
-    set.seed(seed)
-    pos <- matrix(0, J - 1, J- 1)
-    pos[!upper.tri(pos)] <- 1:(J * (J - 1) / 2)
-    # Jac is a list containing the jacobian matrix of the
-    # transformation of S -> Si
-    JacB <- lapply(Mi, function(x) ((x %*% S) %x% x) %*% t(VL) + (x %x% (x %*% S)) %*% t(VK))
-    JacA <- lapply(Si, function(x) (x %x% diag(J - 1)) %*% t(VL) + (diag(J - 1) %x% x) %*% t(VK))
-    Jac <- mapply(function(x, y) t(y) %*% t(ginv(x)), JacA, JacB, SIMPLIFY = FALSE)
-    Gr <- c()
-    theAs <- vector("list", length = J * (J - 1) / 2)
-    DB <- c()
-    DS <- c()
-    for (u in 1:(J * (J - 1) / 2)) theAs[[u]] <- matrix(0, R, J - 1)
-    for (id in 1:n){
-      RN <- matrix(runif((J - 2) * R), R, J - 2)
-      any <- y[id]
-      dv <- DV[id, ]
-      si <- Si[[any]]
-      jac <- Jac[[any]]
-      Xi <- lapply(X, function(x) matrix(x[id, ], R, K, byrow = TRUE))
-      Abeta <- vector("list", length = J - 1)
-      Abeta[[1]] <- - Xi[[1]] / si[1, 1]
-      Dbeta <- Abeta[[1]] * mills(A[[1]][id, ])
-      for (j in 2:(J-1)){
-        Abeta[[j]] <- - Xi[[j]] / si[j, j]
-        for (k in 1:(j-1))
-          Abeta[[j]] <- Abeta[[j]] - si[j, k] / si[j, j] * RN[, k] * dnorm(A[[k]][id, ]) /
-            dnorm(ETA[[k]][id, ]) * Abeta[[k]]
-        Dbeta <- Dbeta + mills(A[[j]][id, ]) * Abeta[[j]]
-      }
-      Dbeta <- apply(Dbeta * probai[id,], 2, mean) / P[id]
-      DB <- rbind(DB, Dbeta)
-      s <- c(t(si)[!lower.tri(si)])
-      As <- theAs
-      # si i = j = l (-> k)
-      for (k in 1:(J - 1)) As[[pos[k, k]]][, k] <- - A[[k]][id, ] / si[k, k]
-      # si j < (i = l)
-      for (i in 2:(J - 1))
-        for (j in 1:(i - 1)) As[[pos[i, j]]][, i] <- - ETA[[j]][id, ] / si[i, i]
-      # i = 1 => j = 1     => 1 < l => l = 2,3   => l = (i+1):(J-1)
-      # i = 2 => j = 1,2   => 2 < l => l = 3     => l = (i+1):(J-1)
-      # i = 3 => j = 1,2,3 => 3 < l => l = rien
-      for (i in 1:(J - 2)){
-        for (j in 1:i){
-          for (l in (i+1):(J-1)){
-            for (h in 1:(l-1)){
-              As[[pos[i, j]]][, l] <- As[[pos[i, j]]][, l] -
-                RN[, h] * si[l, h] / si[l, l] * dnorm(A[[h]][id, ]) / dnorm(ETA[[h]][id,]) * As[[pos[i,j]]][, h]
-            }
-          }
-        }
-      }
-      lambda <- sapply(A, function(x) mills(x[id, ]))
-      Ds <- sapply(As, function(x) x * lambda)
-      Dss <- Ds[1:R, ]
-      for (l in 2:(J - 1)) Dss <- Dss + Ds[(R * (l - 1) + 1:R), ]
-      Ds <- Dss
-      Ds <- apply(Ds * probai[id,], 2, mean) / P[id]
-      Ds <- as.numeric(jac %*% Ds)
-      DS <- rbind(DS, Ds)
-    }
-###    Gr <- cbind(DB, DS[, -1])
-    Gr <- cbind(DB, DS)
-    colnames(Gr) <- c(names(beta), names(corrCoef))
-    attr(lnl, "gradi") <- opposite * Gr
-    attr(lnl, "gradient") <- opposite * apply(Gr, 2, sum)
-  }
-  if (step < stptol) lnl <- NULL
-  else{
-    attr(lnl, "fitted") <- P
-    attr(lnl, "step") <- step
-  }
-  lnl
-}
-
 lnl.rlogit <- function(param, X, y, weights = NULL,
                        gradient = TRUE, hessian = FALSE, opposite = TRUE,
                        direction = rep(0, length(param)), initial.value = NULL, stptol = 1e-10,
@@ -509,6 +353,245 @@ lnl.rlogit <- function(param, X, y, weights = NULL,
   else{
     attr(lnl, "probabilities") <- probabilities
     attr(lnl, "fitted") <- pm
+    attr(lnl, "step") <- step
+  }
+  lnl
+}
+
+
+# Version de dvpt de mprobit
+
+lnl.mprobit <- function(param, y, X, weights = NULL,
+                        gradient = FALSE, hessian = FALSE, opposite = TRUE,
+                        direction = rep(0, length(param)), initial.value = NULL, stptol = 1E-1,
+                        R, seed){
+  
+  names(direction) <- names(param)
+  mills <- function(x) exp(dnorm(x, log = TRUE) - pnorm(x, log.p = TRUE))
+
+  K <- ncol(X[[1]])
+  J <- length(X) + 1
+  n <- length(y)
+  step <- 2
+  
+  # Mi is a list containing the linear transformation of the utility
+  # differences with respect to the first alternative to utility
+  # differences with respect to any alternative
+  Mi <- list()
+  M <- rbind(0, diag(J - 2))
+  Mi[[1]] <- diag(J-1)
+  for (i in 2:(J-1)){
+    Mi[[i]] <- cbind(M[, 0:(i-2), drop = FALSE], -1, M[, ((i-1):(J-2))])
+  }
+  Mi[[J]] <- cbind(M, -1)
+  
+  repeat{
+    step <- step / 2
+    if (step < stptol) break
+    beta <- param[1:K] + step * direction[1:K]
+    corrCoef <- param[- c(1:K)] + step * direction[- c(1:K)]
+    DV <- sapply(X, function(x) crossprod(t(x), beta))
+    if (!is.matrix(DV)) DV <- matrix(DV, nrow = 1)
+    # Cholesky matrix and covariance matrix of U-U_1
+    S <- matrix(0, J - 1, J - 1)
+    S[!upper.tri(S)] <- corrCoef
+    omega <- S %*% t(S)
+    # Si is a list containing the cholesky decomposition of the
+    # covariance matrix of utility differences
+    Si <- lapply(Mi, function(x) t(chol(x %*% omega %*% t(x))))
+    set.seed(seed)
+
+    A <- vector("list", length = J - 1)
+    ETA <- vector("list", length = J - 2)
+    for (id in 1:n){
+      ay <- y[id]
+      dv <- DV[id, ]
+      if (! length(na.omit(dv)) == 0){
+        # Jn is the nb of alternative for individual n
+        Jn <- length(na.omit(dv)) + 1
+        # Compute the random numbers only if the number of alt is at
+        # least 3
+        if (Jn >= 3) RN <- matrix(runif( (Jn - 2) * R), R, Jn - 2)
+        # Compute the E matrix when some alternatives are not available
+        if (Jn < J){
+          # insert in the utility diff a 0 for the chosen alternative at
+          # the right place
+          mydv <- DV[id, ]
+          if (ay == J) theTail <- c()
+          else theTail <- dv[ay:(J - 1)]
+          mydv <- c(mydv[0:(ay - 1)], 0, theTail)
+          # check for missing alternatives and 
+          na.alt <- which(is.na(mydv))
+          na.alt[ay < na.alt] <- na.alt[ay < na.alt] - 1
+          E <- (diag(J - 1))[- na.alt,]
+          Min <- E %*% Mi[[ay]]
+          si <- t(chol(Min %*% omega %*% t(Min)))
+          dv <- na.omit(dv)
+        }
+        else si <- Si[[ay]]
+        A[[1]] <- rbind(A[[1]], rep(- dv[1] / si[1, 1], R))
+        if (Jn >= 3){
+          eta <- qnorm(RN[, 1, drop = FALSE] * pnorm(A[[1]][id,]))
+          ETA[[1]] <- rbind(ETA[[1]], t(eta))
+          for (l in 2:(Jn - 1)){
+            A[[l]] <- rbind(A[[l]], t(- (dv[l] + eta[, 1:(l-1), drop = FALSE] %*% si[l, 1:(l-1)]) / si[l, l]))
+            if (l != (Jn - 1)){
+              etai <- qnorm(RN[, l] * pnorm(A[[l]][id, ]))
+              ETA[[l]] <- rbind(ETA[[l]], etai)
+              eta <- cbind(eta, etai)
+            }
+          }
+        }
+        if (Jn < J){
+          for (l in Jn:(J-1)) A[[l]] <- rbind(A[[l]], rep(1, R))
+          for (l in (Jn - 1):(J - 2)) ETA[[l]] <- rbind(ETA[[l]], rep(NA, R))
+        }
+      }
+      else{
+        for (l in 1:(J - 1)) A[[l]] <- rbind(A[[l]], rep(NA, R))
+        for (l in 1:(J - 2)) ETA[[l]] <- rbind(ETA[[l]], rep(NA, R))
+      }
+    }
+    PR <- lapply(A, pnorm)
+    probai <- Reduce("*", PR)
+    P <- apply(probai, 1, mean)
+    lnl <- opposite * sum(log(P))
+    if (is.null(initial.value) || lnl <= initial.value) break
+  }
+  if (gradient){
+    set.seed(seed)
+    # Two matrices VK and VL maps s to vec(S) and vec(S')
+    M <- matrix(NA, J - 1, J - 1)
+    M[! upper.tri(M)] <- 1:(J * (J - 1) / 2)
+    m <- c(M)
+    mp <- c(t(M))
+    Id <- diag(J * (J - 1) / 2)
+    VK <- VL <- matrix(0, (J - 1) ^ 2, J * (J - 1) / 2)
+    for (i in 1:length(m)){
+      if (!is.na(m[i]))  VL[i, ] <- Id[m[i],]
+      if (!is.na(mp[i])) VK[i, ] <- Id[mp[i],]
+    }
+    VK <- t(VK)
+    VL <- t(VL)
+    DB <- c()
+    DS <- c()
+
+    pos <- matrix(0, J - 1, J- 1)
+    pos[!upper.tri(pos)] <- 1:(J * (J - 1) / 2)
+    for (id in 1:n){
+      ay <- y[id]
+      dv <- DV[id, ]
+      # Jn is the nb of alternative for individual n
+      Jn <- length(na.omit(dv)) + 1
+      # Compute the random numbers only if the number of alt is at
+      # least 3
+      if (Jn >= 3) RN <- matrix(runif( (Jn - 2) * R), R, Jn - 2)
+      # Compute the E matrix when some alternatives are not available
+      if (Jn < J){
+        # insert in the utility diff a 0 for the chosen alternative at
+        # the right place
+        mydv <- DV[id, ]
+        if (ay == J) theTail <- c()
+        else theTail <- dv[ay:(J - 1)]
+        mydv <- c(mydv[0:(ay - 1)], 0, theTail)
+        # check for missing alternatives and 
+        na.alt <- which(is.na(mydv))
+        na.alt.rm.rows <- na.alt
+        na.alt.rm.rows[ay < na.alt] <- na.alt[ay < na.alt] - 1
+        E <- (diag(J - 1))[- na.alt.rm.rows,]
+        Min <- E %*% Mi[[ay]]
+        si <- t(chol(Min %*% omega %*% t(Min)));
+        odv <- dv
+        dv <- na.omit(dv)
+        # Two matrices VKn and VLn maps sn to vec(Sn) and vec(Sn')
+        M <- matrix(NA, Jn - 1, Jn - 1)
+        M[! upper.tri(M)] <- 1:(Jn * (Jn - 1) / 2)
+        m <- c(M)
+        mp <- c(t(M))
+        Id <- diag(Jn * (Jn - 1) / 2)
+        VKn <- VLn <- matrix(0, (Jn - 1) ^ 2, Jn * (Jn - 1) / 2)
+        for (i in 1:length(m)){
+          if (!is.na(m[i]))  VLn[i, ] <- Id[m[i],]
+          if (!is.na(mp[i])) VKn[i, ] <- Id[mp[i],]
+        }
+        VKn <- t(VKn)
+        VLn <- t(VLn)
+        posn <- matrix(0, Jn - 1, Jn- 1)
+        posn[!upper.tri(posn)] <- 1:(Jn * (Jn - 1) / 2)
+      }
+      else{
+        si <- Si[[ay]]
+        Min <- Mi[[ay]]
+        posn <- pos
+        VKn <- VK
+        VLn <- VL
+        na.alt <- an.alt.rm.rows <- c()
+      }
+      JacB <- ((Min %*% S) %x% Min) %*% t(VL) + (Min %x% (Min %*% S)) %*% t(VK)
+      JacA <- (si %x% diag(Jn - 1)) %*% t(VLn) + (diag(Jn - 1) %x% si) %*% t(VKn)
+      Jac <- t(JacB) %*% t(ginv(JacA))
+      Gr <- c()
+      theAs <- vector("list", length = Jn * (Jn - 1) / 2)
+      for (u in 1:(Jn * (Jn - 1) / 2)) theAs[[u]] <- matrix(0, R, Jn - 1)
+      Xi <- lapply(X, function(x) matrix(x[id, ], R, K, byrow = TRUE))
+      if (Jn < J) Xi <- Xi[- na.alt.rm.rows]
+      Abeta <- vector("list", length = Jn - 1)
+      Abeta[[1]] <- - Xi[[1]] / si[1, 1]
+      Dbeta <- Abeta[[1]] * mills(A[[1]][id, ])
+      if (Jn >= 3){
+        for (j in 2:(Jn - 1)){
+          Abeta[[j]] <- - Xi[[j]] / si[j, j]
+          for (k in 1:(j-1))
+            Abeta[[j]] <- Abeta[[j]] - si[j, k] / si[j, j] * RN[, k] * dnorm(A[[k]][id, ]) /
+              dnorm(ETA[[k]][id, ]) * Abeta[[k]]
+          Dbeta <- Dbeta + mills(A[[j]][id, ]) * Abeta[[j]]
+        }
+      }
+      Dbeta <- apply(Dbeta * probai[id,], 2, mean) / P[id]
+      DB <- rbind(DB, Dbeta)
+      s <- c(t(si)[!lower.tri(si)])
+      As <- theAs
+      # si i = j = l (-> k)
+      for (k in 1:(Jn - 1)) As[[posn[k, k]]][, k] <- - A[[k]][id, ] / si[k, k]
+      # si j < (i = l)
+      if (Jn >2){
+        for (i in 2:(Jn - 1))
+          for (j in 1:(i - 1)) As[[posn[i, j]]][, i] <- - ETA[[j]][id, ] / si[i, i]
+      }
+      # i = 1 => j = 1     => 1 < l => l = 2,3   => l = (i+1):(J-1)
+      # i = 2 => j = 1,2   => 2 < l => l = 3     => l = (i+1):(J-1)
+      # i = 3 => j = 1,2,3 => 3 < l => l = rien
+      # pour Jn = 3; i = 1:1; j = 1:1, l= 2:2
+      if (Jn >= 3){
+        for (i in 1:(Jn - 2)){
+          for (j in 1:i){
+            for (l in (i+1):(Jn-1)){
+              for (h in 1:(l-1)){
+                As[[posn[i, j]]][, l] <- As[[posn[i, j]]][, l] -
+                  RN[, h] * si[l, h] / si[l, l] * dnorm(A[[h]][id, ]) / dnorm(ETA[[h]][id,]) * As[[pos[i,j]]][, h]
+              }
+            }
+          }
+        }
+      }
+      lambda <- sapply(A[1:(Jn - 1)], function(x) mills(x[id, ]))
+      Ds <- sapply(As, function(x) x * lambda)
+      Dss <- Ds[1:R, , drop = FALSE]
+      if (Jn > 2)
+        for (l in 2:(Jn - 1)) Dss <- Dss + Ds[(R * (l - 1) + 1:R), ]
+      Ds <- Dss
+      Ds <- apply(Ds * probai[id,], 2, mean) / P[id]
+      Ds <- as.numeric(Jac %*% Ds)
+      DS <- rbind(DS, Ds)
+    }
+    Gr <- cbind(DB, DS)
+    colnames(Gr) <- c(names(beta), names(corrCoef))
+    attr(lnl, "gradi") <- opposite * Gr
+    attr(lnl, "gradient") <- opposite * apply(Gr, 2, sum)
+  }
+  if (step < stptol) lnl <- NULL
+  else{
+    attr(lnl, "fitted") <- P
     attr(lnl, "step") <- step
   }
   lnl

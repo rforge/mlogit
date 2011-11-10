@@ -235,12 +235,15 @@ nl <- mlogit(choice~gcost+wait+incomeother, TravelMode,
 nl2 <- update(nl, un.nest.el = TRUE)
 
 ## a probit model
+\dontrun{
 pr <- mlogit(choice ~ wait + travel + vcost, TravelMode,
              shape = "long", chid.var = "individual", alt.var = "mode",
              probit = TRUE)
+}
 
 
 ## a mixed logit model
+\dontrun{
 rpl <- mlogit(mode ~ price+ catch | income, Fishing, varying = 2:9,
               shape = 'wide', rpar = c(price= 'n', catch = 'n'),
               correlation = TRUE, halton = NA,
@@ -251,6 +254,7 @@ cor.mlogit(rpl)
 cov.mlogit(rpl)
 rpar(rpl, "catch")
 summary(rpar(rpl, "catch"))
+}
 
 # a ranked ordered model
 data("Game", package = "mlogit")

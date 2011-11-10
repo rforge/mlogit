@@ -703,7 +703,7 @@ Elec.mxl <- mlogit(choice~pf+cl+loc+wk+tod+seas|0, Electr,
               R=100, halton=NA, print.level=0, panel=TRUE)
 @ 
 <<echo=FALSE, eval = TRUE>>=
-data("MixedExamples", package = "mlogit")
+data("Examples", package = "mlogit")
 @ 
 <<>>=
 summary(Elec.mxl)
@@ -918,10 +918,15 @@ between bus and rail?
 <<>>=
 data("Mode", package="mlogit")
 Mo <- mlogit.data(Mode, choice='choice', shape='wide', varying=c(2:9))
+@   
+  
+<<echo = TRUE, eval = FALSE>>=
 p1 <- mlogit(choice~cost+time, Mo, seed = 20, R = 100, probit = TRUE)
-summary(p1)
 @   
 
+<<>>=
+summary(p1)
+@ 
 The estimated Choleski factor $L_1$ is :
 
 <<>>=
@@ -969,11 +974,13 @@ indication.)
 
 \begin{answer}
 
-<<>>=
+<<echo = TRUE, eval = FALSE>>=
 p2 <- mlogit(choice~cost+time, Mo, seed = 21, R = 100, probit = TRUE)
-coef(p2)
 @   
 
+<<>>=
+coef(p2)
+@ 
 The estimates seem to change more for parameters with larger standard
 error, though this is not uniformly the case by any means. One would
 expect larger samplign variance (which arises from a flatter $\ln L$

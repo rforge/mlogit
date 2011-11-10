@@ -7,14 +7,11 @@
   choosing the alternatives
 }
 \usage{
-\method{effects}{mlogit}(object, data = NULL, covariate = NULL,
-                        type = c("aa", "ar", "rr", "ra"), ...)
+\method{effects}{mlogit}(object, covariate = NULL,
+                        type = c("aa", "ar", "rr", "ra"), data = NULL, ...)
 }
 \arguments{
   \item{object}{a \code{mlogit} object,}
-  \item{data}{a data.frame containing the values for which the effects
-    should be calculated. The number of lines of this data.frame should be
-    equal to the number of alternatives,}
   \item{covariate}{the name of the covariate for which the effect should
     be computed,}
   \item{type}{the effect is a ratio of two marginal variations of the
@@ -22,6 +19,9 @@
     \code{"a"} or relative \code{"r"}. This argument is a string that
     contains two letters, the first refers to the probability, the second
     to the covariate,}
+  \item{data}{a data.frame containing the values for which the effects
+    should be calculated. The number of lines of this data.frame should be
+    equal to the number of alternatives,}
   \item{...}{further arguments.}
 }
 
@@ -47,9 +47,9 @@ z <- with(Fish, data.frame(price = tapply(price, index(m)$alt, mean),
                            catch = tapply(catch, index(m)$alt, mean),
                            income = mean(income)))
 # compute the marginal effects (the second one is an elasticity
-effects(m, z, covariate = "income")
-effects(m, z, covariate = "price", type = "rr")
-effects(m, z, covariate = "catch", type = "ar")
+effects(m, covariate = "income", data = z)
+effects(m, covariate = "price", type = "rr", data = z)
+effects(m, covariate = "catch", type = "ar", data = z)
 }
 
 \author{Yves Croissant}

@@ -2493,7 +2493,7 @@ Train.mxlu <- update(Train.mxlc, correlation = FALSE)
 @ 
 
 <<echo = FALSE>>=
-data("MixedExamples", package = "mlogit")
+data("Examples", package = "mlogit")
 @ 
 
 The summary method supplies the usual table of coefficients, and also
@@ -2863,11 +2863,14 @@ We use again the \Rd{Fishing} data frame, with only a subset of three
 alternatives used. The multinomial probit model is estimated using
 \Rf{mlogit} with the \Ra{probit}{mlogit} argument equal to \Rv{TRUE}
 
-<<>>=
+<<echo = TRUE, eval = FALSE>>=
 data("Fishing", package = "mlogit")
 Fish <- mlogit.data(Fishing, shape="wide", varying=2:9, choice="mode")
-mprobit <- mlogit(mode~price | income | catch, Fish, probit = TRUE, alt.subset=c('beach', 'boat','pier'))
-summary(mprobit)
+Fish.mprobit <- mlogit(mode~price | income | catch, Fish, probit = TRUE, alt.subset=c('beach', 'boat','pier'))
+@
+
+<<>>=
+summary(Fish.mprobit)
 @ 
 \section{Tests}
 \addcontentsline{toc}{section}{Tests}

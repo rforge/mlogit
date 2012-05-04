@@ -62,10 +62,12 @@ E-mail: \email{yves.croissant@univ-reunion.fr}
 
 The logit model is useful when one tries to explain discrete choices,
 \emph{i.e.} choices of one among several mutually exclusive
-alternatives\footnote{For an extensive presentations of the logit
-  model, see \citet{TRAI:03} and \citet{LOUI:HENS:SWAI:00}}.  There are
-many useful applications of discrete choice modelling in different
-fields of applied econometrics, using individual data, which may be :
+alternatives\footnote{For an extensive presentation of the logit
+  model, see \citet{TRAI:03} and \citet{LOUI:HENS:SWAI:00}. The
+  theoretical parts of this paper draw heavily on Kenneth Train's
+  book.}.  There are many useful applications of discrete choice
+modelling in different fields of applied econometrics, using
+individual data, which may be :
 
 \begin{itemize}
 \item \emph{revealed preferences data} which means that the data are observed

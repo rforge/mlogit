@@ -1,6 +1,6 @@
 Package: mlogit
-Version: 0.2-3
-Date: 2011-10-25
+Version: 0.2-4
+Date: 2013-01-29
 Title: multinomial logit model
 Author: Yves Croissant <yves.croissant@univ-reunion.fr>
 Maintainer: Yves Croissant <yves.croissant@univ-reunion.fr>

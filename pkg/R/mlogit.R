@@ -316,8 +316,8 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
   else opt[c('X', 'y')] <- list(as.name('DX'), as.name('yv'))
   if (mixed.logit){
     opt$logLik <- as.name('lnl.rlogit')
-    opt[c('R', 'seed', 'id', 'rpar', 'correlation')] <-
-      list(as.name('R'), as.name('seed'), as.name('id'), as.name('rpar'), as.name('correlation'))
+    opt[c('R', 'seed', 'id', 'rpar', 'correlation', 'halton')] <-
+      list(as.name('R'), as.name('seed'), as.name('id'), as.name('rpar'), as.name('correlation'), as.name('halton'))
   }
   if (probit){
     opt$logLik <- as.name('lnl.mprobit')

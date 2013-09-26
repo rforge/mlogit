@@ -374,6 +374,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
   resid <- Reduce("cbind", yl) - fitted
   attr(x$coefficients, "fixed") <- attr(x$optimum, "fixed")
   gradient <- -  attr(x$optimum, "gradient")
+  gradient <- - attr(x$optimum, "gradi")
 
   
   # compute the probabilities for all the alternatives for

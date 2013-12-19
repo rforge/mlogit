@@ -161,3 +161,6 @@ Changes since version 0.2-3
 
 	* the contribution of each observation to the gradient is not
 	returned as the 'gradient' element of mlogit objects
+
+	* the distributions are now checked for rpar and an error is
+	returned in case of unknown distribution

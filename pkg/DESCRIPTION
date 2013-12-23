@@ -3,8 +3,8 @@ Version: 0.2-4
 Date: 2013-12-20
 Title: multinomial logit model
 Authors@R: person("Yves", "Croissant", role = c("aut", "cre"), email = "yves.croissant@univ-reunion.fr")
-Depends: R (>= 2.10), Formula, maxLik, lmtest
-Imports: statmod, zoo, MASS
+Depends: R (>= 2.10), Formula, maxLik
+Imports: statmod, zoo, MASS, lmtest
 Suggests: car, nnet, lattice, AER
 Description: Estimation of the multinomial logit model
 License: GPL (>=2)

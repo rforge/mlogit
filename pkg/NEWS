@@ -164,3 +164,22 @@ Changes since version 0.2-3
 
 	* the distributions are now checked for rpar and an error is
 	returned in case of unknown distribution
+
+Changes since version 0.2-4
+
+	* the id series (one observation per choice situation) was
+          badly constructed, it is now fixed
+
+	* the levels of the choice variable are now equalized to the
+          those of the alt variable, allowing the case were some
+          alternatives are never chosen
+
+	* mlogit is now able to estimate models with singular matrix
+          of covariates. At the end of model.matrix.mformula, the
+          linear dependent columns of X are removed
+	 
+
+
+
+
+

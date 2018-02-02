@@ -1,11 +1,11 @@
 Package: mlogit
-Version: 0.2-4
-Date: 2013-12-20
+Version: 0.3-0
+Date: 2018-02-02
 Title: multinomial logit model
 Authors@R: person("Yves", "Croissant", role = c("aut", "cre"), email = "yves.croissant@univ-reunion.fr")
 Depends: R (>= 2.10), Formula, maxLik
 Imports: statmod, zoo, MASS, lmtest
 Suggests: car, nnet, lattice, AER
-Description: Estimation of the multinomial logit model
+Description: Maximum Likelihood estimation of random utility discrete choice models (logit and probit).
 License: GPL (>=2)
 URL: http://www.r-project.org

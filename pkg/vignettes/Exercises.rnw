@@ -125,8 +125,8 @@ alternative, etc.
 library("mlogit")
 #source("~/Forge/mlogit/chargement.R")
 data("Heating", package = "mlogit")
-H <- mlogit.data(Heating, shape="wide", choice="depvar", varying=c(3:12))
-m <- mlogit(depvar~ic+oc|0, H)
+H <- mlogit.data(Heating, shape = "wide", choice = "depvar", varying = c(3:12))
+m <- mlogit(depvar ~ ic + oc | 0, H)
 summary(m)
 @ 
 Yes, they are negative as expected, meaning that as the cost of a
@@ -145,7 +145,7 @@ probability of that system being chosen falls.
 customers choosing each alternative?
 \begin{answer}[5]
 <<>>=
-apply(fitted(m, outcome=FALSE), 2, mean)
+apply(fitted(m, outcome = FALSE), 2, mean)
 @  
 Not very well. 63.67\% of the sample chose \va{gc} (as shown at the top of
 the summary) and yet the estimated model gives an average probability
@@ -216,8 +216,8 @@ $wtp=8.33$). Test the hypothesis that $r=0.12$.
   the constraint $lcc=ic+oc/0.12$ and estimate the model with this
   variable. 
 <<>>=
-H$lcc=H$ic+H$oc/0.12
-mlcc <- mlogit(depvar~lcc|0, H)
+H$lcc <- H$ic + H$oc / 0.12
+mlcc <- mlogit(depvar ~ lcc | 0, H)
 lrtest(m, mlcc)
 qchisq(0.05, df = 1, lower.tail = FALSE)
 @   

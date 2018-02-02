@@ -1,6 +1,6 @@
 lnl.slogit <- function(param, X, y, weights = NULL, gradient = FALSE,
                         hessian = FALSE, opposite, direction = rep(0, length(param)),
-                        initial.value = NULL,stptol = 1E-01){
+                       initial.value = NULL,stptol = 1E-01){
   balanced <- FALSE
   step <- 2
   repeat{
@@ -8,7 +8,9 @@ lnl.slogit <- function(param, X, y, weights = NULL, gradient = FALSE,
     if (step < stptol) break
     eXb <- lapply(X, function(x) exp(crossprod(t(x), param + step * direction)))
     seXb <- suml(eXb)
+
     P <- lapply(eXb, function(x){v <- x/seXb; v[is.na(v)] <- 0; as.vector(v)})
+    
     Pch <- Reduce("+", mapply("*", P, y, SIMPLIFY = FALSE))
     lnl <- sum(opposite * weights * log(Pch))
     if (is.null(initial.value) || lnl <= initial.value) break
@@ -38,323 +40,324 @@ lnl.slogit <- function(param, X, y, weights = NULL, gradient = FALSE,
 }
 
 lnl.nlogit <- function(param, X, y, weights = NULL, gradient = FALSE,
-                        hessian = FALSE, opposite = TRUE, initial.value = NULL,
-                        direction = rep(0, length(param)), stptol = 1E-01,
+                       hessian = FALSE, opposite = TRUE, initial.value = NULL,
+                       direction = rep(0, length(param)), stptol = 1E-01,
                        nests, un.nest.el = FALSE, unscaled = FALSE){
-  if (un.nest.el){
-    lambda <- param[length(param)]
-    param <- c(param, rep(lambda, length(nests)-1))
-  }
-  thealts <- names(X)
-  posalts <- lapply(thealts, function(x) which(unlist(nests) %in% x))
-  K <- ncol(X[[1]])
-  n <- nrow(X[[1]])
-  J <- length(nests)
-  X <- lapply(nests, function(x) X[x])
-  Y <- lapply(nests, function(x) y[x])
-  Yn <- lapply(Y, suml)
-  step <- 2
-  repeat{
-    step <- step / 2
-    if (step < stptol) break
-    beta <- param[1:K] + step * direction[1:K]
-    lambda <- param[-c(1:K)] + step * direction[-c(1:K)]
-    names(lambda) <- names(nests)
-    V <- lapply(X, function(x)
-                lapply(x, function(y)
-                       as.numeric(crossprod(t(y), beta))
-                       )
+    if (un.nest.el){
+        lambda <- param[length(param)]
+        param <- c(param, rep(lambda, length(nests) - 1))
+    }
+    thealts <- names(X)
+    posalts <- lapply(thealts, function(x) which(unlist(nests) %in% x))
+    K <- ncol(X[[1]])
+    n <- nrow(X[[1]])
+    J <- length(nests)
+    X <- lapply(nests, function(x) X[x])
+    Y <- lapply(nests, function(x) y[x])
+    Yn <- lapply(Y, suml)
+    step <- 2
+    repeat{
+        step <- step / 2
+        if (step < stptol) break
+        beta <- param[1:K] + step * direction[1:K]
+        lambda <- param[-c(1:K)] + step * direction[-c(1:K)]
+        names(lambda) <- names(nests)
+        V <- lapply(X, function(x)
+            lapply(x, function(y)
+                as.numeric(crossprod(t(y), beta))
                 )
-    if (!unscaled) W <- mapply(function(v, l) lapply(v, function(x) x / l), V, lambda, SIMPLIFY = FALSE)
-    else W <- V
-    A <- lapply(W, function(x) lapply(x, exp))
-    N <- lapply(A, suml)
-    Pjl <- mapply(function(a, n) lapply(a, function(x) x / n), A, N, SIMPLIFY = FALSE)
-    Pl <- mapply(function(n, l) n^l, N, lambda, SIMPLIFY = FALSE)
-    D <- suml(Pl)
-    Pl <- lapply(Pl, function(x) x / D)
-    P <- mapply(function(pjl, pl) lapply(pjl, function(x) x * pl), Pjl, Pl, SIMPLIFY = FALSE)
-    Pch <- mapply(function(p, y) mapply("*", p, y, SIMPLIFY = FALSE), P, Y, SIMPLIFY = FALSE)
-    Pch <- suml(lapply(Pch, suml))
-    lnl <- sum(opposite * weights * log(Pch))
-    if (is.null(initial.value) || lnl <= initial.value) break
-  }
-  if (gradient){
-    ### For overlaping nests
-    Pj <- unlist(P, recursive = FALSE)
-    Pj <- lapply(posalts, function(x) suml(Pj[x]))
-    names(Pj) <- thealts
-    proba <- Pj
-    Pj <- lapply(nests, function(x) Pj[x])
-                 Pond <- mapply(function(p, pj) mapply("/", p, pj, SIMPLIFY = FALSE), P, Pj, SIMPLIFY = FALSE)
-    Xb <- mapply(function(x, pjl)
-                 suml(mapply("*", x, pjl, SIMPLIFY = FALSE)),
-                 X, Pjl, SIMPLIFY = FALSE)
-    Vb <- mapply(function(v, pjl)
-                 suml(mapply("*", v, pjl, SIMPLIFY = FALSE)),
-                 V, Pjl, SIMPLIFY = FALSE)
-                 
-    if (!unscaled)
-      Xbtot <- suml(mapply("*", Pl, Xb, SIMPLIFY = FALSE))
-    else
-      Xbtot <- suml(mapply(function(pl, xb, l) pl * xb * l,
-                           Pl, Xb, lambda, SIMPLIFY = FALSE))
-    
-    if (!unscaled)
-      Gb <- mapply(function(x, xb, l)
-                   lapply(x, function(z) (z+(l-1) * xb)/l), X, Xb, lambda, SIMPLIFY = FALSE)
-    else
-      Gb <- mapply(function(x, xb, l)
-                   lapply(x, function(z) (z+(l-1) * xb)), X, Xb, lambda, SIMPLIFY = FALSE)
-    
-    Gb <-  mapply(function(gb, y)
-                  mapply("*", gb, y, SIMPLIFY = FALSE),
-                  Gb, Y, SIMPLIFY = FALSE)
-    Gb <-  mapply(function(gb, pond)
-                  mapply("*", gb, pond, SIMPLIFY = FALSE),
-                  Gb, Pond, SIMPLIFY = FALSE)
-    Gb <- suml(lapply(Gb, suml)) - Xbtot
-
-    if (!unscaled){
-      Gl1 <- mapply(function(v, n, vb, l)
-                    lapply(v, function(z) -(z - l^2 * log(n) + (l-1) * vb)/l^2),
-                    V, N, Vb, lambda, SIMPLIFY = FALSE)
-      Gl1 <- mapply(function(gl1, y) mapply("*", gl1, y, SIMPLIFY = FALSE),
-                    Gl1, Y, SIMPLIFY = FALSE)
-      Gl1 <- mapply(function(gl1, pond)
-                    mapply("*", gl1, pond, SIMPLIFY = FALSE),
-                    Gl1, Pond, SIMPLIFY = FALSE)
-      mylog <- function(x){
-        nullx <- abs(x) < 1E-20
-        x[nullx] <- 0
-        x[!nullx] <- log(x[!nullx])
-        x
-      }
-      Gl1 <- lapply(Gl1, suml)
-      Gl2 <- mapply(function(vb, n, l, pl) - pl * (l^2 * mylog(n)- l * vb)/ l^2,
-                    Vb, N, lambda, Pl, SIMPLIFY = FALSE)
-      # log is replaced by mylog which replace log(0) by 0.
-
+            )
+        if (! unscaled) W <- mapply(function(v, l) lapply(v, function(x) x / l), V, lambda, SIMPLIFY = FALSE)
+        else W <- V
+        A <- lapply(W, function(x) lapply(x, exp))
+        N <- lapply(A, suml)
+        Pjl <- mapply(function(a, n) lapply(a, function(x) x / n), A, N, SIMPLIFY = FALSE)
+        Pl <- mapply(function(n, l) n^l, N, lambda, SIMPLIFY = FALSE)
+        D <- suml(Pl)
+        Pl <- lapply(Pl, function(x) x / D)
+        P <- mapply(function(pjl, pl) lapply(pjl, function(x) x * pl), Pjl, Pl, SIMPLIFY = FALSE)
+        Pch <- mapply(function(p, y) mapply("*", p, y, SIMPLIFY = FALSE), P, Y, SIMPLIFY = FALSE)
+        Pch <- suml(lapply(Pch, suml))
+        lnl <- sum(opposite * weights * log(Pch))
+        if (is.null(initial.value) || lnl <= initial.value) break
     }
+    if (gradient){
+        ### For overlaping nests
+        Pj <- unlist(P, recursive = FALSE)
+        Pj <- lapply(posalts, function(x) suml(Pj[x]))
+        names(Pj) <- thealts
+        proba <- Pj
+        Pj <- lapply(nests, function(x) Pj[x])
+        Pond <- mapply(function(p, pj) mapply("/", p, pj, SIMPLIFY = FALSE), P, Pj, SIMPLIFY = FALSE)
+        Xb <- mapply(function(x, pjl)
+            suml(mapply("*", x, pjl, SIMPLIFY = FALSE)),
+            X, Pjl, SIMPLIFY = FALSE)
+        Vb <- mapply(function(v, pjl)
+            suml(mapply("*", v, pjl, SIMPLIFY = FALSE)),
+            V, Pjl, SIMPLIFY = FALSE)
+        
+        if (!unscaled)
+            Xbtot <- suml(mapply("*", Pl, Xb, SIMPLIFY = FALSE))
+        else
+            Xbtot <- suml(mapply(function(pl, xb, l) pl * xb * l,
+                                 Pl, Xb, lambda, SIMPLIFY = FALSE))
+        
+        if (!unscaled)
+            Gb <- mapply(function(x, xb, l)
+                lapply(x, function(z) (z+(l-1) * xb)/l), X, Xb, lambda, SIMPLIFY = FALSE)
+        else
+            Gb <- mapply(function(x, xb, l)
+                lapply(x, function(z) (z+(l-1) * xb)), X, Xb, lambda, SIMPLIFY = FALSE)
+        
+        Gb <-  mapply(function(gb, y)
+            mapply("*", gb, y, SIMPLIFY = FALSE),
+            Gb, Y, SIMPLIFY = FALSE)
+        Gb <-  mapply(function(gb, pond)
+            mapply("*", gb, pond, SIMPLIFY = FALSE),
+            Gb, Pond, SIMPLIFY = FALSE)
+        Gb <- suml(lapply(Gb, suml)) - Xbtot
+        
+        if (!unscaled){
+            Gl1 <- mapply(function(v, n, vb, l)
+                lapply(v, function(z) -(z - l^2 * log(n) + (l-1) * vb)/l^2),
+                V, N, Vb, lambda, SIMPLIFY = FALSE)
+            Gl1 <- mapply(function(gl1, y) mapply("*", gl1, y, SIMPLIFY = FALSE),
+                          Gl1, Y, SIMPLIFY = FALSE)
+            Gl1 <- mapply(function(gl1, pond)
+                mapply("*", gl1, pond, SIMPLIFY = FALSE),
+                Gl1, Pond, SIMPLIFY = FALSE)
+            mylog <- function(x){
+                nullx <- abs(x) < 1E-20
+                x[nullx] <- 0
+                x[!nullx] <- log(x[!nullx])
+                x
+            }
+            Gl1 <- lapply(Gl1, suml)
+            Gl2 <- mapply(function(vb, n, l, pl) - pl * (l^2 * mylog(n)- l * vb)/ l^2,
+                          Vb, N, lambda, Pl, SIMPLIFY = FALSE)
+            # log is replaced by mylog which replace log(0) by 0.
+
+        }
+        else{
+            Gl1 <- mapply(function(n, y)
+                lapply(y, function(x) x * log(n)),
+                N, Y, SIMPLIFY = FALSE)
+            Gl1 <- mapply(function(gl1, pond)
+                mapply("*", gl1, pond, SIMPLIFY = FALSE),
+                Gl1, Pond, SIMPLIFY = FALSE)
+            Gl1 <- lapply(Gl1, suml)
+            Gl2 <- mapply(function(n, pl) - pl * log(n),
+                          N, Pl, SIMPLIFY = FALSE)
+        }
+        Gl <- mapply("+", Gl1, Gl2)
+        if (un.nest.el) Gl <- apply(Gl, 1, sum)
+        gradi <- opposite * weights * cbind(Gb, Gl)
+        attr(lnl, "gradi") <- gradi
+        attr(lnl, "gradient") <- apply(gradi, 2, sum)
+    }
+    if (step < stptol) lnl <- NULL
     else{
-      Gl1 <- mapply(function(n, y)
-                    lapply(y, function(x) x * log(n)),
-                    N, Y, SIMPLIFY = FALSE)
-      Gl1 <- mapply(function(gl1, pond)
-                    mapply("*", gl1, pond, SIMPLIFY = FALSE),
-                    Gl1, Pond, SIMPLIFY = FALSE)
-      Gl1 <- lapply(Gl1, suml)
-      Gl2 <- mapply(function(n, pl) - pl * log(n),
-                    N, Pl, SIMPLIFY = FALSE)
+        P <- unlist(P, recursive = FALSE)
+        P <- sapply(posalts, function(x) suml(P[x]))
+        colnames(P) <- thealts
+        attr(lnl, "probabilities") <- P
+        attr(lnl, "fitted") <- Pch
+        attr(lnl, "step") <- step
     }
-    Gl <- mapply("+", Gl1, Gl2)
-    if (un.nest.el) Gl <- apply(Gl, 1, sum)
-    gradi <- opposite * weights * cbind(Gb, Gl)
-    attr(lnl, "gradi") <- gradi
-    attr(lnl, "gradient") <- apply(gradi, 2, sum)
-  }
-  if (step < stptol) lnl <- NULL
-  else{
-    P <- unlist(P, recursive = FALSE)
-    P <- sapply(posalts, function(x) suml(P[x]))
-    colnames(P) <- thealts
-    attr(lnl, "probabilities") <- P
-    attr(lnl, "fitted") <- Pch
-    attr(lnl, "step") <- step
-  }
-  lnl
+    lnl
 } 
 
 lnl.hlogit <- function(param, X, y, weights = NULL,
                        gradient = FALSE, hessian = FALSE, opposite = TRUE,
                        direction = rep(0, length(param)), initial.value = NULL, stptol = 1E-01,
                        rn){
-  choice <- Reduce("cbind", y)
-  choice <- factor(apply(choice * col(choice), 1, sum), labels = names(y), levels = 1:length(y))
-  names(choice) <- NULL
-  balanced <- TRUE
-  u <- rn$nodes
-  w <- rn$weights
-  K <- ncol(X[[1]])
-  n <- nrow(X[[1]])
-  J <- length(X)
-
-  step <- 2
-  repeat{
-    step <- step / 2
-    if (step < stptol) break
-    beta <- param[1:K] + step * direction[1:K]
-    theta <- c(1, param[-c(1:K)]) + step * c(0, direction[-c(1:K)])
-    V <- lapply(X, function(x) as.numeric(crossprod(t(x), beta)))
-    Vi <- suml(mapply("*", V, y, SIMPLIFY = FALSE))
-    DVi <- lapply(V, function(x) Vi - x)
-    names(theta) <- levels(choice)
-    thetai <- theta[choice]
-    alpha <- mapply(function(dvi, th){
-                    exp( - (dvi - thetai %o% log(u)) / th)},
-                    DVi, theta, SIMPLIFY = FALSE)
-    A <- suml(alpha)
-    G <- exp(- A)
-    P <- apply(t(t(G) * w * exp(u)), 1, sum)
-    lnl <- sum (opposite * weights * log(P))
-    if (is.null(initial.value) || lnl <= initial.value) break
-  }
-  if (gradient){
-    Xi <- suml(mapply("*", X, y, SIMPLIFY = FALSE))
-    DX <- lapply(X, function(x) x - Xi)
-    DXt <- mapply("/", DX, theta, SIMPLIFY = FALSE)
-    Gb <- lapply(alpha, function(a) apply(t(t(a * G) * w * exp(u)), 1, sum))
-    Gb <- mapply(function(a, dxt) a * dxt,
-                 Gb, DXt, SIMPLIFY = FALSE)
-    Gb <- - suml(Gb)
-    Gtj <- mapply(function(a, th) a * log(a) / th,
-                  alpha, theta, SIMPLIFY = FALSE)
-    Gtl <- mapply(function(a, th) - t( t(a / th) * log(u)),
-                  alpha, theta, SIMPLIFY = FALSE)
-    Gtl <- suml(Gtl)
-    Gtj <- lapply(Gtj, function(x){x[is.na(x)] <- 0;x})
-    Gt <- mapply(function(gtj, ay) gtj  + Gtl * ay,
-                 Gtj, y, SIMPLIFY = FALSE)
-    Gt <- sapply(Gt, function(x) apply(t(t(x * G) * exp(u) * w ), 1, sum))
-    gradi <- opposite * cbind(Gb, Gt[, -1]) / P
-    attr(lnl, "gradi") <- gradi
-    attr(lnl, "gradient") <- if (is.matrix(gradi)) apply(gradi, 2, sum) else sum(gradi)
-  }
-  if (step < stptol) lnl <- NULL
-  else{
-    attr(lnl, "fitted") <- P
-    attr(lnl, "step") <- step
-  }
-  lnl
+    choice <- Reduce("cbind", y)
+    choice <- factor(apply(choice * col(choice), 1, sum), labels = names(y), levels = 1:length(y))
+    names(choice) <- NULL
+    balanced <- TRUE
+    u <- rn$nodes
+    w <- rn$weights
+    K <- ncol(X[[1]])
+    n <- nrow(X[[1]])
+    J <- length(X)
+    
+    step <- 2
+    repeat{
+        step <- step / 2
+        if (step < stptol) break
+        beta <- param[1:K] + step * direction[1:K]
+        theta <- c(1, param[-c(1:K)]) + step * c(0, direction[-c(1:K)])
+        V <- lapply(X, function(x) as.numeric(crossprod(t(x), beta)))
+        Vi <- suml(mapply("*", V, y, SIMPLIFY = FALSE))
+        DVi <- lapply(V, function(x) Vi - x)
+        names(theta) <- levels(choice)
+        thetai <- theta[choice]
+        alpha <- mapply(function(dvi, th){
+            exp( - (dvi - thetai %o% log(u)) / th)},
+            DVi, theta, SIMPLIFY = FALSE)
+        A <- suml(alpha)
+        G <- exp(- A)
+        P <- apply(t(t(G) * w * exp(u)), 1, sum)
+        lnl <- sum (opposite * weights * log(P))
+        if (is.null(initial.value) || lnl <= initial.value) break
+    }
+    if (gradient){
+        Xi <- suml(mapply("*", X, y, SIMPLIFY = FALSE))
+        DX <- lapply(X, function(x) x - Xi)
+        DXt <- mapply("/", DX, theta, SIMPLIFY = FALSE)
+        Gb <- lapply(alpha, function(a) apply(t(t(a * G) * w * exp(u)), 1, sum))
+        Gb <- mapply(function(a, dxt) a * dxt,
+                     Gb, DXt, SIMPLIFY = FALSE)
+        Gb <- - suml(Gb)
+        Gtj <- mapply(function(a, th) a * log(a) / th,
+                      alpha, theta, SIMPLIFY = FALSE)
+        Gtl <- mapply(function(a, th) - t( t(a / th) * log(u)),
+                      alpha, theta, SIMPLIFY = FALSE)
+        Gtl <- suml(Gtl)
+        Gtj <- lapply(Gtj, function(x){x[is.na(x)] <- 0;x})
+        Gt <- mapply(function(gtj, ay) gtj  + Gtl * ay,
+                     Gtj, y, SIMPLIFY = FALSE)
+        Gt <- sapply(Gt, function(x) apply(t(t(x * G) * exp(u) * w ), 1, sum))
+        gradi <- opposite * cbind(Gb, Gt[, -1]) / P
+        attr(lnl, "gradi") <- gradi
+        attr(lnl, "gradient") <- if (is.matrix(gradi)) apply(gradi, 2, sum) else sum(gradi)
+    }
+    if (step < stptol) lnl <- NULL
+    else{
+        attr(lnl, "fitted") <- P
+        attr(lnl, "step") <- step
+    }
+    lnl
 }
 
 lnl.rlogit <- function(param, X, y, weights = NULL,
                        gradient = TRUE, hessian = FALSE, opposite = TRUE,
                        direction = rep(0, length(param)), initial.value = NULL, stptol = 1e-10,
                        R, seed, id, rpar, correlation, halton){
-  panel <- !is.null(id)
-  otime <- proc.time()
-  K <- ncol(X[[1]])
-  N <- nrow(X[[1]])
-  J <- length(X)
-  if (panel){
-    n <- length(unique(id))
-    if (length(weights) == 1) weights <- rep(weights, N)
-  }
-  Vara <- sort(match(names(rpar), colnames(X[[1]])))
-  Varc <- (1:K)[- Vara]
-  Ka <- length(Vara)
-  Kc <- length(Varc)
-  Xa <- lapply(X, function(x) x[, Vara, drop = F])
-  Xc <- lapply(X, function(x) x[, Varc, drop = F])
-  K <- Kc + Ka
-  set.seed(seed)
-  random.nb <- make.random.nb(R * ifelse(!is.null(id), n, N), Ka, halton)
-  step <- 2
-  repeat{
-    step <- step / 2
-    if (step < stptol) break
-    betac <- param[Varc] + step * direction[Varc]
-    mua <- param[Vara] + step * direction[Vara]
-    siga <- param[-c(1:K)] + step * direction[-c(1:K)]
-    # seems redondant for uncorrelated models and false for correlated ones
-    if (!correlation) names(mua) <- names(siga) <- colnames(Xa[[1]])
-    A <- lapply(Xc, function(x) as.vector(crossprod(t(as.matrix(x)), betac)))
-    B <- vector(mode = "list", length = J)
-    for (j in 1:J) B[[j]] <- matrix(NA, N, R)
-    ndraws <- ifelse(panel, n, N)
-    if (panel) theIds <- unique(id)
-    for (i in 1:ndraws){
-      if (panel){
-        anid <- theIds[i]
-        theRows <- which(id == anid)
-      }
-      else theRows <- i
-      b <- make.beta(mua, siga, rpar, random.nb[((i - 1) * R + 1):(i * R), , drop = FALSE] , correlation)
-      betaa <- b$betaa
-      for (j in 1:J) B[[j]][theRows,] <- tcrossprod(Xa[[j]][theRows, , drop = FALSE], betaa)
-    }
-    AB <- mapply(function(x, y) exp(x + y), A, B, SIMPLIFY=FALSE)
-    S <- suml(AB)
-    P <- lapply(AB, function(x) x/S)
-    probabilities <- sapply(P, function(x) apply(x, 1, mean))
-    Pch <- suml(mapply("*", P, y, SIMPLIFY = FALSE))
-    if (panel) Pch <- apply(Pch, 2, tapply, id, prod)
-    pm <- apply(Pch, 1, mean)
-    if (panel) lnl <- opposite * sum(weights[!duplicated(id)] * log(pm))
-    else lnl <- opposite * sum(weights * log(pm))
-    if (is.null(initial.value) || lnl <= initial.value) break
-  }
-  if (gradient){
-    Xac <- suml(mapply("*", Xa, y, SIMPLIFY = FALSE))
-    Xcc <- suml(mapply("*", Xc, y, SIMPLIFY = FALSE))
-    if (correlation){
-      names.cor <- c()
-      for (i in 1:Ka){
-        names.cor <- c(names.cor, paste(names(rpar)[i], names(rpar)[i:Ka], sep=":"))
-      }
-      vecX <- c()
-      for (i in 1:Ka){
-        vecX <- c(vecX, i:Ka)
-      }
-      Xas <- lapply(Xa,  function(x) x[, vecX])
-      Xac <- suml(mapply("*", Xa, y, SIMPLIFY = FALSE))
-      Xacs <- suml(mapply("*", Xas, y, SIMPLIFY = FALSE))
-      colnames(Xacs) <- names(param)[-(1:(Ka+Kc))]
-    }
-    else{
-      Xacs <- Xac
-      Xas <- Xa
-      names.cor <- paste("sd", names(rpar), sep = ".")
-    }
+    panel <- ! is.null(id)
+    otime <- proc.time()
+    K <- ncol(X[[1]])
+    N <- nrow(X[[1]])
+    J <- length(X)
     if (panel){
-      Pch <- Pch[as.character(id), ]
-      pm <- apply(Pch, 1, mean)
+        n <- length(unique(id))
+        if (length(weights) == 1) weights <- rep(weights, N)
     }
-    PCP <- lapply(P, function(x) Pch * x)
-    PCPs <- lapply(PCP, function(x) apply(x, 1, sum))
-    grad.cst <- Xcc - suml(mapply("*", Xc, PCPs, SIMPLIFY = FALSE))/(R * pm)
-    PCPm <- PCPs <- vector(mode = "list", length = J)
-    Pchm <- matrix(NA, N, Ka)
-    Pchs <- matrix(NA, N, length(names.cor))
-    for (j in 1:J){
-      PCPm[[j]] <- matrix(NA, N, Ka)
-      PCPs[[j]] <- matrix(NA, N, length(names.cor))
+    Vara <- sort(match(names(rpar), colnames(X[[1]])))
+    Varc <- (1:K)[- Vara]
+    Ka <- length(Vara)
+    Kc <- length(Varc)
+    Xa <- lapply(X, function(x) x[, Vara, drop = FALSE])
+    Xc <- lapply(X, function(x) x[, Varc, drop = FALSE])
+    K <- Kc + Ka
+    set.seed(seed)
+    random.nb <- make.random.nb(R * ifelse(! is.null(id), n, N), Ka, halton)
+    step <- 2
+    repeat{
+        step <- step / 2
+        if (step < stptol) break
+        betac <- param[Varc] + step * direction[Varc]
+        mua <- param[Vara] + step * direction[Vara]
+        siga <- param[-c(1:K)] + step * direction[-c(1:K)]
+        # seems redondant for uncorrelated models and false for correlated ones
+        if (! correlation) names(mua) <- names(siga) <- colnames(Xa[[1]])
+        A <- lapply(Xc, function(x) as.vector(crossprod(t(as.matrix(x)), betac)))
+        B <- vector(mode = "list", length = J)
+        for (j in 1:J) B[[j]] <- matrix(NA, N, R)
+        ndraws <- ifelse(panel, n, N)
+        if (panel) theIds <- unique(id)
+        for (i in 1:ndraws){
+            if (panel){
+                anid <- theIds[i]
+                theRows <- which(id == anid)
+            }
+            else theRows <- i
+            b <- make.beta(mua, siga, rpar, random.nb[((i - 1) * R + 1):(i * R), , drop = FALSE] , correlation)
+            betaa <- b$betaa
+            for (j in 1:J) B[[j]][theRows,] <- tcrossprod(Xa[[j]][theRows, , drop = FALSE], betaa)
+        }
+        AB <- mapply(function(x, y) exp(x + y), A, B, SIMPLIFY = FALSE)
+        S <- suml(AB)
+        P <- lapply(AB, function(x) x/S)
+        probabilities <- sapply(P, function(x) apply(x, 1, mean))
+        Pch <- suml(mapply("*", P, y, SIMPLIFY = FALSE))
+        if (panel) Pch <- apply(Pch, 2, tapply, id, prod)
+        
+        pm <- apply(Pch, 1, mean)
+        if (panel) lnl <- opposite * sum(weights[!duplicated(id)] * log(pm))
+        else lnl <- opposite * sum(weights * log(pm))
+        if (is.null(initial.value) || lnl <= initial.value) break
     }
-    for (i in 1:ndraws){
-      if (panel){
-        anid <- theIds[i]
-        theRows <- which(id == anid)
-      }
-      else theRows <- i
-      b <- make.beta(mua, siga, rpar, random.nb[((i - 1) * R + 1):(i * R), , drop = FALSE] , correlation)
-
-      Pchm[theRows, ] <- tcrossprod(Pch[theRows, ], t(b$betaa.mu))
-      Pchs[theRows, ] <- tcrossprod(Pch[theRows, ], t(b$betaa.sigma))
-      for (j in 1:J){
-        PCPm[[j]][theRows,] <- tcrossprod(PCP[[j]][theRows, ], t(b$betaa.mu))
-        PCPs[[j]][theRows,] <- tcrossprod(PCP[[j]][theRows, ], t(b$betaa.sigma)) 
-      }
-    }    
-    grad.mu <- (Pchm * Xac  - suml(mapply("*", Xa,  PCPm, SIMPLIFY = FALSE))) / (R * pm)
-    grad.sd <- (Pchs * Xacs - suml(mapply("*", Xas, PCPs, SIMPLIFY = FALSE))) / (R * pm)
-    gradi <- matrix(NA, N, K + ncol(grad.sd))
-    gradi[, Varc] <- - grad.cst
-    gradi[, Vara] <- - grad.mu
-    gradi[, -c(1:K)] <- - grad.sd
-    if (!is.null(weights)) gradi <- weights * gradi
-    colnames(gradi) <- names(param)
-    attr(lnl, "gradi") <-  opposite * gradi
-    attr(lnl, "gradient") <- apply(gradi, 2, sum)
-    attr(lnl, "step") <- step
-  }
-  if (step < stptol) lnl <- NULL
-  else{
-    attr(lnl, "probabilities") <- probabilities
-    attr(lnl, "fitted") <- pm
-    attr(lnl, "step") <- step
-  }
-  lnl
+    if (gradient){
+        Xac <- suml(mapply("*", Xa, y, SIMPLIFY = FALSE))
+        Xcc <- suml(mapply("*", Xc, y, SIMPLIFY = FALSE))
+        if (correlation){
+            names.cor <- c()
+            for (i in 1:Ka){
+                names.cor <- c(names.cor, paste(names(rpar)[i], names(rpar)[i:Ka], sep=":"))
+            }
+            vecX <- c()
+            for (i in 1:Ka){
+                vecX <- c(vecX, i:Ka)
+            }
+            Xas <- lapply(Xa,  function(x) x[, vecX])
+            Xac <- suml(mapply("*", Xa, y, SIMPLIFY = FALSE))
+            Xacs <- suml(mapply("*", Xas, y, SIMPLIFY = FALSE))
+            colnames(Xacs) <- names(param)[-(1:(Ka+Kc))]
+        }
+        else{
+            Xacs <- Xac
+            Xas <- Xa
+            names.cor <- paste("sd", names(rpar), sep = ".")
+        }
+        if (panel){
+            Pch <- Pch[as.character(id), ]
+            pm <- apply(Pch, 1, mean)
+        }
+        PCP <- lapply(P, function(x) Pch * x)
+        PCPs <- lapply(PCP, function(x) apply(x, 1, sum))
+        grad.cst <- Xcc - suml(mapply("*", Xc, PCPs, SIMPLIFY = FALSE))/(R * pm)
+        PCPm <- PCPs <- vector(mode = "list", length = J)
+        Pchm <- matrix(NA, N, Ka)
+        Pchs <- matrix(NA, N, length(names.cor))
+        for (j in 1:J){
+            PCPm[[j]] <- matrix(NA, N, Ka)
+            PCPs[[j]] <- matrix(NA, N, length(names.cor))
+        }
+        for (i in 1:ndraws){
+            if (panel){
+                anid <- theIds[i]
+                theRows <- which(id == anid)
+            }
+            else theRows <- i
+            b <- make.beta(mua, siga, rpar, random.nb[((i - 1) * R + 1):(i * R), , drop = FALSE] , correlation)
+            
+            Pchm[theRows, ] <- tcrossprod(Pch[theRows, ], t(b$betaa.mu))
+            Pchs[theRows, ] <- tcrossprod(Pch[theRows, ], t(b$betaa.sigma))
+            for (j in 1:J){
+                PCPm[[j]][theRows,] <- tcrossprod(PCP[[j]][theRows, ], t(b$betaa.mu))
+                PCPs[[j]][theRows,] <- tcrossprod(PCP[[j]][theRows, ], t(b$betaa.sigma)) 
+            }
+        }    
+        grad.mu <- (Pchm * Xac  - suml(mapply("*", Xa,  PCPm, SIMPLIFY = FALSE))) / (R * pm)
+        grad.sd <- (Pchs * Xacs - suml(mapply("*", Xas, PCPs, SIMPLIFY = FALSE))) / (R * pm)
+        gradi <- matrix(NA, N, K + ncol(grad.sd))
+        gradi[, Varc] <- - grad.cst
+        gradi[, Vara] <- - grad.mu
+        gradi[, -c(1:K)] <- - grad.sd
+        if (!is.null(weights)) gradi <- weights * gradi
+        colnames(gradi) <- names(param)
+        attr(lnl, "gradi") <-  opposite * gradi
+        attr(lnl, "gradient") <- apply(gradi, 2, sum)
+        attr(lnl, "step") <- step
+    }
+    if (step < stptol) lnl <- NULL
+    else{
+        attr(lnl, "probabilities") <- probabilities
+        attr(lnl, "fitted") <- pm
+        attr(lnl, "step") <- step
+    }
+    lnl
 }
 
 

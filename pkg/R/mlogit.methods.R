@@ -54,10 +54,10 @@ update.mlogit <- function (object, new, ...){
   if (is.null(call))
     stop("need an object with call component")
   extras <- match.call(expand.dots = FALSE)$...
-  if (!missing(new))
+  if (! missing(new))
     call$formula <- update(formula(object), new)
   if(length(extras) > 0) {
-    existing <- !is.na(match(names(extras), names(call)))
+    existing <- ! is.na(match(names(extras), names(call)))
     ## do these individually to allow NULL to remove entries.
     for (a in names(extras)[existing]) call[[a]] <- extras[[a]]
     if(any(!existing)) {
@@ -65,6 +65,7 @@ update.mlogit <- function (object, new, ...){
       call <- as.call(call)
     }
   }
+  print(call)
   eval(call, parent.frame())
 }
 
@@ -183,38 +184,39 @@ index.mlogit <- function(x, ...){
 }
 
 predict.mlogit <- function(object, newdata = NULL, returnData = FALSE, ...){
-  # if no newdata is provided, use the mean of the model.frame
-  if (is.null(newdata)) newdata <- mean(model.frame(object))
-  # if newdata is not a mlogit.data, it is coerced below
-  if (!inherits(newdata, "mlogit.data")){
-    rownames(newdata) <- NULL
-    lev <- colnames(object$probabilities)
-    J <- length(lev)
-    choice.name <- attr(model.frame(object), "choice")
-    if (nrow(newdata) %% J)
-      stop("the number of rows of the data.frame should be a multiple of the number of alternatives")
-    attr(newdata, "index") <- data.frame(chid = rep(1:(nrow(newdata)%/%J), each = J), alt = rep(lev, J))
-    if (is.null(newdata[['choice.name']])){
-      newdata[[choice.name]] <- FALSE
-      newdata[[choice.name]][1] <- TRUE # probit and hev requires that one (arbitrary) choice is TRUE
+    # if no newdata is provided, use the mean of the model.frame
+    if (is.null(newdata)) newdata <- mean(model.frame(object))
+    # if newdata is not a mlogit.data, it is coerced below
+    if (! inherits(newdata, "mlogit.data")){
+        rownames(newdata) <- NULL
+        lev <- colnames(object$probabilities)
+        J <- length(lev)
+        choice.name <- attr(model.frame(object), "choice")
+        if (nrow(newdata) %% J)
+            stop("the number of rows of the data.frame should be a multiple of the number of alternatives")
+        attr(newdata, "index") <- data.frame(chid = rep(1:(nrow(newdata) %/%J ), each = J), alt = rep(lev, J))
+        attr(newdata, "class") <- c("mlogit.data", "data.frame")
+        if (is.null(newdata[['choice.name']])){
+            newdata[[choice.name]] <- FALSE
+            newdata[[choice.name]][1] <- TRUE # probit and hev requires that one (arbitrary) choice is TRUE
+        }
     }
-  }
-  # if the updated model requires the use of mlogit.data, suppress all
-  # the relevant arguments
-  m <- match(c("choice", "shape", "varying", "sep",
-               "alt.var", "chid.var", "alt.levels",
-               "opposite", "drop.index", "id", "ranked"),
-             names(object$call), 0L)
-  if (sum(m) > 0) object$call <- object$call[ - m]
-  # update the model and get the probabilities
-  newobject <- update(object, start = coef(object), data = newdata, iterlim = 0, print.level = 0)
-  result <- newobject$probabilities
-  if (nrow(result) == 1){
-    result <- as.numeric(result)
-    names(result) <- colnames(object$probabilities)
-  }
-  if (returnData) attr(result, "data") <- newdata
-  result
+    # if the updated model requires the use of mlogit.data, suppress all
+    # the relevant arguments
+    m <- match(c("choice", "shape", "varying", "sep",
+                 "alt.var", "chid.var", "alt.levels",
+                 "opposite", "drop.index", "id", "ranked"),
+               names(object$call), 0L)
+    if (sum(m) > 0) object$call <- object$call[ - m]
+    # update the model and get the probabilities
+    newobject <- update(object, start = coef(object), data = newdata, iterlim = 0, print.level = 0)
+    result <- newobject$probabilities
+    if (nrow(result) == 1){
+        result <- as.numeric(result)
+        names(result) <- colnames(object$probabilities)
+    }
+    if (returnData) attr(result, "data") <- newdata
+    result
 }
 
 fitted.mlogit <- function(object, outcome = TRUE, ...){
@@ -277,7 +279,6 @@ effects.mlogit <- function(object, covariate = NULL,
   rhs <- sapply(cov.list, function(x) length(na.omit(match(x, covariate))) > 0)
   rhs <- (1:length(cov.list))[rhs]
   eps <- 1E-5
-
   if (rhs %in% c(1, 3)){
     if (rhs == 3){
       theCoef <- paste(alt.levels, covariate, sep = ":")

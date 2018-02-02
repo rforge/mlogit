@@ -11,6 +11,13 @@ importFrom("zoo", "index")
 importFrom("MASS", "ginv")
 importFrom("stats", "effects")
 importFrom("statmod", "gauss.quad")
+importFrom("graphics", "lines", "plot", "polygon", "segments", "title")
+importFrom("stats", "as.formula", "coef", "dlnorm", "dnorm", "formula",
+           "logLik", "model.frame", "model.matrix", "model.response",
+           "na.omit", "pchisq", "plnorm", "pnorm", "predict",
+           "printCoefmat", "punif", "qlnorm", "qnorm", "qunif",
+           "relevel", "reshape", "residuals", "rnorm", "runif",
+           "terms", "update", "vcov")
 
 #mlogit.data methods
 S3method("index", "mlogit.data")

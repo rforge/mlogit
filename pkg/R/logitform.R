@@ -141,5 +141,8 @@ model.matrix.mFormula <- function(object, data, ...){
   z <- match(levels(alt), namesX)
   namesX[na.omit(z)] <- paste(levels(alt)[!is.na(z)], '(intercept)', sep=":")
   colnames(X) <- namesX
+  qrX <- qr(na.omit(X))
+  # remove the linear dependant columns
+#  X <- X[, qrX$pivot[1:qrX$rank], drop = FALSE]
   X
 }

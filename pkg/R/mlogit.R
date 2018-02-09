@@ -4,22 +4,24 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
                    heterosc = FALSE, rpar = NULL, probit = FALSE,
                    R = 40, correlation = FALSE, halton = NULL, random.nb = NULL,
                    panel = FALSE, estimate = TRUE, seed = 10, ...){
-
+    
     start.time <- proc.time()
     callT <- match.call(expand.dots = TRUE)
-    callF <- match.call(expand.dots = FALSE)
-    formula <- callF$formula <- mFormula(formula)
+#    callF <- match.call(expand.dots = FALSE)
+#    formula <- callF$formula <- mFormula(formula)
+    formula <- callT$formula <- mFormula(formula)
+    wlogit <- length(formula)[2] == 4
     nframe <- length(sys.calls())
     heterosc.logit <- heterosc
-    nested.logit <- !is.null(nests)
-    if (!is.null(nests) && length(nests) == 1 && nests == "pcl"){
+    nested.logit <- ! is.null(nests)
+    if (! is.null(nests) && length(nests) == 1 && nests == "pcl"){
         nested.logit <- FALSE
         pair.comb.logit <- TRUE
     }
     else pair.comb.logit <- FALSE
     if (nested.logit) attr(nests, "unique") <- ifelse(un.nest.el, TRUE, FALSE)
-    mixed.logit <- !is.null(rpar)
-    multinom.logit <- !heterosc & is.null(nests) & is.null(rpar) & !probit
+    mixed.logit <- ! is.null(rpar)
+    multinom.logit <- ! heterosc & is.null(nests) & is.null(rpar) & ! probit & ! wlogit
     if (heterosc.logit + nested.logit + mixed.logit + probit > 1)
         stop("only one of heterosc, rpar, nests and probit can be used")
     if (multinom.logit){
@@ -65,7 +67,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     mf <- eval(mf, parent.frame())
 
     # change the reference level of the response if required
-    if (!is.null(reflevel)) attr(mf, "index")[["alt"]] <- relevel(attr(mf, "index")[["alt"]], reflevel)
+    if (! is.null(reflevel)) attr(mf, "index")[["alt"]] <- relevel(attr(mf, "index")[["alt"]], reflevel)
     index <- attr(mf, "index")
     alt <- index[["alt"]]
     chid <- index[["chid"]]
@@ -103,6 +105,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     T <- length(alt.un)
     balanced <- TRUE
     if (nrow(mf) != (n * T)){
+        omf <- mf
         # la ligne ci-dessous ne sert à rien ?
         rownames(mf) <- paste(chid, alt, sep = ".")
         all.rn <- as.character(t(outer(chid.un, alt.un, paste, sep = ".")))
@@ -124,7 +127,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
         attr(mf, "index") <- index
     }
     # if estimate is FALSE, return the data.frame
-    if (!estimate) return(mf)
+    if (! estimate) return(mf)
 
     # 3 ###########################################################
     # extract the elements of the model
@@ -132,12 +135,19 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
 
     y <- model.response(mf)
     choice <- na.omit(alt[y])
+    # extract the X matrix for the standard deviation estimation
+    if (length(formula)[2] == 4){
+        sformula <- formula(as.Formula(formula), rhs = 4)
+        Xs <- model.matrix(sformula, omf)[! duplicated(index(omf)$chid), ]
+        formula <- mFormula(formula(as.Formula(formula), rhs = 1:3))
+    }
+    else Xs <- NULL
     X <- model.matrix(formula, mf)
     K <- ncol(X)
     df.residual <- n - K
     colnamesX <- colnames(X)
-    if (any(names(mf)=="(weights)")){
-        weights <- mf[["(weights)"]] <- mf[["(weights)"]]/mean(mf[["(weights)"]])
+    if (any(names(mf) == "(weights)")){
+        weights <- mf[["(weights)"]] <- mf[["(weights)"]] / mean(mf[["(weights)"]])
         weights <- split(weights, alt)[[1]]
     }
     else weights <- NULL
@@ -147,9 +157,8 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     # contains the chosen alternative
     Xl <- vector(length = J, mode = "list")
     names(Xl) <- levels(alt)
-    for (i in levels(alt)){
-        Xl[[i]] <- X[alt == i, , drop = FALSE]
-    }
+    for (i in levels(alt))  Xl[[i]] <- X[alt == i, , drop = FALSE]
+    
     yl <- split(y, alt)
     yl <- lapply(yl, function(x){x[is.na(x)] <- FALSE ; x})
   
@@ -184,6 +193,9 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
 
     # first give names to the supplementary coefficients and values if
     # start is null
+
+    sup.coef <- numeric(0)
+    names.sup.coef <- character(0)
     if (nested.logit){
         L <- length(nests)
         if (un.nest.el){
@@ -212,7 +224,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
         }
     }
     if (heterosc.logit){
-        if (is.null(start) || length(start) == K) sup.coef <- rep(1, J-1)
+        if (is.null(start) || length(start) == K) sup.coef <- rep(1, J - 1)
         names.sup.coef <- paste("sp", alt.lev[-1], sep = ".")
     }
     if (mixed.logit){
@@ -225,7 +237,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
         Varc <- (1:K)[- Vara]
         nmean <- length(c(Varc, Vara))
         nvar <- length(Vara)
-        if (!correlation){
+        if (! correlation){
             if (is.null(start) || length(start) == K) sup.coef <- rep(.1, nvar)
             names.sup.coef <- paste("sd", colnamesX[Vara], sep = ".")
         }
@@ -249,25 +261,34 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
             corrMat <- matrix(0.5, J - 1, J - 1)
             diag(corrMat) <- 1
             corrMat <- chol(corrMat)
-            sup.coef <- (t(corrMat)[!upper.tri(corrMat)])
+            sup.coef <- (t(corrMat)[! upper.tri(corrMat)])
             names(sup.coef) <- names.sup.coef
         }
     }
+
+    if (wlogit){
+        Xs <- Xs[, -1]
+        if (is.null(start) || length(start) == K) sup.coef <- c(sup.coef, rep(0.1, ncol(Xs)))
+        names.sup.coef <- c(names.sup.coef, paste("sig", colnames(Xs), sep = "."))
+    }
+    
     ## start can be :
     ##   1. NULL, in this case estimate the multinomial logit model,
     ##   2. a vector of length K ; then add starting values for the
     ##   supplementary coefficients,
     ##   3. a full set ; then just name the coefs.
+
     if (is.null(start)){
         callst <- callT
         start <- rep(0, K)
         names(start) <- colnamesX
         callst$start <- start
         callst$print.level <- 0
-        if (!multinom.logit){
+        if (! multinom.logit){
             callst$nests <- callst$rpar <- callst$constPar <- callst$iterlim <- NULL
             callst$heterosc <- callst$panel <- callst$probit <- FALSE
             callst$print.level <- 0
+            if (length(callst$formula)[2] == 4) callst$formula <- mFormula(formula(callst$formula, rhs = 1:3))#stop("lesbon")
             #      start <- coef(eval(callst, sys.frame(which=nframe)))
             start <- coef(eval(callst, parent.frame()))
             if (mixed.logit){
@@ -278,14 +299,14 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     }
     if (length(start) == K){
         names(start) <- colnamesX
-        if (!multinom.logit){
+        if (! multinom.logit){
             names(sup.coef) <- names.sup.coef
             if (probit) start <- start * sqrt(3) / pi
             start <- c(start, sup.coef)
         }
     }
     else{
-        if (!multinom.logit) names(start) <- c(colnamesX, names.sup.coef)
+        if (! multinom.logit) names(start) <- c(colnamesX, names.sup.coef)
         else names(start) <- colnamesX
     }
 
@@ -297,7 +318,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     #######################################################################
 
     opt <- callT
-    if (!is.null(opt$constPar)){
+    if (! is.null(opt$constPar)){
         theconstPar <- eval(opt$constPar)
         if (is.numeric(theconstPar)){
             if (is.null(names(theconstPar))) stop('the numeric constPar vector should be named')
@@ -313,18 +334,20 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     opt <- opt[c(1L, m)]
     opt[[1]] <- as.name('mlogit.optim')
     opt$logLik <- as.name('lnl.slogit')
-    
     opposite <- TRUE
     if (is.null(weights)) weights <- 1
     opposite <- ifelse(opposite, -1, +1)
     opt[c('weights', 'opposite')] <- list(as.name('weights'), as.name('opposite'))
-    if (!probit) opt[c('X', 'y')] <- list(as.name('Xl'), as.name('yl'))
+    if (! probit) opt[c('X', 'y')] <- list(as.name('Xl'), as.name('yl'))
     else opt[c('X', 'y')] <- list(as.name('DX'), as.name('yv'))
+
+    if (wlogit) opt[c('logLik', 'Xs')] <- list(as.name('lnl.wlogit'), as.name('Xs'))
+
     if (mixed.logit){
         opt$logLik <- as.name('lnl.rlogit')
-        opt[c('R', 'seed', 'id', 'rpar', 'correlation', 'halton')] <-
+        opt[c('R', 'seed', 'id', 'rpar', 'correlation', 'halton', 'Xs')] <-
             list(as.name('R'), as.name('seed'), as.name('id'), as.name('rpar'),
-                 as.name('correlation'), as.name('halton'))
+                 as.name('correlation'), as.name('halton'), as.name('Xs'))
     }
     if (probit){
         opt$logLik <- as.name('lnl.mprobit')
@@ -356,6 +379,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
         opt$un.nest.el <- as.name('un.nest.el')
     }
     ## Plante avec parent.frame
+
     x <- eval(opt, sys.frame(which = nframe))
 
     # 6 ###########################################################
@@ -382,7 +406,6 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     attr(x$coefficients, "fixed") <- attr(x$optimum, "fixed")
     gradient <- -  attr(x$optimum, "gradient")
     gradient <- - attr(x$optimum, "gradi")
-  
     # compute the probabilities for all the alternatives for
     # heteroscedastic and the probit model
     if (probit | heterosc){
@@ -432,7 +455,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
         alt.names <- colnames(probabilities)
         J <- length(alt.names)
         Omega <- matrix(0, J, J, dimnames = list(alt.names, alt.names))
-        diag(Omega) <- pi^2 / 6
+        diag(Omega) <- pi ^ 2 / 6
     }
     if (probit){
         S <- matrix(0, J - 1, J - 1)
@@ -474,9 +497,10 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
         diag(Omega) <- pi^2 / 6
         for (i in 2:J){
             analt <- alt.names[i]
-            Omega[analt, analt] <- pi^2 / 6 * x$coefficients[paste('sp', analt, sep = '.')]^2
+            Omega[analt, analt] <- pi ^ 2 / 6 * x$coefficients[paste('sp', analt, sep = '.')]^2
         }
     }
+    if (wlogit) Omega <- "plus tard"
     
     result <- structure(
         list(

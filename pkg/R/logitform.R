@@ -77,6 +77,8 @@ has.intercept.mFormula <- function(object, ...){
 }
 
 model.matrix.mFormula <- function(object, data, ...){
+    if (length(object)[2] == 4) object <- formula(object, rhs = 1:3)
+
   K <- length(data)
   omitlines <- attr(na.omit(data), "na.action")
   index <- attr(data, "index")

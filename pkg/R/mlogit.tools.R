@@ -100,8 +100,8 @@ numderiv <- function(f, param, ...){
     for (i in 1:length(param)){
         params <- param
         parami <- param
-        params[i] <- params[i]+eps
-        parami[i] <- parami[i]-eps
+        params[i] <- params[i] + eps
+        parami[i] <- parami[i] - eps
         m$param <- params
         lnls <- eval(m, parent.frame())
         m$param <- parami
@@ -158,14 +158,13 @@ mlogit.optim <- function(logLik, start,
     names(f)[2] <- 'param'
     # eval a first time the function, the gradient and the hessian
     x <- eval(f, parent.frame())
-    if (FALSE){
-        print(attr(x, "gradient"))
+    if (TRUE){
         nd <- f
         nd[["f"]] <- nd[[1]]
         nd[[1]] <- as.name("numderiv")
         nd$gradient <- FALSE
         bla <- eval(nd, parent.frame())
-        print(cbind(numeric = bla, analytic = attr(x, "gradient")))
+        print(cbind(coef = f$param, numeric = bla, analytic = attr(x, "gradient")))
         cat("____________\n");
     }
 

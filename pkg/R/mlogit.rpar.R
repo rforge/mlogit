@@ -1,85 +1,139 @@
 make.beta <- function(mua, siga, rpar, random.nb, correlation){
-  nr <- names(rpar)
-  censored <-    nr[rpar == "cn"]
-  lognormal <-   nr[rpar == "ln"]
-  truncated <-   nr[rpar == "tn"]
-  normal  <-     nr[rpar ==  "n"]
-  uniform  <-    nr[rpar ==  "u"]
-  triangular  <- nr[rpar ==  "t"]
-  Ka <- ncol(random.nb)
-  R <- nrow(random.nb) 
-  
-  betaa <- matrix(NA, R, Ka)
-  betaa.mu <- betaa.sigma <- betaa
 
-  colnames(betaa) <- colnames(betaa.mu) <- colnames(betaa.sigma) <-
-    colnames(random.nb) <- names(mua)
-  if (correlation){
-    colnames(random.nb) <- NULL
-    CC <- makeC(siga)
-    sigeta <- tcrossprod(random.nb, CC)
-    colnames(sigeta) <- nr
-#    mymua <- mua
-#    mysiga <- sigeta
-#    betaa <- t(mymua + t(mysiga))
-    betaa <- t(mua + t(sigeta))
-    betaa.mu <- matrix(1, R, Ka)
-    betaa.sigma <- random.nb[, rep(1:Ka, Ka:1)]
 
-    for (i in 1:Ka){
-      sigi <- i + cumsum(c(0, (Ka-1):1))[1:i]
-      if (rpar[i] == "cn"){
-        betaa[, i] <- pmax(betaa[, i], 0)
-#        betaa.mu[, i] <- (betaa[, i] > 0) * 1 + 0
-#        betaa.sigma[, sigi] <- ( (betaa[, i] > 0) * 1 + 0) * betaa.sigma[, sigi]
-        betaa.mu[, i] <- as.numeric(betaa[, i] > 0)
-        betaa.sigma[, sigi] <- as.numeric(betaa[, i] > 0) * betaa.sigma[, sigi]
-      }
-      if (rpar[i] == "ln"){
-        betaa[, i] <- exp(betaa[, i])
-        betaa.mu[, i] <- betaa[, i]
-        betaa.sigma[, sigi] <- betaa[, i] * betaa.sigma[, sigi]
-      }
-    }
-  }
-  else{
-    if(length(censored) > 0){
-      sel <- censored
-      betaa[, sel] <- pmax(t(mua[sel] + siga[sel] * t(random.nb[, sel, drop = FALSE])), 0)
-      betaa.mu[, sel] <- as.numeric(betaa[, sel] > 0)
-      betaa.sigma[, sel] <- betaa.mu[, sel] * random.nb[, sel]
-    }
-    if(length(lognormal) > 0){
-      sel <- lognormal
-      betaa[, sel] <- exp(t(mua[sel] + siga[sel] * t(random.nb[, sel, drop = FALSE])))
-      betaa.mu[, sel] <- betaa[, sel, drop = FALSE]
-      betaa.sigma[, sel] <- betaa.mu[, sel] * random.nb[, sel]
-    }
-    if(length(normal) > 0){
-      sel <- normal
-      betaa[, sel] <- t(mua[sel] + siga[sel] * t(random.nb[, sel, drop = FALSE]))
-      betaa.mu[, sel] <- 1
-      betaa.sigma[, sel] <- random.nb[, sel, drop = FALSE]
-    }
+    uncorrelated <- setdiff(names(rpar), correlation)
+    correlated <-   names(mua)[sort(match(correlation,  names(mua)))]
+    uncorrelated <- names(mua)[sort(match(uncorrelated, names(mua)))]
+    singlepar <- names(rpar)[rpar %in% c("zbu", "zbt")]
+    singlepar <- names(mua)[sort(match(singlepar, names(mua)))]
+    utwopars <- setdiff(uncorrelated, singlepar)
 
-    if(length(uniform) > 0){
-      sel <- uniform
-      etauni <- pnorm(random.nb[, sel, drop = FALSE])
-      betaa[, sel] <- t(mua[sel] - siga[sel] + 2 * t(etauni) * siga[sel])
-      betaa.mu[, sel] <- 1
-      betaa.sigma[, sel] <- 2 * etauni - 1
-    }
+    if (is.logical(correlation) && ! correlation) correlation <- character(0)
+    nr <- names(mua)
+    rpar <- rpar[nr]
 
-    if(length(triangular) > 0){
-      sel <- triangular
-      eta05 <- random.nb[, sel, drop= FALSE ] < 0.5
-      betaa.mu[, sel] <- 1
-      betaa.sigma[, sel] <- eta05 * (sqrt(2 * pnorm(random.nb[, sel, drop = FALSE])) - 1) +
-        ! eta05 * (1-sqrt(2 * (1 - pnorm(random.nb[, sel, drop = FALSE]))))
-      betaa[, sel] <- t(mua[sel] + siga[sel] * t(betaa.sigma[, sel]))
+    censored <-    nr[rpar == "cn"]
+    lognormal <-   nr[rpar == "ln"]
+    truncated <-   nr[rpar == "tn"]
+    normal  <-     nr[rpar ==  "n"]
+    uniform  <-    nr[rpar ==  "u"]
+    triangular  <- nr[rpar ==  "t"]
+
+    zbuniform <- nr[rpar == "zbu"]
+    zbtriangular <- nr[rpar == "zbt"]
+
+    Ko <- sum(rpar %in% c("zbu", "zbt"))
+        
+    R <- nrow(random.nb)
+    Ku <- length(uncorrelated)
+    Kc <- length(correlated)
+    Ka <- Kc + Ku
+
+    betaa <- matrix(NA, R, Ka)
+    colnames(betaa) <- nr
+    betaa.mu <- betaa
+
+    if (Ku){
+        random.nbu <- random.nb[, 1:Ku, drop = FALSE]
+        if (Ku - Ko){
+            betaa.sigmau <- matrix(NA, R, Ku - Ko)       
+            colnames(betaa.sigmau) <- paste("sd.", utwopars, sep = "")
+        }
+        colnames(random.nbu) <- paste("sd.", uncorrelated, sep = "")
+
+
+        sel <- intersect(uniform, uncorrelated)
+        sd.sel <- paste("sd.", sel, sep = "")
+        if (length(sel)){
+            etauni <- pnorm(random.nbu[, sd.sel, drop = FALSE])
+            betaa[, sel] <- t(mua[sel] - siga[sd.sel] + 2 * t(etauni) * siga[sd.sel])
+            betaa.mu[, sel] <- 1
+            betaa.sigmau[, sd.sel] <- 2 * etauni - 1
+        }
+
+        sel <- intersect(zbuniform, uncorrelated)
+        if (length(sel)){
+            etauni <- pnorm(random.nbu[, paste("sd.", sel, sep = ""), drop = FALSE])
+            betaa[, sel] <- 2 * etauni * mua[sel]
+            betaa.mu[, sel] <- 2 * etauni
+        }
+
+        sel <- intersect(triangular, uncorrelated)
+        sd.sel <- paste("sd.", sel, sep = "")
+        if (length(sel)){
+            eta05 <- random.nbu[, sd.sel, drop = FALSE ] < 0.5
+            betaa.mu[, sel] <- 1
+            betaa.sigmau[, sd.sel] <- eta05 * (sqrt(2 * pnorm(random.nbu[, sd.sel, drop = FALSE])) - 1) +
+                ! eta05 * (1-sqrt(2 * (1 - pnorm(random.nbu[, sd.sel, drop = FALSE]))))
+            betaa[, sel] <- t(mua[sel] + siga[sd.sel] * t(betaa.sigmau[, sd.sel]))
+        }
+
+        sel <- intersect(zbtriangular, uncorrelated)
+        sd.sel <- paste("sd.", sel, sep = "")
+        if (length(sel)){
+            eta05 <- random.nbu[, sd.sel, drop = FALSE] < 0.5
+            betaa.mu[, sel] <- eta05 * sqrt(2 * pnorm(random.nbu[, sd.sel, drop = FALSE])) +
+                ! eta05 * (2 - sqrt(2 * (1 - pnorm(random.nbu[, sd.sel, drop = FALSE]))))
+            betaa[, sel] <- t(t(betaa.mu[, sel]) * mua[sel])
+        }
+
+        
+        sel <- intersect(censored, uncorrelated)
+        sd.sel <- paste("sd.", sel, sep = "")
+        if (length(sel)){
+            betaa[, sel] <- pmax(t(mua[sel] + siga[sd.sel] *
+                                   t(random.nbu[, sd.sel, drop = FALSE])), 0)
+            betaa.mu[, sel] <- as.numeric(betaa[, sel] > 0)
+            betaa.sigmau[, sd.sel] <- betaa.mu[, sel] * random.nbu[, sd.sel]
+        }
+
+        sel <- intersect(lognormal, uncorrelated)
+        sd.sel <- paste("sd.", sel, sep = "")
+        if (length(sel)){
+            betaa[, sel] <- exp(t(mua[sel] + siga[sd.sel] * t(random.nbu[, sd.sel, drop = FALSE])))
+            betaa.mu[, sel] <- betaa[, sel, drop = FALSE]
+            betaa.sigmau[, sd.sel] <- betaa.mu[, sel] * random.nbu[, sd.sel]
+        }
+        sel <- intersect(normal, uncorrelated)
+        sd.sel <- paste("sd.", sel, sep = "")
+        if (length(sel)){
+            betaa[, sel] <- t(mua[sel] + siga[sd.sel] * t(random.nbu[, sd.sel, drop = FALSE]))
+            betaa.mu[, sel] <- 1
+            betaa.sigmau[, sd.sel] <- random.nbu[, sd.sel, drop = FALSE]
+        }
+        
     }
-  }
-  list(betaa = betaa, betaa.mu = betaa.mu, betaa.sigma = betaa.sigma)
+    
+    if (Kc){
+        names.corr.coef <- c()
+        for (i in 1:Kc) names.corr.coef <- c(names.corr.coef, paste(correlated[i], correlated[i:Kc], sep = "."))
+        random.nbc <- random.nb[, (Ku + 1):(Ku + Kc), drop = FALSE]
+        CC <- makeC(siga[(Ku - Ko + 1):length(siga)])
+        sigeta <- tcrossprod(random.nbc, CC)
+        colnames(sigeta) <- correlated
+        betaa[, correlated] <- t(mua[correlated] + t(sigeta))
+        betaa.mu[, correlated] <- matrix(1, R, length(correlated))
+        betaa.sigmac <- random.nbc[, rep(1:Kc, Kc:1)]
+        colnames(betaa.sigmac) <- names.corr.coef
+        for (i in 1:Kc){
+            sigi <- i + cumsum(c(0, (Kc - 1):1))[1:i]
+            if (rpar[i] == "cn"){
+                betaa[, i] <- pmax(betaa[, i], 0)
+                betaa.mu[, i] <- as.numeric(betaa[, i] > 0)
+                betaa.sigmac[, sigi] <- as.numeric(betaa[, i] > 0) * betaa.sigmac[, sigi]
+            }
+            if (rpar[i] == "ln"){
+                betaa[, i] <- exp(betaa[, i])
+                betaa.mu[, i] <- betaa[, i]
+                betaa.sigmac[, sigi] <- betaa[, i] * betaa.sigmac[, sigi]
+            }
+        }
+    }
+    if (Kc &   (Ku - Ko)) betaa.sigma <- cbind(betaa.sigmau, betaa.sigmac)
+    if (Kc & ! (Ku - Ko)) betaa.sigma <- betaa.sigmac
+    if (! Kc & (Ku - Ko)) betaa.sigma <- betaa.sigmau
+    if (! Kc & ! (Ku - Ko)) betaa.sigma <- NULL
+    list(betaa = betaa, betaa.mu = betaa.mu, betaa.sigma = betaa.sigma)
 }
 
 gnrpoints <- function(low, up, n = 100){
@@ -146,7 +200,7 @@ make.rpar <- function(rpar, correlation, estimate, norm){
     K <- length(rpar)
     nr <- names(rpar)
     rpar <- lapply(rpar, function(x) list(dist = x))
-    if (correlation){
+    if (length(correlation)){
         Ktot <- length(estimate)
         v <- estimate[(Ktot - 0.5 * K * (K + 1) + 1):Ktot]
         v <- tcrossprod(makeC(v))
@@ -156,7 +210,7 @@ make.rpar <- function(rpar, correlation, estimate, norm){
     }      
     for (i in (1:K)){
         m <- estimate[nr[i]]
-        if (!correlation){
+        if (! length(correlation)){
             s <- estimate[paste("sd.", nr[i], sep = "")]
         }
         else{
@@ -173,7 +227,7 @@ make.rpar <- function(rpar, correlation, estimate, norm){
         }
     }
     z <- lapply(rpar, function(x){attr(x, "class") = "rpar" ;x})
-    if (correlation) attr(z, 'covariance') <- v
+    if (length(correlation)) attr(z, 'covariance') <- v
     z
 }
 
@@ -262,14 +316,18 @@ print.rpar <- function(x, digits = max(3, getOption("digits") - 2),
                    "ln" = "log-normal",
                    "cn" = "censored normal",
                    "t"  = "triangular",
-                   "u"  = "uniform"
+                   "u"  = "uniform",
+                   "zbu" = "uniform",
+                   "zbt" = "triangular"
                    )
     npar1 <- switch(x$dist,
                     "n"  = "mean",
                     "ln" = "meanlog",
                     "cn" = "mean",
                     "t"  = "center",
-                    "u"  = "center"
+                    "u"  = "center",
+                    "zbu" = "center",
+                    "zbt" = "center"
                     )
     
     npar2 <- switch(x$dist,
@@ -277,13 +335,15 @@ print.rpar <- function(x, digits = max(3, getOption("digits") - 2),
                     "ln" = "sdlog",
                     "cn" = "sd",
                     "t"  = "span",
-                    "u"  = "span"
+                    "u"  = "span",
+                    "zbu" = NA,
+                    "zbt" = NA
                     )
     par1 <- x$mean
     par2 <- x$sigma
-    cat(paste(dist, " distribution with parameters ",round(par1,3),
-              " (", npar1, ")", " and ", round(par2,3),
-              " (",npar2,")", "\n",sep=""))
+    cat(paste(dist, " distribution with parameters ",round(par1, 3),
+              " (", npar1, ")", " and ", round(par2, 3),
+              " (",npar2,")", "\n",sep = ""))
 }
 
 summary.rpar <- function(object, ...){
@@ -327,7 +387,9 @@ m2norm <- function(m, dist, norm){
            "ln" = m - log(norm),
            "t"  = m / norm,
            "cn" = m / norm,
-           "u"  = m / norm
+           "u"  = m / norm,
+           "zbu" = m / norm,
+           "zbt" = m / norm
            )
 }
 
@@ -337,7 +399,9 @@ s2norm <- function(s, dist, norm){
            "ln" = s,
            "t"  = s / norm,
            "cn" = s / norm,
-           "u"  = s / norm
+           "u"  = s / norm,
+           "zbu" = s / norm,
+           "zbt" = s / norm
            )
 }
 
@@ -369,7 +433,9 @@ mean.rpar <- function(x, norm = NULL, ...){
            "ln" = exp(m + 0.5 * s^2),
            "u"  = m,
            "t"  = m,
-           "cn" = s * dnorm(- m / s) + m * (1 - pnorm(- m / s))
+           "cn" = s * dnorm(- m / s) + m * (1 - pnorm(- m / s)),
+           "zbu" = m,
+           "zbt" = m
            )
 }
 
@@ -386,7 +452,9 @@ med.rpar <- function(x, norm = NULL, ...){
            "ln" = exp(m),
            "u"  = m,
            "t"  = m,
-           "cn" = max(0, m)
+           "cn" = max(0, m),
+           "zbu" = m,
+           "zbt" = m
            )
 }
 
@@ -400,11 +468,13 @@ stdev.rpar <- function(x, norm = NULL, ...){
     }
     switch(dist,
            "n"  = s,
-           "ln" = sqrt(exp(s^2)-1)*exp(m+0.5*s^2),
-           "u"  = s^2/3,
+           "ln" = sqrt(exp(s ^ 2) - 1) * exp(m + 0.5 * s ^ 2),
+           "u"  = s ^ 2 / 3,
            "t"  = s,
-           "cn" = sqrt( s^2*(1-pnorm(-m/s))+m*(s*dnorm(-m/s)+m*(1-pnorm(-m/s)))-
-                        (s*dnorm(-m/s)+m*(1-pnorm(-m/s)))^2)
+           "cn" = sqrt( s ^ 2 * (1 - pnorm(- m / s)) + m * (s * dnorm(- m / s) + m * (1 - pnorm(- m / s))) -
+                        (s * dnorm(- m / s) + m * (1 - pnorm(- m / s))) ^ 2),
+           "zbu" = m ^ 2 / 3,
+           "zbt" = m
            )
 }
 
@@ -412,7 +482,7 @@ rg.rpar <- function(x, norm = NULL, ...){
     dist <- x$dist
     m <- x$mean
     s <- abs(x$sigma)
-    if (!is.null(norm)){
+    if (! is.null(norm)){
         s <- s2norm(s, dist, norm)
         m <- m2norm(m, dist, norm)
     }
@@ -421,7 +491,9 @@ rg.rpar <- function(x, norm = NULL, ...){
                      "ln" = c(0, +Inf),
                      "u"  = c(m - s, m + s),
                      "t"  = c(m - s, m + s),
-                     "cn" = c(0, +Inf)
+                     "cn" = c(0, +Inf),
+                     "zbu" = c(0, 2 * m),
+                     "zbt" = c(0, 2 * m)
                      )
     names(result) <- c('Min.', 'Max.')
     result
@@ -476,12 +548,15 @@ qrpar.rpar <- function(x, norm = NULL, ...){
         m <- m2norm(m, dist, norm)
     }
     switch(dist,
-           "n"  = function(x=(1:9)/10) qnorm(x, m, s),
-           "ln" = function(x=(1:9)/10) qlnorm(x, m, s),
-           "u"  = function(x=(1:9)/10) qunif(x, m - s, m + s),
-           "t"  = function(x=(1:9)/10) (m - s + sqrt(2 * s^2 * x)) *
-                                       (x <= 0.5)+(m + s - sqrt(2 * s^2 *(1 - x))) *(x > 0.5),
-           "cn" = function(x=(1:9)/10) max(0, qnorm(x, m, s))
+           "n"  = function(x = (1:9) / 10) qnorm(x, m, s),
+           "ln" = function(x = (1:9) / 10) qlnorm(x, m, s),
+           "u"  = function(x = (1:9) / 10) qunif(x, m - s, m + s),
+           "t"  = function(x = (1:9) / 10) (m - s + sqrt(2 * s^2 * x)) *
+                                       (x <= 0.5) + (m + s - sqrt(2 * s^2 *(1 - x))) *(x > 0.5),
+           "cn" = function(x=(1:9)/10) max(0, qnorm(x, m, s)),
+           "zbu" = function(x = (1:9) / 10) qunif(x, 0, 2 * m),
+           "zbt" = function(x = (1:9) / 10) sqrt(2 * m ^ 2 * x) *
+                                            (x <= 0.5) + (2 * m - sqrt(2 * m ^ 2 *(1 - x))) * (x > 0.5)
            )
 }
 
@@ -497,9 +572,13 @@ prpar.rpar <- function(x, norm = NULL, ...){
            "n"  = function(x) pnorm(x, m, s),
            "ln" = function(x) plnorm(x, m, s),
            "u"  = function(x) punif(x, m - s, m + s),
-           "t"  = function(x) (x >= (m - s) & x < m)*(x - m + s)^2 / (2 * s^2) +
-                              (x >= m & x <= (m + s)) * (1 - (m + s - x)^2 / (2 * s^2)) + (x > (m + s)) * 1 + 0,
-           "cn" = function(x) pnorm(x, m, s)
+           "t"  = function(x) (x >= (m - s) & x < m) * (x - m + s) ^ 2 / (2 * s ^ 2) +
+                              (x >= m & x <= (m + s)) * (1 - (m + s - x) ^ 2 / (2 * s ^ 2)) + (x > (m + s)) * 1 + 0,
+           "cn" = function(x) pnorm(x, m, s),
+           "zbu" = function(x) punif(x, 0, 2 * m),
+           "zbt"  = function(x) (x >= 0 & x < m) * x ^ 2 / (2 * m ^ 2) +
+                                (x >= m & x <= 2 * m) * (1 - (2 * m) ^ 2 / (2 * m ^ 2)) + (x > 2 * m) * 1 + 0
+
            )
 }
 
@@ -512,12 +591,15 @@ drpar.rpar <- function(x, norm = NULL, ...){
         m <- m2norm(m, dist, norm)
     }
     switch(dist,
-           "n"=function(x) dnorm(x, m, s),
-           "ln"=function(x) dlnorm(x, m, s),
-           "u"=function(x) (1/s+x*0)*(x >= m-s & x <= m+s) + 0,
-           "t"=function(x) (x >= (m-s) & x < m)*(x-m+s)/s^2+
-                           (x>=m & x <= (m+s))*(s+m-x)/s^2+0,
-           "cn"=function(x) dnorm(x,m,s)
+           "n"  = function(x) dnorm(x, m, s),
+           "ln" = function(x) dlnorm(x, m, s),
+           "u"  = function(x) (1 / s + x * 0) * (x >= m - s & x <= m + s) + 0,
+           "t"  = function(x) (x >= (m - s) & x < m) * (x - m + s) / s ^ 2 +
+                              (x >= m & x <= (m + s)) * (s + m - x) / s ^ 2 + 0,
+           "cn" = function(x) dnorm(x, m, s),
+           "zbu" = function(x) dunif(x, 0, 2 * m),
+           "zbt" = function(x) (x >= 0 & x < m) * x / m ^ 2 +
+                               (x >= m & x <= 2 * m) * (2 * m - x) / m ^ 2 + 0,
            )
 }
 

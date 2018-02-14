@@ -515,50 +515,79 @@ lnl.rlogit <- function(param, X, y, Xs, weights = NULL,
                        gradient = TRUE, hessian = FALSE, opposite = TRUE,
                        direction = rep(0, length(param)), initial.value = NULL, stptol = 1e-10,
                        R, seed, id, rpar, correlation, halton){
+
     panel <- ! is.null(id)
     otime <- proc.time()
     K <- ncol(X[[1]])
     Ktot <- length(param)
     N <- nrow(X[[1]])
     J <- length(X)
-    if (! is.null(Xs)){
-        Ks <- ncol(Xs)
-    }  else Ks <- 0
+    
+    if (! is.null(Xs)) Ks <- ncol(Xs) else Ks <- 0
     fpsigma <- Xs
+    
     if (panel){
         n <- length(unique(id))
         if (length(weights) == 1) weights <- rep(weights, N)
     }
-    Vara <- sort(match(names(rpar), colnames(X[[1]])))
-    Varc <- (1:K)[- Vara]
-    if (! is.null(Xs)) Vars <- (Ktot - Ks + 1):Ktot else Vars <- numeric(0)
-    Varr <- (1:Ktot)[- c(Vara, Varc, Vars)]
-    Ka <- length(Vara)
-    Kc <- length(Varc)
-    Xa <- lapply(X, function(x) x[, Vara, drop = FALSE])
-    Xc <- lapply(X, function(x) x[, Varc, drop = FALSE])
-    K <- Kc + Ka
+
+     colnamesX <- colnames(X[[1]])
+    ## uncorrelated <- setdiff(names(rpar), correlation)
+    ## fixedpar <- setdiff(colnamesX, names(rpar))
+    ## correlated <-   colnamesX[sort(match(correlation,  colnamesX))]
+    ## uncorrelated <- colnamesX[sort(match(uncorrelated, colnamesX))]
+    ## fixedpar <- colnamesX[sort(match(fixedpar, colnamesX))]
+    ## randompar <- colnamesX[sort(match(names(rpar), colnamesX))]
+
+    uncorrelated <- setdiff(names(rpar), correlation)
+    fixedpar <- setdiff(colnamesX, names(rpar))
+    singlepar <- names(rpar)[rpar %in% c("zbu", "zbt")]
+    utwopars <- intersect(names(rpar)[! rpar %in% c("zbu", "zbt")], uncorrelated)       
+    correlated <-   colnamesX[sort(match(correlation,  colnamesX))]
+    uncorrelated <- colnamesX[sort(match(uncorrelated, colnamesX))]
+    fixedpar <- colnamesX[sort(match(fixedpar, colnamesX))]
+    randompar <- colnamesX[sort(match(names(rpar), colnamesX))]
+    singlepar <- colnamesX[sort(match(singlepar, colnamesX))]
+    utwopars <- colnamesX[sort(match(utwopars, colnamesX))]
+    
+    Kc <- length(correlated)
+    Ku <- length(uncorrelated)
+    Ktot <- length(param)
+    Ko <- Ku - length(utwopars)
+    
+    Vf <- match(fixedpar, names(param))
+    Va <- match(randompar, names(param))
+    Vc <- match(correlated, names(param))
+    Vu <- match(utwopars, names(param))
+    if (! is.null(Xs)) Vs <- (Ktot - Ks + 1):Ktot else Vs <- numeric(0)
+    Vv <- (1:Ktot)[- c(Vf, Va, Vs)]
+    Vvu <- Vv[1:(Ku - Ko)]
+    Vvc <- Vv[- (0:(Ku - Ko))]
+
+    Kv <- length(Vv)
+
+    Xf <- lapply(X, function(x) x[, fixedpar, drop = FALSE])
+    Xc <- lapply(X, function(x) x[, correlated, drop = FALSE])
+    Xu <- lapply(X, function(x) x[, utwopars, drop = FALSE])
+    Xa <- lapply(X, function(x) x[, randompar, drop = FALSE])
 
     set.seed(seed)
-    random.nb <- make.random.nb(R * ifelse(! is.null(id), n, N), Ka, halton)
+    random.nb <- make.random.nb(R * ifelse(! is.null(id), n, N), Ku + Kc, halton)
+
     step <- 2
     repeat{
         step <- step / 2
         if (step < stptol) break
-        betac <- param[Varc] + step * direction[Varc]
-        mua <- param[Vara] + step * direction[Vara]
-        siga <- param[Varr] + step * direction[Varr]
+        betaf <- param[Vf] + step * direction[Vf]
+        mua <- param[Va] + step * direction[Va]
+        siga <- param[Vv] + step * direction[Vv]
         if (! is.null(Xs)){
-            lambda <- param[Vars] + step * direction[Vars]
+            lambda <- param[Vs] + step * direction[Vs]
             sigma <- 1 + as.numeric(Xs %*% lambda)
             fpsigma <- Xs
         }
-        else{
-            sigma <- rep(1, nrow(X[[1]]))
-        }
-        # seems redondant for uncorrelated models and false for correlated ones
-        if (! correlation) names(mua) <- names(siga) <- colnames(Xa[[1]])
-        A <- lapply(Xc, function(x) as.vector(crossprod(t(as.matrix(x) * sigma), betac)))
+        else sigma <- rep(1, nrow(X[[1]]))
+        A <- lapply(Xf, function(x) as.vector(crossprod(t(as.matrix(x) * sigma), betaf)))
         B <- vector(mode = "list", length = J)
         for (j in 1:J) B[[j]] <- matrix(NA, N, R)
         ndraws <- ifelse(panel, n, N)
@@ -569,9 +598,13 @@ lnl.rlogit <- function(param, X, y, Xs, weights = NULL,
                 theRows <- which(id == anid)
             }
             else theRows <- i
-            b <- make.beta(mua, siga, rpar, random.nb[((i - 1) * R + 1):(i * R), , drop = FALSE] , correlation)
+            b <- make.beta(mua, siga, rpar,
+                           random.nb[((i - 1) * R + 1):(i * R), ,
+                                     drop = FALSE] , correlation)
             betaa <- b$betaa
-            for (j in 1:J) B[[j]][theRows,] <- tcrossprod(Xa[[j]][theRows, , drop = FALSE] * sigma[theRows], betaa)
+            for (j in 1:J) B[[j]][theRows,] <-
+                               tcrossprod(Xa[[j]][theRows, ,
+                                                  drop = FALSE] * sigma[theRows], betaa)
         }
         AB <- mapply(function(x, y) exp(x + y), A, B, SIMPLIFY = FALSE)
         S <- suml(AB)
@@ -580,46 +613,52 @@ lnl.rlogit <- function(param, X, y, Xs, weights = NULL,
         Pch <- suml(mapply("*", P, y, SIMPLIFY = FALSE))
         if (panel) Pch <- apply(Pch, 2, tapply, id, prod)
         pm <- apply(Pch, 1, mean)
-        if (panel) lnl <- opposite * sum(weights[!duplicated(id)] * log(pm))
+        if (panel) lnl <- opposite * sum(weights[! duplicated(id)] * log(pm))
         else lnl <- opposite * sum(weights * log(pm))
-
         if (is.null(initial.value) || lnl <= initial.value) break
     }
     if (gradient){
-        Xac <- suml(mapply("*", Xa, y, SIMPLIFY = FALSE))
-        Xcc <- suml(mapply("*", Xc, y, SIMPLIFY = FALSE))
-        if (correlation){
-            names.cor <- c()
-            for (i in 1:Ka){
-                names.cor <- c(names.cor, paste(names(rpar)[i], names(rpar)[i:Ka], sep=":"))
-            }
+
+        Xf.ch <- suml(mapply("*", Xf, y, SIMPLIFY = FALSE))
+        Xa.ch <- suml(mapply("*", Xa, y, SIMPLIFY = FALSE))
+        if (Kc){
             vecX <- c()
-            for (i in 1:Ka){
-                vecX <- c(vecX, i:Ka)
-            }
-            Xas <- lapply(Xa,  function(x) x[, vecX])
-            Xac <- suml(mapply("*", Xa, y, SIMPLIFY = FALSE))
-            Xacs <- suml(mapply("*", Xas, y, SIMPLIFY = FALSE))
-            colnames(Xacs) <- names(param)[Varr]
+            for (i in 1:Kc) vecX <- c(vecX, i:Kc)
+            Xc <- lapply(Xc,  function(x) x[, vecX, drop = FALSE])            
+            Xc.ch <- suml(mapply("*", Xc, y, SIMPLIFY = FALSE))
+            colnames(Xc.ch) <- names(param)[Vvc]
         }
-        else{
-            Xacs <- Xac
-            Xas <- Xa
-            names.cor <- paste("sd", names(rpar), sep = ".")
+        if (Ku - Ko){
+            Xu.ch <- suml(mapply("*", Xu, y, SIMPLIFY = FALSE))
+            colnames(Xu.ch) <- names(param)[Vvu]
         }
+        if ((Ku - Ko) & Kc){
+            Xas.ch <- cbind(Xu.ch, Xc.ch)
+            Xas <- mapply("cbind", Xu, Xc, SIMPLIFY = FALSE)
+        }
+        if ((Ku - Ko) & ! Kc){
+            Xas.ch <- Xu.ch
+            Xas <- Xu
+        }
+        if (! (Ku - Ko) & Kc){
+            Xas.ch <- Xc.ch
+            Xas <- Xc
+        }
+        
         if (panel){
             Pch <- Pch[as.character(id), ]
             pm <- apply(Pch, 1, mean)
         }
+
         PCP <- lapply(P, function(x) Pch * x)
         PCPs <- lapply(PCP, function(x) apply(x, 1, sum))
-        grad.cst <- Xcc - suml(mapply("*", Xc, PCPs, SIMPLIFY = FALSE))/(R * pm)
+        grad.cst <- Xf.ch - suml(mapply("*", Xf, PCPs, SIMPLIFY = FALSE))/(R * pm)
         PCPm <- PCPs <- vector(mode = "list", length = J)
-        Pchm <- matrix(NA, N, Ka)
-        Pchs <- matrix(NA, N, length(names.cor))
+        Pchm <- matrix(NA, N, Ku + Kc)
+        Pchs <- matrix(NA, N, Kv)
         for (j in 1:J){
-            PCPm[[j]] <- matrix(NA, N, Ka)
-            PCPs[[j]] <- matrix(NA, N, length(names.cor))
+            PCPm[[j]] <- matrix(NA, N, Ku + Kc)
+            PCPs[[j]] <- matrix(NA, N, Kv)
         }
         for (i in 1:ndraws){
             if (panel){
@@ -627,8 +666,9 @@ lnl.rlogit <- function(param, X, y, Xs, weights = NULL,
                 theRows <- which(id == anid)
             }
             else theRows <- i
-            b <- make.beta(mua, siga, rpar, random.nb[((i - 1) * R + 1):(i * R), , drop = FALSE] , correlation)
-            
+            b <- make.beta(mua, siga, rpar,
+                           random.nb[((i - 1) * R + 1):(i * R), , drop = FALSE],
+                           correlation)
             Pchm[theRows, ] <- tcrossprod(Pch[theRows, ], t(b$betaa.mu))
             Pchs[theRows, ] <- tcrossprod(Pch[theRows, ], t(b$betaa.sigma))
             for (j in 1:J){
@@ -636,18 +676,18 @@ lnl.rlogit <- function(param, X, y, Xs, weights = NULL,
                 PCPs[[j]][theRows,] <- tcrossprod(PCP[[j]][theRows, ], t(b$betaa.sigma)) 
             }
         }
-        grad.mu <- (Pchm * Xac  - suml(mapply("*", Xa,  PCPm, SIMPLIFY = FALSE))) / (R * pm)
-        grad.sd <- (Pchs * Xacs - suml(mapply("*", Xas, PCPs, SIMPLIFY = FALSE))) / (R * pm)
+        grad.mu <- (Pchm * Xa.ch  - suml(mapply("*", Xa,  PCPm, SIMPLIFY = FALSE))) / (R * pm)
+        grad.sd <- (Pchs * Xas.ch - suml(mapply("*", Xas, PCPs, SIMPLIFY = FALSE))) / (R * pm)
         gradi <- matrix(NA, N, K + ncol(grad.sd))
-        gradi[, Varc] <- - grad.cst
-        gradi[, Vara] <- - grad.mu
-        gradi[, Varr] <- - grad.sd       
+        gradi[, Vf] <- - grad.cst
+        gradi[, Va] <- - grad.mu
+        gradi[, Vv] <- - grad.sd
         if (! is.null(Xs)){
             gradi <- gradi * sigma
-            betas <- numeric(length = length(c(Varc, Vara, Varr)))
-            betas[Varc] <- betac
-            betas[Vara] <- mua
-            betas[Varr] <- siga
+            betas <- numeric(length = length(c(Va, Vf, Vv)))
+            betas[Vf] <- betaf
+            betas[Va] <- mua
+            betas[Vv] <- siga
             gradsi <- sapply(as.data.frame(fpsigma),
                              function(x) apply(x * t(t(gradi) * betas), 1, sum))
             gradi <- cbind(gradi, gradsi)

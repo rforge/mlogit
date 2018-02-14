@@ -72,7 +72,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     alt <- index[["alt"]]
     chid <- index[["chid"]]
     if (panel){
-        if (!mixed.logit) stop("panel is only relevant for mixed logit models")
+        if (! mixed.logit) stop("panel is only relevant for mixed logit models")
         id <- index[["id"]]
         if (is.null(id)) stop("no individual index")
         # bug, only works when all the alternatives are available for all the choice situations
@@ -116,6 +116,9 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
         index <- data.frame(chid = chid, alt = alt, row.names = rownames(mf))
         balanced <- FALSE
     }
+    else omf <- mf
+    # ! QDBC YC
+    
     #suppress individuals for which no choice is made
     if (FALSE){
         delete.id <- tapply(model.response(mf), chid, sum, na.rm = TRUE)
@@ -218,9 +221,9 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
                 names.sup.coef <- c(names.sup.coef, paste('iv', alt.lev[i], alt.lev[(i+1):J], sep = "."))
             }
             sup.coef <- rep(1, length(names.sup.coef))
-        # in case we have to suppress one nest
-        ## sup.coef <- sup.coef[-1]
-        ## names.sup.coef <- names.sup.coef[-1]
+            # in case we have to suppress one nest
+            ## sup.coef <- sup.coef[-1]
+            ## names.sup.coef <- names.sup.coef[-1]
         }
     }
     if (heterosc.logit){
@@ -228,28 +231,59 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
         names.sup.coef <- paste("sp", alt.lev[-1], sep = ".")
     }
     if (mixed.logit){
-        unknowndist <- rpar[! (rpar %in% c("cn", "ln", "tn", "n", "u", "t"))]
+        unknowndist <- rpar[! (rpar %in% c("cn", "ln", "tn", "n", "u", "t", "zbu", "zbt"))]
         if (length(unknowndist) > 0){
             udstr <- paste("unknown distribution", paste(unique(unknowndist), collapse = ", "))
             stop(udstr)
+        }        
+        names.rpar <- names(rpar)
+        names.rpar.sig <- names.rpar[! rpar %in% c("zbu", "zbt")]
+        names.fixed <- colnamesX[! colnamesX %in% names.rpar]
+        # the names of the correlated and uncorrelated random
+        # parameters in the order of the X matrix
+
+        if (is.logical(correlation)){
+            if (correlation) correlation <- names(rpar) else correlation <- character(0)
         }
-        Vara <- sort(match(names(rpar), colnamesX))
-        Varc <- (1:K)[- Vara]
-        nmean <- length(c(Varc, Vara))
-        nvar <- length(Vara)
-        if (! correlation){
-            if (is.null(start) || length(start) == K) sup.coef <- rep(.1, nvar)
-            names.sup.coef <- paste("sd", colnamesX[Vara], sep = ".")
+        if (any (! names(rpar) %in% colnamesX)) stop("unknown random parameter")
+        if (any (! correlation %in% names(rpar))) stop("unknown random parameter in the correlation vector")
+
+
+        uncorrelated <- setdiff(names(rpar), correlation)
+        fixedpar <- setdiff(colnamesX, names(rpar))
+        singlepar <- names(rpar)[rpar %in% c("zbu", "zbt")]
+        utwopars <- intersect(names(rpar)[! rpar %in% c("zbu", "zbt")], uncorrelated)       
+        correlated <-   colnamesX[sort(match(correlation,  colnamesX))]
+        uncorrelated <- colnamesX[sort(match(uncorrelated, colnamesX))]
+        fixedpar <- colnamesX[sort(match(fixedpar, colnamesX))]
+        randompar <- colnamesX[sort(match(names(rpar), colnamesX))]
+        singlepar <- colnamesX[sort(match(singlepar, colnamesX))]
+        utwopars <- colnamesX[sort(match(utwopars, colnamesX))]
+
+        
+        ## uncorrelated <- setdiff(names(rpar), correlation)
+        ## correlated <-   colnamesX[sort(match(correlation,  colnamesX))]
+        ## uncorrelated <- colnamesX[sort(match(uncorrelated, colnamesX))]
+        ## singlepar <- colnamesX[sort(match(names.rpar.sig, colnamesX))]
+
+        Kc <- length(correlated)
+        Ku <- length(uncorrelated)
+        Ko <- length(singlepar)
+        
+        names.sup.coef <- c()
+        sup.coef <- c()
+        if (Ku - Ko){
+            if (is.null(start) || length(start) == K) sup.coef <- c(sup.coef, rep(0.1, Ku - Ko))
+            names.sup.coef <- paste("sd", utwopars, sep = ".")
         }
-        else{
-            if (is.null(start) || length(start) == K) sup.coef <- rep(.1, 0.5 * nvar * (nvar + 1))
-            names.sup.coef <- c()
-            Ka <- length(rpar)
-            for (i in 1:Ka){
+        if (Kc){
+            if (is.null(start) || length(start) == K) sup.coef <- c(sup.coef, rep(0.1, 0.5 * Kc * (Kc + 1)))
+            for (i in 1:Kc){
                 names.sup.coef <- c(names.sup.coef,
-                                    paste(names(rpar)[i], names(rpar)[i:Ka], sep = "."))
+                                    paste(correlated[i], correlated[i:Kc], sep = "."))
             }
         }
+        if (is.null(start) || length(start) == K) names(sup.coef) <- names.sup.coef
     }
     if (probit){
         names.sup.coef <- c()
@@ -267,7 +301,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     }
 
     if (wlogit){
-        Xs <- Xs[, -1]
+        Xs <- Xs[, -1, drop = FALSE]
         if (is.null(start) || length(start) == K) sup.coef <- c(sup.coef, rep(0.1, ncol(Xs)))
         names.sup.coef <- c(names.sup.coef, paste("sig", colnames(Xs), sep = "."))
     }

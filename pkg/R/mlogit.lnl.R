@@ -279,7 +279,7 @@ lnl.mprobit <- function(param, y, X, weights = NULL,
                         gradient = FALSE, hessian = FALSE, opposite = TRUE,
                         direction = rep(0, length(param)), initial.value = NULL, stptol = 1E-1,
                         R, seed){
-    
+
     names(direction) <- names(param)
     mills <- function(x) exp(dnorm(x, log = TRUE) - pnorm(x, log.p = TRUE))
     

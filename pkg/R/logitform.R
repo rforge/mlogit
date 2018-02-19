@@ -48,7 +48,7 @@ as.Formula.mFormula <- function(x, ...){
 
 model.frame.mFormula <- function(formula, data, ..., lhs = NULL, rhs = NULL){
   if (is.null(rhs)) rhs <- 1:(length(formula)[2])
-  if (is.null(lhs)) lhs <- ifelse(length(formula)[1]>0, 1, 0)
+  if (is.null(lhs)) lhs <- ifelse(length(formula)[1] > 0, 1, 0)
   index <- attr(data, "index")
 ##   weights <- match.call()$weights
 ##   print(weights)

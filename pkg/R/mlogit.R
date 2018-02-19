@@ -4,7 +4,6 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
                    heterosc = FALSE, rpar = NULL, probit = FALSE,
                    R = 40, correlation = FALSE, halton = NULL, random.nb = NULL,
                    panel = FALSE, estimate = TRUE, seed = 10, ...){
-    
     start.time <- proc.time()
     callT <- match.call(expand.dots = TRUE)
 #    callF <- match.call(expand.dots = FALSE)
@@ -13,22 +12,31 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     wlogit <- length(formula)[2] == 4
     nframe <- length(sys.calls())
     heterosc.logit <- heterosc
+
     nested.logit <- ! is.null(nests)
-    if (! is.null(nests) && length(nests) == 1 && nests == "pcl"){
-        nested.logit <- FALSE
-        pair.comb.logit <- TRUE
+    pair.comb.logit <- FALSE
+    if (! is.null(nests) && length(nests) == 1){
+        if (is.character(nests) && nests == "pcl"){
+            nested.logit <- TRUE
+            pair.comb.logit <- TRUE
+        }
+        if (is.logical(nests)){
+            nested.logit <- nests
+            pair.comb.logit <- FALSE
+        }
     }
-    else pair.comb.logit <- FALSE
     if (nested.logit) attr(nests, "unique") <- ifelse(un.nest.el, TRUE, FALSE)
+
     mixed.logit <- ! is.null(rpar)
-    multinom.logit <- ! heterosc & is.null(nests) & is.null(rpar) & ! probit & ! wlogit
+
+    multinom.logit <- ! heterosc & ! nested.logit & is.null(rpar) & ! probit & ! wlogit
     if (heterosc.logit + nested.logit + mixed.logit + probit > 1)
         stop("only one of heterosc, rpar, nests and probit can be used")
     if (multinom.logit){
         if (is.null(callT$method)) callT$method <- 'nr'
         if (is.null(callT$print.level)) callT$print.level <- 0
     }
-  
+    
     # 1 ############################################################
     #  check whether arguments for mlogit.data are present: if so run
     #  mlogit.data
@@ -37,7 +45,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     mldata <- callT
     response.name <- paste(deparse(attr(formula, "lhs")[[1]]))
     m <- match(c("data", "choice", "shape", "varying", "sep",
-                 "alt.var", "chid.var", "alt.levels",
+                 "alt.var", "chid.var", "alt.levels", "group.var",
                  "opposite", "drop.index", "id", "ranked"),
                names(mldata), 0L)
     use.mlogit.data <- sum(m[-1]) > 0
@@ -80,6 +88,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
         id <- unique(index[, c("chid", "id")])$id
     }
     else id <- NULL
+
     # compute the relevent subset if required
     if (! is.null(alt.subset)){
         # we keep only choices that belong to the subset
@@ -95,6 +104,20 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
         alt <- alt[id.kept & alt.kept , drop = TRUE]
         chid <- chid[id.kept & alt.kept , drop = TRUE]
     }
+
+    if (nested.logit){
+        if (is.logical(nests) && nests){
+            if (is.null(index(mf)$group)){
+                stop("no grouping variable")
+            }
+            else{
+                nests <- unique(data.frame(alt = as.character(alt),
+                                           group = index(mf)$group))
+                nests <- split(nests$alt, nests$group)
+            }
+        }
+    }
+    
     # balanced the data.frame i.e. insert rows with NA when an
     # alternative is not relevant
     alt.un <- unique(alt)
@@ -207,7 +230,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
         }
         else{
             if (is.null(start) || length(start) == K) sup.coef <- rep(1, L)
-            names.sup.coef <- paste("iv", names(nests), sep = ".")
+            names.sup.coef <- paste("iv", names(nests), sep = ":")
         }
     }
     if (pair.comb.logit){
@@ -291,6 +314,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
             names.sup.coef <- c(names.sup.coef,
                                 paste(alt.lev[i], alt.lev[i:J], sep = "."))
         }
+
         if (is.null(start) || length(start) == K){
             corrMat <- matrix(0.5, J - 1, J - 1)
             diag(corrMat) <- 1
@@ -324,7 +348,13 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
             callst$print.level <- 0
             if (length(callst$formula)[2] == 4) callst$formula <- mFormula(formula(callst$formula, rhs = 1:3))#stop("lesbon")
             #      start <- coef(eval(callst, sys.frame(which=nframe)))
-            start <- coef(eval(callst, parent.frame()))
+#            start <- coef(eval(callst, parent.frame()))
+
+#            start <- coef(eval(callst, parent.frame))
+            # retour sur nframe ????
+            start <- coef(eval(callst, sys.frame(which=nframe)))
+
+            
             if (mixed.logit){
                 ln <- names(rpar[rpar == "ln"])
                 start[ln] <- log(start[ln])

@@ -494,7 +494,7 @@ specified to have the cooling alternatives (\va{gcc}, \va{ecc},
 \va{erc}, \va{hpc}) in one nest and the non-cooling alternatives
 (\va{gc}, \va{ec}, \va{er}) in another nest.
 \begin{answer}[5]
-<<>>=
+<<nest1>>=
 library("mlogit")
 data("HC", package = "mlogit")
 HC <- mlogit.data(HC, varying = c(2:8, 10:16), choice = "depvar", shape = "wide")
@@ -576,7 +576,7 @@ across alternatives? Do you think the estimate is plausible?
 
 \begin{answer}[5]
   The t-statistic is :
-<<>>=
+<<tstat>>=
  (coef(nl2)['iv']-1)/sqrt(vcov(nl2)['iv', 'iv'])
 lrtest(nl2, ml)
 @   
@@ -599,7 +599,7 @@ appropriate nesting structure.
 3. Rerun the model that has the cooling alternatives in one nest and
 the non-cooling alternatives in the other nest (like for exercise 1),
 with a separate log-sum coefficient for each nest.
-<<>>=
+<<nl3>>=
 nl3 <- update(nl, un.nest.el = FALSE)
 @ 
 (a) Which nest is estimated to have the higher correlation in
@@ -621,7 +621,7 @@ exercise 1 is the true model?
 \begin{answer}[5]
   We can use a likelihood ratio tests with models \texttt{nl} and
   \texttt{nl3}.
-<<>>=
+<<lrtest1>>=
 lrtest(nl, nl3)
 @   
 The restricted model is the one from exercise 1 that has one log-sum
@@ -640,7 +640,7 @@ nests. Estimate a model with alternatives \va{gcc}, \va{ecc} and
 worse than the model in exercise 1, which puts alternative \va{hpc} in
 the same nest as alternatives \va{gcc}, \va{ecc} and \va{erc}?
 \begin{answer}[5]
-<<>>=
+<<threentest>>=
 nl4 <- update(nl, nests=list(n1 = c('gcc', 'ecc', 'erc'), n2 = c('hpc'),
                     n3 = c('gc', 'ec', 'er')))
 summary(nl4)

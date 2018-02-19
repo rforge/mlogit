@@ -14,8 +14,8 @@
 \usage{
 mlogit.data(data, choice, shape = c("wide","long"), varying = NULL,
             sep=".",alt.var = NULL, chid.var = NULL, alt.levels = NULL,
-            id.var = NULL, opposite = NULL, drop.index = FALSE,
-            ranked = FALSE, ...)
+            id.var = NULL, group.var = NULL, opposite = NULL,
+            drop.index = FALSE, ranked = FALSE, ...)
 \method{mean}{mlogit.data}(x, ...)
 \method{print}{pseries}(x, ...)
 
@@ -54,6 +54,9 @@ mlogit.data(data, choice, shape = c("wide","long"), varying = NULL,
   \code{data.frame}, they are guessed from the \code{alt.var} argument,}
 
   \item{id.var}{the name of the variable that contains the individual
+  index if any,}
+
+  \item{group.var}{the name of the variable that contains the group
   index if any,}
 
   \item{opposite}{returns the opposite of the specified variables,}

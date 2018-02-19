@@ -132,7 +132,8 @@ logLik.mlogit <- function(object,...){
 
 summary.mlogit <- function (object,...){
     fixed <- attr(object$coefficients, "fixed")
-    b <- coef(object)[!fixed]
+    #    b <- coef(object)[! fixed]
+    b <- coef(object)
     std.err <- sqrt(diag(vcov(object)))
     z <- b / std.err
     p <- 2 * (1 - pnorm(abs(z)))
@@ -207,7 +208,9 @@ predict.mlogit <- function(object, newdata = NULL, returnData = FALSE, ...){
                names(object$call), 0L)
     if (sum(m) > 0) object$call <- object$call[ - m]
     # update the model and get the probabilities
-    newobject <- update(object, start = coef(object), data = newdata, iterlim = 0, print.level = 0)
+    newobject <- update(object, start = coef(object, fixed = TRUE), data = newdata, iterlim = 0, print.level = 0)
+#    newobject <- update(object, start = coef(object), data = newdata, iterlim = 0, print.level = 0)
+    
     result <- newobject$probabilities
     if (nrow(result) == 1){
         result <- as.numeric(result)
@@ -223,8 +226,9 @@ fitted.mlogit <- function(object, outcome = TRUE, ...){
     result
 }
 
-coef.mlogit <- function(object, ...){
+coef.mlogit <- function(object, fixed = FALSE, ...){
     result <- object$coefficients
+    if (! fixed) result <- result[! attr(result, "fixed")]
     attr(result, "fixed") <- NULL
     result
 }

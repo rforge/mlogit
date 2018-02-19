@@ -1,7 +1,7 @@
 mlogit.data <- function(data, choice, shape = c("wide","long"), varying = NULL,
                         sep = ".", alt.var = NULL, chid.var = NULL, 
-                        alt.levels = NULL, id.var = NULL, opposite = NULL,
-                        drop.index = FALSE, ranked = FALSE, ...){
+                        alt.levels = NULL, id.var = NULL, group.var = NULL,
+                        opposite = NULL, drop.index = FALSE, ranked = FALSE, ...){
     # chid.name, alt.name : the name of the index variables
     # chid, alt : the index variables
     if (shape == "long"){
@@ -38,6 +38,7 @@ mlogit.data <- function(data, choice, shape = c("wide","long"), varying = NULL,
             alt.levels <- levels(data[[alt.name]])
             J <- length(alt.levels)
             alt <- data[[alt.name]]
+
         }
         n <- nrow(data) / J
         if (! chid.is.variable) chid <- rep(1:n, each = J) else chid <- data[[chid.name]]
@@ -53,7 +54,6 @@ mlogit.data <- function(data, choice, shape = c("wide","long"), varying = NULL,
         alt <- as.factor(alt)
         row.names(data) <- paste(chid, alt, sep = ".")
     }
-  
     if (shape == "wide"){
         if (! ranked){
             choice.name <- choice
@@ -99,10 +99,15 @@ mlogit.data <- function(data, choice, shape = c("wide","long"), varying = NULL,
 
     chidpos <- which(names(data) == chid.name)
     altpos <- which(names(data) == alt.name)
-    if (!is.null(id.var)){
+    if (! is.null(id.var)){
         idpos <- which(names(data) == id.var)
         id.var <- as.factor(data[[id.var]])
     }
+    if (! is.null(group.var)){
+        grouppos <- which(names(data) == group.var)
+        group.var <- as.factor(data[[group.var]])
+    }
+    
     if (drop.index){
         if (! is.null(id.var)) data <- data[, -c(chidpos, altpos, idpos)]
         else data <- data[, -c(chidpos, altpos)] 
@@ -115,6 +120,7 @@ mlogit.data <- function(data, choice, shape = c("wide","long"), varying = NULL,
     }
     index <- data.frame(chid = chid, alt = alt)
     if (! is.null(id.var)) index <- cbind(index, id = id.var)
+    if (! is.null(group.var)) index <- cbind(index, group = group.var)
     rownames(index) <- rownames(data)
     attr(data, "index") <- index
     attr(data, "class") <- c("mlogit.data", "data.frame")

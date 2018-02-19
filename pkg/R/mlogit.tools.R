@@ -158,7 +158,7 @@ mlogit.optim <- function(logLik, start,
     names(f)[2] <- 'param'
     # eval a first time the function, the gradient and the hessian
     x <- eval(f, parent.frame())
-    if (TRUE){
+    if (FALSE){
         nd <- f
         nd[["f"]] <- nd[[1]]
         nd[[1]] <- as.name("numderiv")
@@ -171,6 +171,7 @@ mlogit.optim <- function(logLik, start,
     if (print.level > 0)
         cat(paste("Initial value of the function :", as.numeric(x), "\n"))
     g <- attr(x, "gradient")
+
     if (method == 'nr')   H <- attr(x, "hessian")[! fixed, ! fixed]
     if (method == 'bhhh') H <- crossprod(attr(x, "gradi")[, ! fixed])
     if (method == 'bfgs') Hm1 <- solve(crossprod(attr(x, "gradi")[, ! fixed]))

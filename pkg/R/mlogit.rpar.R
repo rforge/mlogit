@@ -152,7 +152,7 @@ halton <- function(prime = 3, length = 100, drop = 10){
 
 make.random.nb <- function(R, Ka, halton){
     # Create the matrix of random numbers
-    if (!is.null(halton)){
+    if (! is.null(halton)){
         length.halton <- rep(R,Ka)
         prime <- c(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43,
                    47, 53, 59, 61, 71, 73, 79, 83, 89, 97, 101, 103,

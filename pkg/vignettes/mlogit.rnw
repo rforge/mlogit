@@ -3099,7 +3099,7 @@ scoretest(ml.HC, nests = list(cooling = c('ecc', 'erc', 'gcc', 'hpc'),
 The wald test can also be performed using the \Rf{linearHypothesis}
 function :
 <<>>=
-linearHypothesis(nl.HC, c("iv.cooling=1", "iv.noncool=1"))
+linearHypothesis(nl.HC, c("iv:cooling = 1", "iv:noncool = 1"))
 @ 
 
 The three tests reject the null hypothesis of no correlation at the
@@ -3112,7 +3112,7 @@ model that is called \va{nl.HC.u}
 lrtest(nl.HC,nl.HC.u)
 waldtest(nl.HC, un.nest.el = TRUE)
 scoretest(nl.HC.u, un.nest.el = FALSE)
-linearHypothesis(nl.HC, "iv.cooling=iv.noncool")
+linearHypothesis(nl.HC, "iv:cooling = iv:noncool")
 @ 
 
 

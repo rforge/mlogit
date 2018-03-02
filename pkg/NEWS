@@ -188,8 +188,14 @@ Changes since version 0.2-4
         * zbu and zbt distributions are added : these are
           one-parameter distributions for which the lower bond is 0.
 
-	  
+	* there was a bug in the triangular distribution which is now
+          fixed
 
+	* bug in the effects method fixed
+	
+
+	  
+	  
 
 	 
 

@@ -193,7 +193,7 @@ predict.mlogit <- function(object, newdata = NULL, returnData = FALSE, ...){
         choice.name <- attr(model.frame(object), "choice")
         if (nrow(newdata) %% J)
             stop("the number of rows of the data.frame should be a multiple of the number of alternatives")
-        attr(newdata, "index") <- data.frame(chid = rep(1:(nrow(newdata) %/%J ), each = J), alt = rep(lev, J))
+        attr(newdata, "index") <- data.frame(chid = rep(1:(nrow(newdata) %/% J ), each = J), alt = rep(lev, J))
         attr(newdata, "class") <- c("mlogit.data", "data.frame")
         if (is.null(newdata[['choice.name']])){
             newdata[[choice.name]] <- FALSE
@@ -220,9 +220,19 @@ predict.mlogit <- function(object, newdata = NULL, returnData = FALSE, ...){
     result
 }
 
-fitted.mlogit <- function(object, outcome = TRUE, ...){
-    if (outcome) result <- object$fitted
-    else result <- object$probabilities
+fitted.mlogit <- function(object, type = c("outcome", "probabilities", "parameters"),
+                          outcome = NULL, ...){
+    if (! is.null(outcome)){
+        if (outcome) result <- object$fitted
+        else result <- object$probabilities
+    }
+    else{
+        type <- match.arg(type)
+        result <- switch(type,
+                        outcome = object$fitted,
+                        probabilities = object$probabilities,
+                        parameters = object$indpar)
+    }
     result
 }
 
@@ -277,7 +287,11 @@ effects.mlogit <- function(object, covariate = NULL,
     alt.levels <- names(P)
     pVar <- substr(type, 1, 1)
     xVar <- substr(type, 2, 2)
-    cov.list <- lapply(attr(formula(object), "rhs"), as.character)
+#    cov.list <- lapply(attr(formula(object), "rhs"), as.character)
+    nrhs <- length(formula(object))[2]
+    cov.list <- vector(length = 3, mode = "list")
+    for (i in 1:nrhs) cov.list[[i]] <-
+                          attr(terms(formula(object), rhs = i), "term.labels")
     rhs <- sapply(cov.list, function(x) length(na.omit(match(x, covariate))) > 0)
     rhs <- (1:length(cov.list))[rhs]
     eps <- 1E-5

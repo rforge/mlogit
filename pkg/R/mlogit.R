@@ -46,7 +46,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     response.name <- paste(deparse(attr(formula, "lhs")[[1]]))
     m <- match(c("data", "choice", "shape", "varying", "sep",
                  "alt.var", "chid.var", "alt.levels", "group.var",
-                 "opposite", "drop.index", "id", "ranked"),
+                 "opposite", "drop.index", "id.var", "ranked"),
                names(mldata), 0L)
     use.mlogit.data <- sum(m[-1]) > 0
     if (use.mlogit.data){
@@ -173,8 +173,9 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     df.residual <- n - K
     colnamesX <- colnames(X)
     if (any(names(mf) == "(weights)")){
-        weights <- mf[["(weights)"]] <- mf[["(weights)"]] / mean(mf[["(weights)"]])
-        weights <- split(weights, alt)[[1]]
+        weights <- matrix(mf[["(weights)"]], ncol = J, byrow = TRUE)
+        weights <- as.numeric(apply(weights, 1, min, na.rm = TRUE))
+        weights <- weights / mean(weights)
     }
     else weights <- NULL
     freq <- table(alt[y])
@@ -184,7 +185,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     Xl <- vector(length = J, mode = "list")
     names(Xl) <- levels(alt)
     for (i in levels(alt))  Xl[[i]] <- X[alt == i, , drop = FALSE]
-    
+
     yl <- split(y, alt)
     yl <- lapply(yl, function(x){x[is.na(x)] <- FALSE ; x})
   
@@ -283,12 +284,6 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
         singlepar <- colnamesX[sort(match(singlepar, colnamesX))]
         utwopars <- colnamesX[sort(match(utwopars, colnamesX))]
 
-        
-        ## uncorrelated <- setdiff(names(rpar), correlation)
-        ## correlated <-   colnamesX[sort(match(correlation,  colnamesX))]
-        ## uncorrelated <- colnamesX[sort(match(uncorrelated, colnamesX))]
-        ## singlepar <- colnamesX[sort(match(names.rpar.sig, colnamesX))]
-
         Kc <- length(correlated)
         Ku <- length(uncorrelated)
         Ko <- length(singlepar)
@@ -348,12 +343,10 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
             callst$print.level <- 0
             if (length(callst$formula)[2] == 4) callst$formula <- mFormula(formula(callst$formula, rhs = 1:3))#stop("lesbon")
             #      start <- coef(eval(callst, sys.frame(which=nframe)))
-#            start <- coef(eval(callst, parent.frame()))
-
-#            start <- coef(eval(callst, parent.frame))
-            # retour sur nframe ????
+            #      start <- coef(eval(callst, parent.frame()))
+            #      start <- coef(eval(callst, parent.frame))
+            #      retour sur nframe ????
             start <- coef(eval(callst, sys.frame(which=nframe)))
-
             
             if (mixed.logit){
                 ln <- names(rpar[rpar == "ln"])
@@ -470,6 +463,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     attr(x$coefficients, "fixed") <- attr(x$optimum, "fixed")
     gradient <- -  attr(x$optimum, "gradient")
     gradient <- - attr(x$optimum, "gradi")
+    if (mixed.logit) indpar <- attr(x$optimum, "indpar") else indpar <- NULL
     # compute the probabilities for all the alternatives for
     # heteroscedastic and the probit model
     if (probit | heterosc){
@@ -575,6 +569,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
             est.stat      = x$est.stat,
             fitted.values = fitted,
             probabilities = probabilities,
+            indpar        = indpar,
             residuals     = resid,
             omega         = Omega,
             rpar          = rpar,

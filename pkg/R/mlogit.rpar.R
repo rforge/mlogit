@@ -61,19 +61,26 @@ make.beta <- function(mua, siga, rpar, random.nb, correlation){
         sel <- intersect(triangular, uncorrelated)
         sd.sel <- paste("sd.", sel, sep = "")
         if (length(sel)){
-            eta05 <- random.nbu[, sd.sel, drop = FALSE ] < 0.5
+            eta <- pnorm(random.nbu[, sd.sel, drop = FALSE])
             betaa.mu[, sel] <- 1
-            betaa.sigmau[, sd.sel] <- eta05 * (sqrt(2 * pnorm(random.nbu[, sd.sel, drop = FALSE])) - 1) +
-                ! eta05 * (1-sqrt(2 * (1 - pnorm(random.nbu[, sd.sel, drop = FALSE]))))
+            ## eta05 <- pnorm(random.nbu[, sd.sel, drop = FALSE]) < 0.5
+            ## print(table(eta05))
+            ## betaa.sigmau[, sd.sel] <- eta05 * (sqrt(2 * pnorm(random.nbu[, sd.sel, drop = FALSE])) - 1) +
+            ##     (! eta05) * (1 - sqrt(2 * (1 - pnorm(random.nbu[, sd.sel, drop = FALSE]))))
+
+            betaa.sigmau[, sd.sel] <- (eta < 0.5) * (sqrt(2 * eta) - 1) +
+                (eta > 0.5) * (1 - sqrt(2 * (1 - eta)))
+            print(mua)
+            print(siga)
             betaa[, sel] <- t(mua[sel] + siga[sd.sel] * t(betaa.sigmau[, sd.sel]))
         }
 
         sel <- intersect(zbtriangular, uncorrelated)
         sd.sel <- paste("sd.", sel, sep = "")
         if (length(sel)){
-            eta05 <- random.nbu[, sd.sel, drop = FALSE] < 0.5
-            betaa.mu[, sel] <- eta05 * sqrt(2 * pnorm(random.nbu[, sd.sel, drop = FALSE])) +
-                ! eta05 * (2 - sqrt(2 * (1 - pnorm(random.nbu[, sd.sel, drop = FALSE]))))
+            eta <- pnorm(random.nbu[, sd.sel, drop = FALSE])
+            betaa.mu[, sel] <- (eta < 0.5) * sqrt(2 * eta) +
+                (eta > 0.5) * (2 - sqrt(2 * (1 - eta)))
             betaa[, sel] <- t(t(betaa.mu[, sel]) * mua[sel])
         }
 
@@ -198,38 +205,43 @@ makeC <- function(x){
 
 make.rpar <- function(rpar, correlation, estimate, norm){
     K <- length(rpar)
+    Kc <- length(correlation)
+    Ku <- K - Kc
     nr <- names(rpar)
     rpar <- lapply(rpar, function(x) list(dist = x))
-    if (length(correlation)){
+    if (Kc){
         Ktot <- length(estimate)
-        v <- estimate[(Ktot - 0.5 * K * (K + 1) + 1):Ktot]
+        index.corr <- (Ktot - 0.5 * Kc * (Kc + 1) + 1):Ktot
+        v <- estimate[index.corr]
         v <- tcrossprod(makeC(v))
-        colnames(v) <- rownames(v) <- nr
-        sv <- sqrt(diag(v))
-        names(sv) <- nr
-    }      
+        colnames(v) <- rownames(v) <- correlation
+        sc <- sqrt(diag(v))
+        names(sc) <- correlation
+    }
+    else sc <- c()
     for (i in (1:K)){
         m <- estimate[nr[i]]
-        if (! length(correlation)){
+        if (! nr[i] %in% correlation){
             s <- estimate[paste("sd.", nr[i], sep = "")]
         }
         else{
-            s <- sv[i]
+            s <- sc[nr[i]]
         }
         names(m) <- names(s) <- NULL
         rpar[[i]]$mean <- m
         rpar[[i]]$sigma <- s
         rpar[[i]]$name <- nr[[i]]
-        if (!is.null(norm)){
+        if (! is.null(norm)){
             vn <- estimate[norm]
             names(vn) <- NULL
             rpar[[i]]$norm <- vn
         }
     }
-    z <- lapply(rpar, function(x){attr(x, "class") = "rpar" ;x})
+    z <- lapply(rpar, function(x){attr(x, "class") = "rpar" ; x})
     if (length(correlation)) attr(z, 'covariance') <- v
     z
 }
+
 
 plot.rpar <- function(x, norm = NULL, type = c("density", "probability"), ...){
     type <- match.arg(type)
@@ -367,7 +379,7 @@ cor.mlogit <- function(x){
     sd.mlogit <- sqrt(diag(cor.mlogit))
     for (i in 1:K){
         for (j in 1:K){
-            cor.mlogit[i,j] <- cor.mlogit[i,j]/sd.mlogit[i]/sd.mlogit[j]
+            cor.mlogit[i,j] <- cor.mlogit[i,j] / sd.mlogit[i] / sd.mlogit[j]
         }
     }
     cor.mlogit
@@ -421,10 +433,11 @@ med <- function(x, ...){
 }
 
 mean.rpar <- function(x, norm = NULL, ...){
+    if (is.null(norm) & ! is.null(x$norm)) norm <- as.numeric(x$norm)
     dist <- x$dist
     m <- x$mean
     s <- abs(x$sigma)
-    if (!is.null(norm)){
+    if (! is.null(norm)){
         s <- s2norm(s, dist, norm)
         m <- m2norm(m, dist, norm)
     }
@@ -440,10 +453,11 @@ mean.rpar <- function(x, norm = NULL, ...){
 }
 
 med.rpar <- function(x, norm = NULL, ...){
+    if (is.null(norm) & ! is.null(x$norm)) norm <- as.numeric(x$norm)
     dist <- x$dist
     m <- x$mean
     s <- abs(x$sigma)
-    if (!is.null(norm)){
+    if (! is.null(norm)){
         s <- s2norm(s, dist, norm)
         m <- m2norm(m, dist, norm) 
     }
@@ -459,10 +473,11 @@ med.rpar <- function(x, norm = NULL, ...){
 }
 
 stdev.rpar <- function(x, norm = NULL, ...){
+    if (is.null(norm) & ! is.null(x$norm)) norm <- as.numeric(x$norm)
     dist <- x$dist
     m <- x$mean
     s <- abs(x$sigma)
-    if (!is.null(norm)){
+    if (! is.null(norm)){
         s <- s2norm(s, dist, norm)
         m <- m2norm(m, dist, norm)
     }
@@ -479,6 +494,7 @@ stdev.rpar <- function(x, norm = NULL, ...){
 }
 
 rg.rpar <- function(x, norm = NULL, ...){
+    if (is.null(norm) & ! is.null(x$norm)) norm <- as.numeric(x$norm)
     dist <- x$dist
     m <- x$mean
     s <- abs(x$sigma)

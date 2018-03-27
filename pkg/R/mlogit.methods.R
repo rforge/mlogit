@@ -138,7 +138,7 @@ summary.mlogit <- function (object,...){
     z <- b / std.err
     p <- 2 * (1 - pnorm(abs(z)))
     CoefTable <- cbind(b, std.err, z, p)
-    colnames(CoefTable) <- c("Estimate", "Std. Error", "t-value", "Pr(>|t|)")
+    colnames(CoefTable) <- c("Estimate", "Std. Error", "z-value", "Pr(>|z|)")
     object$CoefTable <- CoefTable
     if (has.intercept(object$formula)){
         object$lratio <- lratio(object)
@@ -220,7 +220,8 @@ predict.mlogit <- function(object, newdata = NULL, returnData = FALSE, ...){
     result
 }
 
-fitted.mlogit <- function(object, type = c("outcome", "probabilities", "parameters"),
+fitted.mlogit <- function(object, type = c("outcome", "probabilities",
+                                           "linpred", "parameters"),
                           outcome = NULL, ...){
     if (! is.null(outcome)){
         if (outcome) result <- object$fitted
@@ -231,6 +232,7 @@ fitted.mlogit <- function(object, type = c("outcome", "probabilities", "paramete
         result <- switch(type,
                         outcome = object$fitted,
                         probabilities = object$probabilities,
+                        linpred = object$linpred,
                         parameters = object$indpar)
     }
     result
@@ -240,6 +242,11 @@ coef.mlogit <- function(object, fixed = FALSE, ...){
     result <- object$coefficients
     if (! fixed) result <- result[! attr(result, "fixed")]
     attr(result, "fixed") <- NULL
+    result
+}
+
+coef.summary.mlogit <- function(object, ...){
+    result <- object$CoefTable
     result
 }
 
@@ -321,4 +328,39 @@ effects.mlogit <- function(object, covariate = NULL,
         names(me) <- alt.levels
     }
     me
+}
+
+iv <- function(x, y = NULL, type = NULL, output = c("chid", "obs")){
+    # the model.matrix is from model x
+    # the coef is from model y
+    output <- match.arg(output)
+    if (! is.null(type)){
+        if (! type %in% c("group", "global"))
+            stop("type should be one of 'group' or 'local'")
+    }
+    idx <- index(x)
+    idx$nb <- 1:nrow(idx)
+    if (! is.null(y)) beta <- coef(y) else beta <- coef(x)
+    X <- model.matrix(x)[, names(beta)]
+    idx$linpred <- as.numeric(crossprod(t(X), beta))
+    
+    if (! is.null(idx$group) & (is.null(type) || type == "group")){
+        iv <- with(idx, tapply(linpred, list(chid, group), sum))
+        if (output == "obs"){
+            iv <- data.frame(chid = rep(rownames(iv), each = ncol(iv)),
+                             group = rep(colnames(iv), nrow(iv)),
+                             iv = as.numeric(t(iv)))
+            iv <- merge(idx, iv)
+            iv <- iv[order(iv$nb), "iv"]
+        }
+    }
+    else{
+        iv <- with(idx, tapply(linpred, chid, sum))
+        if (output == "obs"){
+            iv <- data.frame(chid = rownames(iv), iv = as.numeric(iv))
+            iv <- merge(idx, iv)
+            iv <- iv[order(iv$nb), "iv"]
+        }
+    }
+    iv        
 }

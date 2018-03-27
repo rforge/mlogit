@@ -6,11 +6,12 @@ lnl.slogit <- function(param, X, y, weights = NULL, gradient = FALSE,
     repeat{
         step <- step / 2
         if (step < stptol) break
-        eXb <- lapply(X, function(x) exp(crossprod(t(x), param + step * direction)))
+        Xb <- lapply(X, function(x) crossprod(t(x), param + step * direction))
+        eXb <- lapply(Xb, exp)
         seXb <- suml(eXb)
         P <- lapply(eXb, function(x){v <- x / seXb; v[is.na(v)] <- 0; as.vector(v)})
-        
         Pch <- Reduce("+", mapply("*", P, y, SIMPLIFY = FALSE))
+        names(Pch) <- attr(y, "chid")
         lnl <- sum(opposite * weights * log(Pch))
         if (is.null(initial.value) || lnl <= initial.value) break
     }
@@ -29,9 +30,11 @@ lnl.slogit <- function(param, X, y, weights = NULL, gradient = FALSE,
     }
     if (step < stptol) lnl <- NULL
     else{
+        Xb <- Reduce("cbind", Xb)
         P <- Reduce("cbind", P)
-        colnames(P) <- names(y)
+        dimnames(P) <- dimnames(Xb) <- list(attr(y, "chid"), names(y))
         attr(lnl, "probabilities") <- P
+        attr(lnl, "linpred") <- Xb
         attr(lnl, "fitted") <- Pch
         attr(lnl, "step") <- step
     }
@@ -51,11 +54,13 @@ lnl.wlogit <- function(param, X, y, Xs, weights = NULL, gradient = FALSE,
         beta <- param[1:K] + step * direction[1:K]
         lambda <- param[(K + 1):(K + Ks)] + direction[(K + 1):(K + Ks)]
         sigma <- 1 + as.numeric(Xs %*% lambda)
-        fpsigma <- Xs        
-        eXb <- lapply(X, function(x) exp(crossprod(t(x * sigma), beta)))
+        fpsigma <- Xs
+        Xb <- lapply(X, function(x) crossprod(t(x * sigma), beta))
+        eXb <- lapply(Xb, exp)
         seXb <- suml(eXb)
         P <- lapply(eXb, function(x){v <- x / seXb; v[is.na(v)] <- 0; as.vector(v)})
-                Pch <- Reduce("+", mapply("*", P, y, SIMPLIFY = FALSE))
+        Pch <- Reduce("+", mapply("*", P, y, SIMPLIFY = FALSE))
+        names(Pch) <- attr(y, "chid")
         lnl <- sum(opposite * weights * log(Pch))
         if (is.null(initial.value) || lnl <= initial.value) break
     }
@@ -74,7 +79,9 @@ lnl.wlogit <- function(param, X, y, Xs, weights = NULL, gradient = FALSE,
     if (step < stptol) lnl <- NULL
     else{
         P <- Reduce("cbind", P)
-        colnames(P) <- names(y)
+        Xb <- log(Reduce("cbind", eXb))
+        colnames(P) <- colnames(Xb) <- names(y)
+        attr(lnl, "linpred") <- Xb
         attr(lnl, "probabilities") <- P
         attr(lnl, "fitted") <- Pch
         attr(lnl, "step") <- step
@@ -95,7 +102,7 @@ lnl.nlogit <- function(param, X, y, weights = NULL, gradient = FALSE,
     K <- ncol(X[[1]])
     n <- nrow(X[[1]])
     J <- length(nests)
-    X <- lapply(nests, function(x) X[x])
+    Xn <- lapply(nests, function(x) X[x])
     Y <- lapply(nests, function(x) y[x])
     Yn <- lapply(Y, suml)
     step <- 2
@@ -105,7 +112,9 @@ lnl.nlogit <- function(param, X, y, weights = NULL, gradient = FALSE,
         beta <- param[1:K] + step * direction[1:K]
         lambda <- param[-c(1:K)] + step * direction[-c(1:K)]
         names(lambda) <- names(nests)
-        V <- lapply(X, function(x)
+        Xb <- lapply(X, function(x) as.numeric(crossprod(t(x), beta)))
+        Xb <- Reduce("cbind", Xb)
+        V <- lapply(Xn, function(x)
             lapply(x, function(y)
                 as.numeric(crossprod(t(y), beta))
                 )
@@ -134,7 +143,7 @@ lnl.nlogit <- function(param, X, y, weights = NULL, gradient = FALSE,
         Pond <- mapply(function(p, pj) mapply("/", p, pj, SIMPLIFY = FALSE), P, Pj, SIMPLIFY = FALSE)
         Xb <- mapply(function(x, pjl)
             suml(mapply("*", x, pjl, SIMPLIFY = FALSE)),
-            X, Pjl, SIMPLIFY = FALSE)
+            Xn, Pjl, SIMPLIFY = FALSE)
         Vb <- mapply(function(v, pjl)
             suml(mapply("*", v, pjl, SIMPLIFY = FALSE)),
             V, Pjl, SIMPLIFY = FALSE)
@@ -147,10 +156,10 @@ lnl.nlogit <- function(param, X, y, weights = NULL, gradient = FALSE,
         
         if (!unscaled)
             Gb <- mapply(function(x, xb, l)
-                lapply(x, function(z) (z+(l-1) * xb)/l), X, Xb, lambda, SIMPLIFY = FALSE)
+                lapply(x, function(z) (z+(l-1) * xb)/l), Xn, Xb, lambda, SIMPLIFY = FALSE)
         else
             Gb <- mapply(function(x, xb, l)
-                lapply(x, function(z) (z+(l-1) * xb)), X, Xb, lambda, SIMPLIFY = FALSE)
+                lapply(x, function(z) (z+(l-1) * xb)), Xn, Xb, lambda, SIMPLIFY = FALSE)
         
         Gb <-  mapply(function(gb, y)
             mapply("*", gb, y, SIMPLIFY = FALSE),
@@ -202,10 +211,15 @@ lnl.nlogit <- function(param, X, y, weights = NULL, gradient = FALSE,
     else{
         P <- unlist(P, recursive = FALSE)
         P <- sapply(posalts, function(x) suml(P[x]))
-        colnames(P) <- thealts
+#        colnames(P) <- thealts
+        Xb <- Reduce("cbind",
+                     lapply(X, function(x) as.numeric(crossprod(t(x), beta))))
+        dimnames(P) <- dimnames(Xb) <- list(attr(y, "chid"), names(y))
         attr(lnl, "probabilities") <- P
+        attr(lnl, "linpred") <- Xb
         attr(lnl, "fitted") <- Pch
         attr(lnl, "step") <- step
+        
     }
     lnl
 } 
@@ -269,6 +283,7 @@ lnl.hlogit <- function(param, X, y, weights = NULL,
     else{
         attr(lnl, "fitted") <- P
         attr(lnl, "step") <- step
+        attr(lnl, "linpred") <- Reduce("cbind", V)
     }
     lnl
 }
@@ -305,7 +320,7 @@ lnl.mprobit <- function(param, y, X, weights = NULL,
         beta <- param[1:K] + step * direction[1:K]
         corrCoef <- param[- c(1:K)] + step * direction[- c(1:K)]
         DV <- sapply(X, function(x) crossprod(t(x), beta))
-        if (!is.matrix(DV)) DV <- matrix(DV, nrow = 1)
+        if (! is.matrix(DV)) DV <- matrix(DV, nrow = 1)
         # Cholesky matrix and covariance matrix of U-U_1
         S <- matrix(0, J - 1, J - 1)
         S[!upper.tri(S)] <- corrCoef
@@ -798,7 +813,12 @@ lnl.rlogit <- function(param, X, y, Xs, weights = NULL,
             fpsigma <- Xs
         }
         else sigma <- rep(1, nrow(X[[1]]))
-        A <- lapply(Xf, function(x) as.vector(crossprod(t(as.matrix(x) * sigma), betaf)))
+        if (length(betaf)){
+            A <- lapply(Xf, function(x) as.vector(crossprod(t(as.matrix(x) * sigma), betaf)))
+        }
+        else{
+            A <- lapply(Xf, function(x) rep(0, N))
+        }
         B <- vector(mode = "list", length = J)
         for (j in 1:J) B[[j]] <- matrix(NA, N, R)
         ndraws <- ifelse(panel, n, N)
@@ -818,10 +838,13 @@ lnl.rlogit <- function(param, X, y, Xs, weights = NULL,
                                tcrossprod(Xa[[j]][theRows, ,
                                                   drop = FALSE] * sigma[theRows], betaa)
         }
+        linpred <- mapply(function(x, y) x + y, A, B, SIMPLIFY = FALSE)
+        linpred <- Reduce("cbind", lapply(linpred, apply, 1, mean))
         AB <- mapply(function(x, y) exp(x + y), A, B, SIMPLIFY = FALSE)
         S <- suml(AB)
         P <- lapply(AB, function(x) x / S)
         probabilities <- sapply(P, function(x) apply(x, 1, mean))
+        colnames(linpred) <- colnames(probabilities)
         Pch <- suml(mapply("*", P, y, SIMPLIFY = FALSE))
         if (panel) Pch <- apply(Pch, 2, tapply, id, prod)
         pm <- apply(Pch, 1, mean)
@@ -934,6 +957,7 @@ lnl.rlogit <- function(param, X, y, Xs, weights = NULL,
         attr(lnl, "fitted") <- pm
         attr(lnl, "step") <- step
         attr(lnl, "indparam") <- indparam
+        attr(lnl, "linpred") <- linpred
     }
     lnl
 }

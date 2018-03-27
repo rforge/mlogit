@@ -193,9 +193,10 @@ Changes since version 0.2-4
 
 	* bug in the effects method fixed
 	
-
+	* a new iv function is provided
 	  
-	  
+	* the linear predictor is now returned
+	
 
 	 
 

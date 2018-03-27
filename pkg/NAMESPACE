@@ -1,7 +1,7 @@
 export("mlogit", "mlogit.data", "hmftest", "mFormula", "is.mFormula",
        "mlogit.optim", "cov.mlogit", "cor.mlogit", "rpar", "scoretest",
        "med", "rg", "stdev", "qrpar", "prpar", "drpar",
-       "lrtest", "waldtest", "index")
+       "lrtest", "waldtest", "index", "iv")
 import("Formula", "maxLik")
 importFrom("lmtest", "lrtest")
 importFrom("lmtest", "lrtest.default")

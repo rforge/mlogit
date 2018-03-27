@@ -1570,7 +1570,7 @@ don't choose the bus and choose a mode among the four modes available
 
 <<>>=
 busUsers <- with(ModeCanada, case[choice == 1 & alt == 'bus'])
-Bhat <- subset(ModeCanada, !case %in% busUsers & alt != 'bus' & nchoice == 4)
+Bhat <- subset(ModeCanada, !case %in% busUsers & alt != 'bus' & noalt == 4)
 Bhat$alt <- Bhat$alt[drop = TRUE]
 Bhat <- mlogit.data(Bhat, shape='long', chid.var = 'case',
                     alt.var = 'alt', choice='choice',

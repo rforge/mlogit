@@ -719,12 +719,12 @@ halton sequences and taking into account the panel data structure.
 
 <<>>=
 data("Electricity", package = "mlogit")
-Electr <- mlogit.data(Electricity, id="id", choice="choice", 
-                      varying=3:26, shape="wide", sep="")
+Electr <- mlogit.data(Electricity, id = "id", choice = "choice", 
+                      varying = 3:26, shape = "wide", sep = "")
 @ 
 
 <<>>=
-Elec.mxl <- mlogit(choice~pf+cl+loc+wk+tod+seas|0, Electr, 
+Elec.mxl <- mlogit(choice ~ pf + cl + loc + wk + tod + seas | 0, Electr, 
               rpar=c(pf = 'n', cl = 'n', loc = 'n', wk = 'n', 
                      tod = 'n', seas = 'n'), 
               R = 100, halton = NA, panel = TRUE)
@@ -734,6 +734,7 @@ summary(Elec.mxl)
 2. (a) Using the estimated mean coefficients, determine the amount
 that a customer with average coefficients for price and length is
 willing to pay for an extra year of contract length.
+
 \begin{answer}[5]
 <<>>=
 coef(Elec.mxl)['cl'] / coef(Elec.mxl)['pf']

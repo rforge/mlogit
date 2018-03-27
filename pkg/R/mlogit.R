@@ -48,7 +48,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
                  "alt.var", "chid.var", "alt.levels", "group.var",
                  "opposite", "drop.index", "id.var", "ranked"),
                names(mldata), 0L)
-    use.mlogit.data <- sum(m[-1]) > 0
+    use.mlogit.data <- sum(m[- 1]) > 0
     if (use.mlogit.data){
         mldata <- mldata[c(1L, m)]
         mldata[[1L]] <- as.name("mlogit.data")
@@ -73,12 +73,16 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     mf$data <- data # fix the bug when the data is called mldata
     #  mf <- eval(mf, sys.frame(which = nframe))
     mf <- eval(mf, parent.frame())
-
+    # ensures that the response is logical
+    mf[[1]] <- tological(mf[[1]])
+    
+    
     # change the reference level of the response if required
     if (! is.null(reflevel)) attr(mf, "index")[["alt"]] <- relevel(attr(mf, "index")[["alt"]], reflevel)
     index <- attr(mf, "index")
     alt <- index[["alt"]]
     chid <- index[["chid"]]
+
     if (panel){
         if (! mixed.logit) stop("panel is only relevant for mixed logit models")
         id <- index[["id"]]
@@ -88,7 +92,9 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
         id <- unique(index[, c("chid", "id")])$id
     }
     else id <- NULL
-
+    #YC POURQUOI CE TRUC CI DESSOUS
+#    id <- index[["id"]]
+    
     # compute the relevent subset if required
     if (! is.null(alt.subset)){
         # we keep only choices that belong to the subset
@@ -137,6 +143,13 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
         chid <- rep(chid.un, each = T)
         alt <- rep(alt.un, n)
         index <- data.frame(chid = chid, alt = alt, row.names = rownames(mf))
+        if (! is.null(index(mf)$group)){
+            ra <- index(mf)[c("alt", "group")][! duplicated(index(mf)$alt), ]
+            gps <- ra$group
+            names(gps) <- ra$alt
+            index$group <- gps[index$alt]
+        }
+        
         balanced <- FALSE
     }
     else omf <- mf
@@ -185,9 +198,10 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     Xl <- vector(length = J, mode = "list")
     names(Xl) <- levels(alt)
     for (i in levels(alt))  Xl[[i]] <- X[alt == i, , drop = FALSE]
-
     yl <- split(y, alt)
     yl <- lapply(yl, function(x){x[is.na(x)] <- FALSE ; x})
+    attr(yl, "chid") <- as.character(levels(chid))
+    attr(yl, "id") <- as.character(levels(id))
   
     if (probit){
         # for probit the response is a vector that contains the chosen
@@ -397,7 +411,6 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     opt[c('weights', 'opposite')] <- list(as.name('weights'), as.name('opposite'))
     if (! probit) opt[c('X', 'y')] <- list(as.name('Xl'), as.name('yl'))
     else opt[c('X', 'y')] <- list(as.name('DX'), as.name('yv'))
-
     if (wlogit) opt[c('logLik', 'Xs')] <- list(as.name('lnl.wlogit'), as.name('Xs'))
 
     if (mixed.logit){
@@ -436,9 +449,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
         opt$un.nest.el <- as.name('un.nest.el')
     }
     ## Plante avec parent.frame
-
     x <- eval(opt, sys.frame(which = nframe))
-
     # 6 ###########################################################
     # put the result in form
     ###############################################################
@@ -452,13 +463,14 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
                         class = "logLik"
                         )
     if (mixed.logit) rpar <- make.rpar(rpar, correlation, x$coefficients, NULL) else rpar <- NULL
-    if (!(nested.logit | pair.comb.logit)) nests <- NULL
+    if (! (nested.logit | pair.comb.logit)) nests <- NULL
   
     # if no hessian is returned, use the BHHH approximation
     if (is.null(attr(x$optimum, 'hessian'))) hessian <- - crossprod(attr(x$optimum, 'gradi'))
     else hessian <- - attr(x$optimum, 'hessian')
     fitted <- attr(x$optimum, "fitted")
     probabilities <- attr(x$optimum, "probabilities")
+    linpred <- attr(x$optimum, "linpred")
     resid <- Reduce("cbind", yl) - fitted
     attr(x$coefficients, "fixed") <- attr(x$optimum, "fixed")
     gradient <- -  attr(x$optimum, "gradient")
@@ -559,7 +571,14 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
         }
     }
     if (wlogit) Omega <- "plus tard"
-    
+
+    mfindex <- index(mf)
+    mf$probabilities <- as.numeric(t(probabilities))
+    mf$linpred <- as.numeric(t(linpred))
+    mf <- structure(mf,
+                    class = c("mlogit.data", "data.frame"),
+                    index = mfindex)
+
     result <- structure(
         list(
             coefficients  = x$coefficients,
@@ -569,6 +588,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
             est.stat      = x$est.stat,
             fitted.values = fitted,
             probabilities = probabilities,
+            linpred       = linpred,
             indpar        = indpar,
             residuals     = resid,
             omega         = Omega,

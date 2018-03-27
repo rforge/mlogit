@@ -12,10 +12,10 @@
   shape a \code{data.frame} in a suitable form for the use of the \code{mlogit} function.
 }
 \usage{
-mlogit.data(data, choice, shape = c("wide","long"), varying = NULL,
-            sep=".",alt.var = NULL, chid.var = NULL, alt.levels = NULL,
+mlogit.data(data, choice = NULL, shape = c("long", "wide"), varying = NULL,
+            sep=".", alt.var = NULL, chid.var = NULL, alt.levels = NULL,
             id.var = NULL, group.var = NULL, opposite = NULL,
-            drop.index = FALSE, ranked = FALSE, ...)
+            drop.index = FALSE, ranked = FALSE, subset = NULL, ...)
 \method{mean}{mlogit.data}(x, ...)
 \method{print}{pseries}(x, ...)
 
@@ -64,7 +64,11 @@ mlogit.data(data, choice, shape = c("wide","long"), varying = NULL,
   \item{drop.index}{should the index variables be dropped from the
     \code{data.frame},}
 
-  \item{ranked}{a logical value which is true if the response is a rank.}
+  \item{ranked}{a logical value which is true if the response is a
+    rank,}
+
+  \item{subset}{a logical expression which defines the subset of
+  observations to be selected,}
   
   \item{...}{further arguments passed to \code{reshape}.}
 }

@@ -165,6 +165,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
         index[[2]] <- alt <- index[[2]][, drop=TRUE]
         attr(mf, "index") <- index
     }
+    attr(mf, "formula") <- formula
     # if estimate is FALSE, return the data.frame
     if (! estimate) return(mf)
 
@@ -574,7 +575,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
 
     mfindex <- index(mf)
     mf$probabilities <- as.numeric(t(probabilities))
-    mf$linpred <- as.numeric(t(linpred))
+    if (! is.null(linpred)) mf$linpred <- as.numeric(t(linpred))
     mf <- structure(mf,
                     class = c("mlogit.data", "data.frame"),
                     index = mfindex)

@@ -8,8 +8,10 @@
 \alias{df.residual.mlogit}
 \alias{terms.mlogit}
 \alias{model.matrix.mlogit}
+\alias{coef.mlogit}
 \alias{update.mlogit}
 \alias{summary.mlogit}
+\alias{coef.summary.mlogit}
 \alias{print.summary.mlogit}
 \alias{logLik.mlogit}
 \title{Multinomial logit model}
@@ -35,13 +37,16 @@ mlogit(formula, data, subset, weights, na.action, start = NULL,
 \method{logLik}{mlogit}(object, ...)
 \method{residuals}{mlogit}(object, outcome = TRUE, ...)
 \method{fitted}{mlogit}(object,
-                type = c("outcome", "probabilities", "parameters"),
+                type = c("outcome", "probabilities",
+                         "linpred", "parameters"),
                 outcome = NULL, ...)
 \method{predict}{mlogit}(object, newdata, returnData = FALSE, ...)
 \method{df.residual}{mlogit}(object, ...)
 \method{terms}{mlogit}(x, ...)
 \method{model.matrix}{mlogit}(object, ...)
 \method{update}{mlogit}(object, new, ...)
+\method{coef}{mlogit}(object, fixed = FALSE, ...)
+\method{coef}{summary.mlogit}(object, ...)
 }
 
 \arguments{
@@ -104,7 +109,9 @@ mlogit(formula, data, subset, weights, na.action, start = NULL,
   \item{type}{ one of \code{outcome} (probability of the chosen
   alternative), \code{probabilities} (probabilities for all the
   alternatives), \code{parameters} for individual-level random
-  parameters,}  
+  parameters,}
+  \item{fixed}{ if \code{FALSE} (the default), constant coefficients are
+  not returned,}
   \item{...}{further arguments passed to \code{mlogit.data} or
   \code{mlogit.optim}.}
   

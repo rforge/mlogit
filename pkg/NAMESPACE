@@ -23,12 +23,14 @@ importFrom("stats", "as.formula", "coef", "dlnorm", "dnorm", "formula",
 S3method("index", "mlogit.data")
 S3method("[[<-", "mlogit.data")
 S3method("$<-", "mlogit.data")
+S3method("formula", "mlogit.data")
 
 #mlogit methods
 S3method("index", "mlogit")
 S3method("scoretest", "mlogit")
 S3method("waldtest", "mlogit")
 S3method("lrtest", "mlogit")
+S3method("coef", "mlogit")
 S3method("logLik", "mlogit")
 S3method("vcov", "mlogit")
 S3method("model.matrix", "mlogit")
@@ -70,4 +72,5 @@ S3method("hmftest", "formula")
 S3method("model.matrix", "mFormula")
 S3method("model.frame", "mFormula")
 S3method("print", "summary.mlogit")
+S3method("coef", "summary.mlogit")
 

@@ -182,6 +182,10 @@ index.mlogit <- function(x, ...){
     index(model.frame(x))
 }
 
+index.matrix <- function(x, ...){
+    attr(x, "index")
+}
+
 predict.mlogit <- function(object, newdata = NULL, returnData = FALSE, ...){
     # if no newdata is provided, use the mean of the model.frame
     if (is.null(newdata)) newdata <- mean(model.frame(object))
@@ -330,22 +334,99 @@ effects.mlogit <- function(object, covariate = NULL,
     me
 }
 
-iv <- function(x, y = NULL, type = NULL, output = c("chid", "obs")){
+
+iv <- function(coef, X = NULL, formula = NULL, data = NULL,
+               type = NULL, output = c("chid", "obs")){
     # the model.matrix is from model x
     # the coef is from model y
+
+    # extract the coefs
+    if (is.numeric(coef)) beta <- coef
+    else{
+        if (inherits(coef, "mlogit")) beta <- coef(coef)
+        else stop("coef should be either a numeric or a mlogit object")
+    }
+    
+    # extract the model.matrix
+
+    # X, formula and data is NULL, in this case, extract the
+    # model.matrix from the coef object
+    if (is.null(X) & (is.null(data))){
+        if (inherits(coef, "mlogit")){
+            idx <- index(coef)
+            X <- model.matrix(coef)
+        }
+        else stop("only one argument is provided, it should be a mlogit object")           
+    }
+    else{
+        # X is provided, in this case, the index is (by priority) the
+        # index attribute of X if it exists, otherwise, it is coef's
+        # and conformity should be checked
+        if (! is.null(X)){
+            if (! inherits(X, "matrix") & ! inherits(X, "mlogit"))
+                stop("X should be either a matrix or a mlogit object")
+            if (is.matrix(X)){
+                if (! is.null(attr(X, "index"))) idx <- attr(X, "index")
+                else{
+                    if (inherits(coef, "mlogit")){
+                        idx <- index(coef)
+                        if (nrow(idx) != nrow(X)) stop("X has no index and its dimension is uncorrect")
+                    }
+                    else stop("no index in for the coef and the X argument")
+                }
+            }
+            if (inherits(X, "mlogit")){
+                idx <- index(X)
+                X <- model.matrix(X)
+            }
+        }
+        else{
+            if (is.null(data)) stop("the X or data argument should be provided")
+            else{
+                # data is provided, if it is a mlogit object, extract
+                # the model.frame
+                if (inherits(data, "mlogit")) data <- model.frame(data)
+                # if it is an ordinary data.frame, coerce it using the
+                # index extracted from the coef argument
+                if (! is.data.frame(data)) stop("data should be a data.frame")
+                if (! inherits(data, "mlogit.data")){
+                    if (is.null(attr(coef, "index")))
+                        stop("no index available to compute the model.matrix")
+                    else{
+                        idx <- index(coef)
+                        if (nrow(idx) != nrow(data)) stop("uncompatible dimensions")
+                        else{
+                            data <- structure(data, index = idx,
+                                              class = c("mlogit.data", "data.frame"))
+                        }
+                    }
+                }
+                else idx <- index(data)
+                if (! is.null(formula)) X <- model.matrix(formula, data)
+                else{
+                    if (inherits(coef, "mlogit")){
+                        mf <- update(coef, data = data, estimate = FALSE)
+                        idx <- index(mf)
+                        X <- model.matrix(formula(mf), mf)
+                    }
+                    else stop("no formula provided to compute the model.matrix")
+                }
+            }
+        }
+    }
+
     output <- match.arg(output)
     if (! is.null(type)){
         if (! type %in% c("group", "global"))
             stop("type should be one of 'group' or 'local'")
     }
-    idx <- index(x)
     idx$nb <- 1:nrow(idx)
-    if (! is.null(y)) beta <- coef(y) else beta <- coef(x)
-    X <- model.matrix(x)[, names(beta)]
-    idx$linpred <- as.numeric(crossprod(t(X), beta))
+    coefsubset <- intersect(names(beta), colnames(X))
+    X <- X[, coefsubset, drop = FALSE]
+    idx$linpred <- as.numeric(crossprod(t(X[, coefsubset, drop = FALSE]), beta[coefsubset]))
     
     if (! is.null(idx$group) & (is.null(type) || type == "group")){
-        iv <- with(idx, tapply(linpred, list(chid, group), sum))
+        iv <- log(with(idx, tapply(exp(linpred), list(chid, group), sum)))
         if (output == "obs"){
             iv <- data.frame(chid = rep(rownames(iv), each = ncol(iv)),
                              group = rep(colnames(iv), nrow(iv)),
@@ -355,7 +436,7 @@ iv <- function(x, y = NULL, type = NULL, output = c("chid", "obs")){
         }
     }
     else{
-        iv <- with(idx, tapply(linpred, chid, sum))
+        iv <- log(with(idx, tapply(exp(linpred), chid, sum)))
         if (output == "obs"){
             iv <- data.frame(chid = rownames(iv), iv = as.numeric(iv))
             iv <- merge(idx, iv)

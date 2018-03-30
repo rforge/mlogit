@@ -5,6 +5,7 @@
 \alias{print.pseries}
 \alias{index}
 \alias{mean.mlogit.data}
+\alias{formula.mlogit.data}
 
 
 \title{data.frame for logit model}
@@ -18,7 +19,7 @@ mlogit.data(data, choice = NULL, shape = c("long", "wide"), varying = NULL,
             drop.index = FALSE, ranked = FALSE, subset = NULL, ...)
 \method{mean}{mlogit.data}(x, ...)
 \method{print}{pseries}(x, ...)
-
+\method{formula}{mlogit.data}(x, ...)
 }
 
 \arguments{

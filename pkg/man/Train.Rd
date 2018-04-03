@@ -25,11 +25,13 @@
   }
 }
 \source{
-    Meijer, Erik  and  Jan  Rouwendal (2005) \dQuote{Measuring welfare effects in models with random coefficients}, \emph{Journal of Applied Econometrics}, \bold{forthcoming}.
+    Meijer, Erik  and  Jan  Rouwendal (2006) \dQuote{Measuring welfare
+      effects in models with random coefficients}, \emph{Journal of
+      Applied Econometrics}, \bold{21}(2), 227-244.
 
-    Ben--Akiva, M.,  D.   Bolduc and  M.  Bradley (1993) \dQuote{Estimation of travel choice models with randomly distributed values of time}, \emph{Transportation Research Record}, \bold{1413}, 88--97.
-
-    Carson, R.T.,  L.   Wilks and  D.  Imber (1994) \dQuote{Valuing the preservation of Australia's Kakadu conservation zone}, \emph{Oxford Economic Papers}, \bold{46}, 727--749.
+    Ben--Akiva, M., D.  Bolduc and M.  Bradley (1993) \dQuote{Estimation
+    of travel choice models with randomly distributed values of time},
+    \emph{Transportation Research Record}, \bold{1413}, 88--97.
 
 }
 \references{

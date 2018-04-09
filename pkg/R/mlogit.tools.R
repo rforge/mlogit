@@ -158,7 +158,7 @@ mlogit.optim <- function(logLik, start,
     names(f)[2] <- 'param'
     # eval a first time the function, the gradient and the hessian
     x <- eval(f, parent.frame())
-    if (TRUE){
+    if (FALSE){
         nd <- f
         nd[["f"]] <- nd[[1]]
         nd[[1]] <- as.name("numderiv")

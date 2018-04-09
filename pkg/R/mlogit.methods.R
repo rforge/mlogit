@@ -335,8 +335,8 @@ effects.mlogit <- function(object, covariate = NULL,
 }
 
 
-iv <- function(coef, X = NULL, formula = NULL, data = NULL,
-               type = NULL, output = c("chid", "obs")){
+logsum <- function(coef, X = NULL, formula = NULL, data = NULL,
+                   type = NULL, output = c("chid", "obs")){
     # the model.matrix is from model x
     # the coef is from model y
 

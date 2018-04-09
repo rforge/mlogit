@@ -375,8 +375,8 @@ this panel dimension into account, one has to add an argument
 index.
 
 <<>>=
-Tr <- mlogit.data(Train, shape = 'wide', choice="choice", 
-                  varying=4:11, sep="", alt.levels=c(1, 2), id = "id")
+Tr <- mlogit.data(Train, shape = 'wide', choice = "choice", id = "id",
+                  varying = 4:11, sep = "_", alt.levels = c("A", "B")) 
 head(Tr, 3)
 head(index(Tr), 3)
 @ 
@@ -1297,8 +1297,8 @@ characterized by four attributes :
 
 <<>>=
 data("Train", package="mlogit")
-Tr <- mlogit.data(Train, shape = 'wide', choice="choice", 
-                  varying=4:11, sep="", alt.levels=c(1, 2), id = "id")
+Tr <- mlogit.data(Train, shape = 'wide', choice = "choice", 
+                  varying = 4:11, sep = "_", alt.levels = c("A", "B"), id = "id")
 
 @ 
 
@@ -2491,9 +2491,9 @@ model. A basic multinomial model \va{ml} is also estimated.
 <<>>=
 data("Train", package = "mlogit")
 Tr <- mlogit.data(Train, shape = "wide", varying = 4:11, 
-                  choice = "choice", sep = "", 
+                  choice = "choice", sep = "_", 
                   opposite = c("price", "time", "change", "comfort"),
-                  alt.levels=c("choice1", "choice2"), id="id")
+                  alt.levels=c("A", "B"), id.var ="id")
 @ 
 <<echo = TRUE>>=
 Train.ml <- mlogit(choice ~ price + time + change + comfort, Tr)

@@ -111,20 +111,20 @@ TM <- mlogit.data(TravelMode, choice = "choice",
 TM <- mlogit.data(TravelMode, choice = "choice", shape = "long",
                  id.var = "individual", alt.var = "mode")
 
-# Same but with two own provided variables which are deleted from the
-  data.frame
+#  Same but with two own provided variables which are deleted from the
+#  data.frame
 
 TM <- mlogit.data(TravelMode, choice = "choice", shape = "long",
                  id.var = "individual", alt.var = "mode", drop.index = TRUE)
 
 
-# Train is a wide data.frame with columns 'choiceid' is the choice
+#  Train is a wide data.frame with columns 'choiceid' is the choice
 #  index, the alternatives are named "ch1" and "ch2", the opposite of
 #  the variables is returned
 
 data("Train", package = "mlogit")
 Train <- mlogit.data(Train, choice = "choice", shape = "wide",
-                     varying = 4:11, alt.levels = c("ch1", "ch2"), sep = "",
+                     varying = 4:11, alt.levels = c("A", "B"), sep = "_",
                      opposite = c("price", "time", "change", "comfort"))
 
 

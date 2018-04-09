@@ -336,7 +336,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
 
     if (wlogit){
         Xs <- Xs[, -1, drop = FALSE]
-        if (is.null(start) || length(start) == K) sup.coef <- c(sup.coef, rep(0.1, ncol(Xs)))
+        if (is.null(start) || length(start) == K) sup.coef <- c(sup.coef, rep(0.01, ncol(Xs)))
         names.sup.coef <- c(names.sup.coef, paste("sig", colnames(Xs), sep = "."))
     }
     

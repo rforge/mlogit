@@ -1,7 +1,7 @@
 Package: mlogit
 Version: 0.3-0
 Date: 2018-03-27
-Title: multinomial Logit Model
+Title: Multinomial Logit Models
 Authors@R: person("Yves", "Croissant", role = c("aut", "cre"), email = "yves.croissant@univ-reunion.fr")
 Depends: R (>= 2.10), Formula, maxLik
 Imports: statmod, zoo, MASS, lmtest

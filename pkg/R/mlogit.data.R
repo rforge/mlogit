@@ -70,7 +70,7 @@ mlogit.data <- function(data, choice = NULL, shape = c("long", "wide"), varying 
             choice <- data[[choice]]
             data[[choice.name]] <- tological(data[[choice.name]])
         }
-        # remplacer id par chid à gauche
+        # remplacer id par chid a gauche
         chid <- as.factor(chid)
         alt <- as.factor(alt)
         row.names(data) <- paste(chid, alt, sep = ".")
@@ -102,7 +102,7 @@ mlogit.data <- function(data, choice = NULL, shape = c("long", "wide"), varying 
             row.names(data) <- paste(data[[chid.name]], data[[alt.name]], sep = ".")
         }
         data <- data[order(data[[chid.name]], data[[alt.name]]), ]
-        # remplacer id par chid à gauche
+        # remplacer id par chid a gauche
         chid <- as.factor(data[[chid.name]])
         alt <- as.factor(data[[alt.name]])
         if (! is.null(alt.levels)){

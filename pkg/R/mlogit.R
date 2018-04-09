@@ -135,7 +135,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     balanced <- TRUE
     if (nrow(mf) != (n * T)){
         omf <- mf
-        # la ligne ci-dessous ne sert à rien ?
+        # la ligne ci-dessous ne sert a rien ?
         rownames(mf) <- paste(chid, alt, sep = ".")
         all.rn <- as.character(t(outer(chid.un, alt.un, paste, sep = ".")))
         mf <- mf[all.rn, ]

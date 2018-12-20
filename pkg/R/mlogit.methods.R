@@ -81,56 +81,12 @@ print.mlogit <- function (x, digits = max(3, getOption("digits") - 2),
     invisible(x)
 }
 
-vcov.mlogit <- function(object, what = c('coefficient', 'errors', 'rpar'),
-                        type = c('cov', 'cor', 'sd'), reflevel = NULL, ...){
-    what <- match.arg(what)
-    type <- match.arg(type)
-    if (what == 'coefficient'){
-        fixed <- attr(object$coefficients, "fixed")
-        result <- solve(-object$hessian[!fixed, !fixed])
-    }
-    if (what == 'errors'){
-        if (!is.null(object$omega)){
-            if (is.null(reflevel)){
-                if (is.list(object$omega)) result <- object$omega[[1]]
-                else result <- object$omega
-            }
-            else result <- object$omega[[reflevel]]
-        }
-        result <- switch(type,
-                         cov = result,
-                         cor = result / tcrossprod(sqrt(diag(result))),
-                         sd = sqrt(diag(result))
-                         )
-    }
-    if (what == 'rpar'){
-        if (is.null(object$rpar)) stop('no random parameters')
-        if (is.null(attr(object$rpar, "covariance"))){
-            result <- stdev(object)
-            if (type != 'sd'){
-                V  <- matrix(0, length(result), length(result), dimnames = list(names(result), names(result)))
-                if (type == 'cor') diag(V) <- 1
-                if (type == 'cov') diag(V) <- result^2
-                result <- V
-            }
-        }
-        else{
-            thecov <- attr(object$rpar, "covariance")
-            result <- switch(type,
-                             cov = thecov,
-                             cor = thecov / tcrossprod(sqrt(diag(thecov))),
-                             sd = sqrt(diag(thecov))
-                             )
-        }
-    }
-    result
-}
-
 logLik.mlogit <- function(object,...){
     object$logLik
 }
 
-summary.mlogit <- function (object,...){
+summary.mlogit <- function (object, ..., type = c("chol", "cov", "cor")){
+    type <- match.arg(type)
     fixed <- attr(object$coefficients, "fixed")
     #    b <- coef(object)[! fixed]
     b <- coef(object)
@@ -139,6 +95,11 @@ summary.mlogit <- function (object,...){
     p <- 2 * (1 - pnorm(abs(z)))
     CoefTable <- cbind(b, std.err, z, p)
     colnames(CoefTable) <- c("Estimate", "Std. Error", "z-value", "Pr(>|z|)")
+    if (type != "chol"){
+        sumvcov <- summary(vcov(object, what = "rpar", type = type))
+        CoefTable[grep("chol.", rownames(CoefTable)), ] <- sumvcov
+        rownames(CoefTable)[grep("chol.", rownames(CoefTable))] <- rownames(sumvcov)
+    }
     object$CoefTable <- CoefTable
     if (has.intercept(object$formula)){
         object$lratio <- lratio(object)
@@ -445,3 +406,274 @@ logsum <- function(coef, X = NULL, formula = NULL, data = NULL,
     }
     iv        
 }
+
+
+coef.mlogit <- function(object,
+                        subset = c("all", "iv", "sig", "sd", "sp", "chol"),
+                        fixed = FALSE, ...){
+    whichcoef <- match.arg(subset)
+    result <- object$coefficients
+    ncoefs <- names(result)
+    # first remove the fixed coefficients if required
+    if (! fixed) result <- result[! attr(result, "fixed")]
+    attr(result, "fixed") <- NULL
+    if (whichcoef == "all") selcoef <- 1:length(result)
+    else selcoef <- grep(whichcoef, ncoefs)
+    result[selcoef]
+}
+    
+ltm <- function(x, to = c("vec", "mat", "ltm")){
+    to <- match.arg(to)
+    result <- x
+    if (is.null(dim(x))){
+        if (to != "vec"){
+            z <- length(x)
+            K <- - 0.5 + sqrt(1 + 8 * z) / 2
+            if (abs(K - floor(K)) > 1E-07) stop("wrong length")
+            result <- matrix(0, nrow = K, ncol = K)
+            result[! lower.tri(result)] <- x
+            result <- t(result)
+            if (to == "mat") result[upper.tri(result)] <- t(result)[upper.tri(result)]
+        }
+    }
+    else{
+        if (! identical(x, t(x))){
+            # the matrix is not symetric, its upper triangular
+            # elements should be 0
+            if (any(x[upper.tri(x)] != 0))
+                stop("the matrix is not symetric, it should have only zero ont the upper triangular part")
+            if (to == "mat") result[upper.tri(x)] <- t(x)[upper.tri(x)]
+            if (to == "vec") result <- t(x)[! lower.tri(x)]
+        }
+        else{
+            result <- x
+            if (to == "ltm") result[upper.tri(result)] <- 0
+            if (to == "vec") result <- t(x)[! lower.tri(x)]
+        }
+    }
+    result
+}
+
+chol2vcov <- function(x, type = c("cov", "cor")){
+    type <- match.arg(type)
+    # Take a mlogit object as argument and returns a vector of
+    # variance for the structural parameters
+    # First get the position of the coefficients of the Cholesky
+    # decomposition
+    cholspos <- grep("chol.", names(coef(x)))
+    # Then get these coefficients
+    coefs <- coef(x)[cholspos]
+    # and the covariance matrix of these coefficients
+    vcovs <- vcov(x)[cholspos, cholspos]
+    # compute the matrix of derivatives
+    Dcholcov <- function(x){
+        # x is a Cholesky matrix (lower triangular + diagonal),
+        # entered as a matrix or as a vector ; Dchol returns the
+        # matrix of derivatives of the structural parameters (variance
+        # and covariance) respective to the estimated parameters (the
+        # element of the Cholesky decomposition).
+        if (! is.matrix(x)) x <- ltm(x, to = "ltm")
+        K <- nrow(x)    
+        Delta <- matrix(0, nrow = K * (K + 1) / 2, ncol = K * (K + 1) / 2)
+        dims <- c(0, (1:K) * (1:K + 1) / 2)
+        Delta[1, 1] <- x[1, 1]
+        if (K > 1){
+            for (i in 2:K){
+                pos <- (dims[i] + 1):dims[i + 1]
+                betas <- ltm(ltm(x, to = "vec")[1:dims[i + 1]], to = "ltm")
+                Delta[pos, pos] <- betas
+                for (j in 1:(i - 1)){
+                    Delta[dims[i] + j, (dims[j] + 1):dims[j + 1]] <- x[i, 1:j]
+                }
+            }
+        }
+        dblrows <- (1:K) * ( (1:K) + 1) / 2
+        Delta[dblrows, ] <- Delta[dblrows, ] * 2
+        Delta
+    }
+    Dcovcor <- function(x){
+        y <- ltm(x, to = "ltm")
+        sd <- sqrt(diag(y))
+        y <- y / outer(sd, sd)
+        diag(y) <- sd
+        x <- ltm(x, to = "vec")
+        y <- ltm(y, to = "vec")
+        dims <- length(x)
+        K <- - 0.5 + sqrt(1 + 8 * dims) / 2
+        diags <- (1:K) * ((1:K) + 1) / 2
+        rows <- Reduce("c", lapply(1:K, function(x) 1:x))
+        cols <- rep(1:K, 1:K)
+        M <- matrix(0, dims, dims)
+        for (i in 1:dims){
+            if (cols[i] == rows[i]) M[i, i] <- 1 / 2 * y[i] / x[i]
+            else{
+                M[i, i] <- 1  * y[i] / x[i]
+                first <- rows[i]
+                second <- cols[i]      
+                M[i, rows == first  & cols == first ] <- - 1 / 2  * y[i] / x[i]
+                M[i, rows == second & cols == second] <- - 1 / 2  * y[i] / x[i]
+            }   
+        }
+        M
+    }
+    Derchols <- Dcholcov(ltm(coefs, to = "ltm"))
+    # estimate the covariance matrix of the structural parameters
+    result <- Derchols %*% vcovs %*% t(Derchols)
+    if (type == "cor"){
+        coefs <- tcrossprod(ltm(coefs, to = "ltm"))
+        Dercov <- Dcovcor(ltm(coefs, to = "ltm"))
+        result <- Dercov %*% result %*% t(Dercov)
+    }
+    # coerce it to a vector and set the relevant names
+    result <- diag(result)
+    names(result) <- names(coef(x))[cholspos]
+    result
+}
+
+vcov.mlogit <- function(object,
+                        what = c('coefficient', 'errors', 'rpar'),
+                        subset = c("all", "iv", "sig", "sd", "sp", "chol"),
+                        type = c('cov', 'cor', 'sd'),
+                        reflevel = NULL, ...){
+    whichcoef <- match.arg(subset)
+    what <- match.arg(what)
+    type <- match.arg(type)
+    fixed <- attr(object$coefficients, "fixed")
+    ncoefs <- names(object$coefficients)
+
+    # for the coefficients, we have to check the problem for fixed
+    # coefficients
+    if (what == 'coefficient'){
+        if (whichcoef == "all") selcoef <- 1:length(ncoefs)
+        else selcoef <- grep(whichcoef, ncoefs)
+        if (any(fixed)) selcoef <- selcoef[! fixed]
+        result <- solve(- object$hessian[selcoef, selcoef])
+    }
+    
+    if (what == 'errors'){
+        if (! is.null(object$omega)){
+            if (is.null(reflevel)){
+                if (is.list(object$omega)) result <- object$omega[[1]]
+                else result <- object$omega
+            }
+            else result <- object$omega[[reflevel]]
+        }
+        result <- switch(type,
+                         cov = result,
+                         cor = result / tcrossprod(sqrt(diag(result))),
+                         sd = sqrt(diag(result))
+                         )
+    }
+    if (what == 'rpar'){
+        if (is.null(object$rpar)) stop('no random parameters')
+        nrpar <- names(object$rpar)
+        if (is.null(attr(object$rpar, "covariance"))){
+            # No correlated parameters
+            result <- stdev(object)
+            if (type != 'sd'){
+                V  <- matrix(0, length(result), length(result),
+                             dimnames = list(names(result), names(result)))
+                if (type == 'cor') diag(V) <- 1
+#                if (type == 'vcov') diag(V) <- result ^ 2
+#                if (type == 'cov') V <- result ^ 2
+                if (type == 'cov') diag(V) <- result ^ 2
+                result <- V
+            }
+        }
+        else{
+            # correlated parameters
+            coefs <- coef(object, subset = "chol")
+            ncoefs <- names(coefs)
+            # compute the vcov matrix of random parameters
+            result <- tcrossprod(ltm(coefs, to = "ltm"))
+            # compute the variance of the vcov matrix of random
+            # parameters
+            vcovstruct <- chol2vcov(object, type = type)
+            if (type == "cov") attr(result, "cov") <- vcovstruct
+            if (type == 'cor'){
+                sd <- sqrt(diag(result))
+                result <- result / tcrossprod(sqrt(diag(result)))
+                diag(result) <- sd
+                attr(result, "cov") <- vcovstruct
+            }
+            attr(result, "type") <- type
+            ## if (type == 'cov'){
+            ##     result <- diag(result)
+            ##     attr(result, "cov") <- diag(ltm(vcovstruct, to = "ltm"))
+            ## }
+            if (type == 'sd') result <- sqrt(diag(result))
+            nrparcor <- rownames(attr(object$rpar, "covariance"))
+            if (is.null(dim(result))) names(result) <- nrparcor
+            else dimnames(result) <- list(nrparcor, nrparcor)
+        }
+    }
+    structure(result, class = c('vcov.mlogit', class(result)), type = type)
+}
+
+print.vcov.mlogit <- function(x, ...){
+    attr(x, "cov") <- attr(x, "type") <- NULL
+    print(unclass(x))
+}
+
+summary.vcov.mlogit <- function(object, ...){
+    if (is.null(attr(object, "cov")))
+        stop("summary.vcov.mlogit only implemented for random parameters")
+    if (is.matrix(object)){
+        coefs <- ltm(object, to = "vec")
+        nrpar <- rownames(object)
+        K <- length(nrpar)
+        type <- attr(object, "type")
+        diag <- ifelse(type == "cov", "var", "sd")
+        nstruct <- names.rpar(nrpar, prefix = type, diag = diag, unique = TRUE)
+    }
+    else{
+        coefs <- object
+        nstruct <- names(coefs)
+    }
+    std.err <- sqrt(attr(object, "cov"))
+    b <- coefs
+    z <- b / std.err
+    p <- 2 * pnorm(abs(z), lower.tail = FALSE)
+    # construct the object of class summary.plm
+    coefficients <- cbind("Estimate"   = b,
+                          "Std. Error" = std.err,
+                          "z-value"    = z,
+                          "Pr(>|z|)"   = p)
+    rownames(coefficients) <- nstruct
+    if (is.matrix(object)){
+        diagpos <- (1:K) * ( (1:K) + 1) / 2
+        coefficients <- coefficients[c(diagpos, (1:nrow(coefficients))[- diagpos]), ]
+    }
+    structure(coefficients, class = "summary.vcov.mlogit")
+    }   
+
+print.summary.vcov.mlogit <- function(x, digits = max(3, getOption("digits") - 2),
+                                      width = getOption("width"), ...){
+    printCoefmat(x, digits = digits)
+}
+
+names.rpar <- function(rpar, prefix = NULL, diag = NULL, unique = FALSE){
+    K <- length(rpar)
+    nms <- vector(mode = "character", length = K * (K + 1) / 2)
+    pos <- 0
+    for (i in 1:K){
+        for (j in 1:i){
+            pos <- pos + 1
+            if (is.null(prefix)) nms[pos] <- paste(rpar[j], ":", rpar[i], sep = "")
+            else{
+                if (is.null(diag)) nms[pos] <- paste(prefix, ".", rpar[j], ":", rpar[i], sep = "")
+                else{
+                    ifelse(i == j,
+                           nms[pos] <- paste(diag, ".",
+                                             ifelse(unique,
+                                                    rpar[i],
+                                                    paste(rpar[j], ":", rpar[i], sep = "")), sep = ""),
+                           nms[pos] <- paste(prefix, ".", rpar[j], ":", rpar[i], sep = "")
+                           )
+                }
+            }
+        }
+    }
+    nms
+}
+                  

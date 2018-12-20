@@ -1832,9 +1832,9 @@ effects:
 lr.mxc <- lrtest(Train.mxlc, Train.ml)
 wd.mxc <- waldtest(Train.mxlc)
 lh.mxc <- linearHypothesis(Train.mxlc, 
-                           c("time.time = 0", "time.change =  0",
-                             "time.comfort = 0", "change.change = 0",
-                             "change.comfort = 0", "comfort.comfort = 0"))
+                           c("chol.time:time = 0", "chol.time:change =  0",
+                             "chol.change:change = 0", "chol.time:comfort = 0", 
+                             "chol.change:comfort = 0", "chol.comfort:comfort = 0"))
 sc.mxc <- scoretest(Train.ml, 
                     rpar = c(time = "n", change = "n", comfort = "n"), 
                     R = 100, correlation = TRUE, halton = NA, 
@@ -1866,9 +1866,9 @@ sapply(list(wald = wd.mxu, lh = lh.mxu,
 
 <<>>=
 lr.corr <- lrtest(Train.mxlc, Train.mxlu)
-lh.corr <- linearHypothesis(Train.mxlc, c("time.change = 0", 
-                                          "time.comfort = 0",
-                                          "change.comfort = 0"))
+lh.corr <- linearHypothesis(Train.mxlc, c("chol.time:change = 0", 
+                                          "chol.time:comfort = 0",
+                                          "chol.change:comfort = 0"))
 wd.corr <- waldtest(Train.mxlc, correlation = FALSE)
 sc.corr <- scoretest(Train.mxlu, correlation = TRUE)
 sapply(list(wald = wd.corr, lh = lh.corr, 

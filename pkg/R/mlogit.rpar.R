@@ -1,6 +1,5 @@
 make.beta <- function(mua, siga, rpar, random.nb, correlation){
 
-
     uncorrelated <- setdiff(names(rpar), correlation)
     correlated <-   names(mua)[sort(match(correlation,  names(mua)))]
     uncorrelated <- names(mua)[sort(match(uncorrelated, names(mua)))]
@@ -63,15 +62,8 @@ make.beta <- function(mua, siga, rpar, random.nb, correlation){
         if (length(sel)){
             eta <- pnorm(random.nbu[, sd.sel, drop = FALSE])
             betaa.mu[, sel] <- 1
-            ## eta05 <- pnorm(random.nbu[, sd.sel, drop = FALSE]) < 0.5
-            ## print(table(eta05))
-            ## betaa.sigmau[, sd.sel] <- eta05 * (sqrt(2 * pnorm(random.nbu[, sd.sel, drop = FALSE])) - 1) +
-            ##     (! eta05) * (1 - sqrt(2 * (1 - pnorm(random.nbu[, sd.sel, drop = FALSE]))))
-
             betaa.sigmau[, sd.sel] <- (eta < 0.5) * (sqrt(2 * eta) - 1) +
                 (eta > 0.5) * (1 - sqrt(2 * (1 - eta)))
-            print(mua)
-            print(siga)
             betaa[, sel] <- t(mua[sel] + siga[sd.sel] * t(betaa.sigmau[, sd.sel]))
         }
 
@@ -83,7 +75,6 @@ make.beta <- function(mua, siga, rpar, random.nb, correlation){
                 (eta > 0.5) * (2 - sqrt(2 * (1 - eta)))
             betaa[, sel] <- t(t(betaa.mu[, sel]) * mua[sel])
         }
-
         
         sel <- intersect(censored, uncorrelated)
         sd.sel <- paste("sd.", sel, sep = "")
@@ -107,20 +98,17 @@ make.beta <- function(mua, siga, rpar, random.nb, correlation){
             betaa[, sel] <- t(mua[sel] + siga[sd.sel] * t(random.nbu[, sd.sel, drop = FALSE]))
             betaa.mu[, sel] <- 1
             betaa.sigmau[, sd.sel] <- random.nbu[, sd.sel, drop = FALSE]
-        }
-        
+        }        
     }
-    
     if (Kc){
-        names.corr.coef <- c()
-        for (i in 1:Kc) names.corr.coef <- c(names.corr.coef, paste(correlated[i], correlated[i:Kc], sep = "."))
         random.nbc <- random.nb[, (Ku + 1):(Ku + Kc), drop = FALSE]
-        CC <- makeC(siga[(Ku - Ko + 1):length(siga)])
-        sigeta <- tcrossprod(random.nbc, CC)
+        names.corr.coef <- names.rpar(correlated, prefix = "chol")
+        CC <- ltm(siga[(Ku - Ko + 1):length(siga)], to = "ltm")
+        sigeta <- random.nbc %*% t(CC)
         colnames(sigeta) <- correlated
         betaa[, correlated] <- t(mua[correlated] + t(sigeta))
         betaa.mu[, correlated] <- matrix(1, R, length(correlated))
-        betaa.sigmac <- random.nbc[, rep(1:Kc, Kc:1)]
+        betaa.sigmac <- random.nbc[, Reduce("c", lapply(1:Kc, function(i) 1:i))]
         colnames(betaa.sigmac) <- names.corr.coef
         for (i in 1:Kc){
             sigi <- i + cumsum(c(0, (Kc - 1):1))[1:i]
@@ -213,7 +201,7 @@ make.rpar <- function(rpar, correlation, estimate, norm){
         Ktot <- length(estimate)
         index.corr <- (Ktot - 0.5 * Kc * (Kc + 1) + 1):Ktot
         v <- estimate[index.corr]
-        v <- tcrossprod(makeC(v))
+        v <- tcrossprod(ltm(v, to = "ltm"))
         colnames(v) <- rownames(v) <- correlation
         sc <- sqrt(diag(v))
         names(sc) <- correlation
@@ -241,7 +229,6 @@ make.rpar <- function(rpar, correlation, estimate, norm){
     if (length(correlation)) attr(z, 'covariance') <- v
     z
 }
-
 
 plot.rpar <- function(x, norm = NULL, type = c("density", "probability"), ...){
     type <- match.arg(type)

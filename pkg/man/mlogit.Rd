@@ -29,7 +29,7 @@ mlogit(formula, data, subset, weights, na.action, start = NULL,
        seed = 10, ...)
 \method{print}{mlogit}(x, digits = max(3, getOption("digits") - 2),
     width = getOption("width"), ...)
-\method{summary}{mlogit}(object, ...)
+\method{summary}{mlogit}(object, ..., type = c("chol", "cov", "cor"))
 \method{print}{summary.mlogit}(x, digits = max(3, getOption("digits") - 2),
     width = getOption("width"), ...)
 \method{print}{mlogit}(x, digits = max(3, getOption("digits") - 2),
@@ -45,7 +45,10 @@ mlogit(formula, data, subset, weights, na.action, start = NULL,
 \method{terms}{mlogit}(x, ...)
 \method{model.matrix}{mlogit}(object, ...)
 \method{update}{mlogit}(object, new, ...)
-\method{coef}{mlogit}(object, fixed = FALSE, ...)
+\method{coef}{mlogit}(object,
+                      subset = c("all", "iv", "sig",
+                                 "sd", "sp", "chol"),
+                      fixed = FALSE, ...)
 \method{coef}{summary.mlogit}(object, ...)
 }
 
@@ -57,7 +60,9 @@ mlogit(formula, data, subset, weights, na.action, start = NULL,
   \item{returnData}{if \code{TRUE}, the data is returned as an attribute,}
   \item{data}{the data: an \code{mlogit.data} object or an ordinary
   \code{data.frame},}
-  \item{subset}{an optional vector specifying a subset of observations,}
+  \item{subset}{an optional vector specifying a subset of observations
+  for \code{mlogit}, an optional vector of coefficients to extract for
+  the \code{coef} method,}
   \item{weights}{an optional vector of weights,}
   \item{na.action}{a function which indicates what should happen when
     the data contains '\code{NA}'s,}
@@ -109,9 +114,13 @@ mlogit(formula, data, subset, weights, na.action, start = NULL,
   \item{type}{ one of \code{outcome} (probability of the chosen
   alternative), \code{probabilities} (probabilities for all the
   alternatives), \code{parameters} for individual-level random
-  parameters,}
+  parameters for the fitted method, how the correlated random parameters
+  should be displayed : \code{"chol"} for the estimated parameters (the
+  elements of the Cholesky decomposition matrix), \code{"cov"} for the
+  covariance matrix and \code{"cor"} for the correlation matrix and the
+  standard deviations,}
   \item{fixed}{ if \code{FALSE} (the default), constant coefficients are
-  not returned,}
+    not returned,}
   \item{...}{further arguments passed to \code{mlogit.data} or
   \code{mlogit.optim}.}
   

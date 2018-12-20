@@ -1,5 +1,8 @@
 \name{vcov.mlogit}
 \alias{vcov.mlogit}
+\alias{print.vcov.mlogit}
+\alias{summary.vcov.mlogit}
+\alias{print.summary.vcov.mlogit}
 \title{vcov method for mlogit objects}
 \description{
   The \code{vcov} method for \code{mlogit} objects extract the
@@ -7,24 +10,36 @@
   parameters.
 }
 \usage{
-\method{vcov}{mlogit}(object, what = c('coefficient', 'errors', 'rpar'),
-                        type = c('cov', 'cor', 'sd'), reflevel = NULL, ...)
+\method{vcov}{mlogit}(object,
+                      what = c('coefficient', 'errors', 'rpar'),
+                      subset = c("all", "iv", "sig", "sd", "sp", "chol"),
+                      type = c('cov', 'cor', 'sd'),
+                      reflevel = NULL, ...)
+\method{print}{vcov.mlogit}(x, ...)
+\method{summary}{vcov.mlogit}(object, ...)
+\method{print}{summary.vcov.mlogit}(x, digits = max(3, getOption("digits") - 2),
+    width = getOption("width"), ...)		      
 }
 \arguments{
-  \item{object}{a \code{mlogit} object,}
+  \item{object}{a \code{mlogit} object (and a \code{vcov.mlogit} for the summary method),}
+  \item{x}{a \code{vcov.mlogit} or a \code{summary.vcov.mlogit} object,}
   \item{what}{indicates which covariance matrix has to be extracted :
     the default value is \code{coefficients}, in this case, \code{vcov}
     behaves as usual. If \code{what} equals \code{errors} the covariance
     matrix of the errors of the model is returned. Finally, if
     \code{what} equals \code{rpar}, the covariance matrix of the random
-    parameters are extracted.}
+    parameters are extracted,}
+  \item{subset}{the subset of the coefficients that have to be extracted
+    (only relevant if \code{what = "coefficients"},}
   \item{type}{with this argument, the covariance matrix may be returned
-    (the default) ; the correlation matrix and the standard deviation
-    vector may also be extracted.}
+    (the default) ; the correlation matrix with the standard deviation
+    on the diagonal may also be extracted,}
   \item{reflevel}{relevent for the extraction of the errors of a
     multinomial probit model ; in this case the covariance matrix is of
     error differences is returned and, with this argument, the
-    alternative used for differentiation is indicated.}
+    alternative used for differentiation is indicated,}
+  \item{digits}{the number of digits,}
+  \item{width}{the width of the printing,}
   \item{...}{further arguments.}
 }
 \details{

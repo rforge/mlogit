@@ -23,13 +23,13 @@ waldtest.mlogit <- function(object, ...){
     K <- length(colnames(model.matrix(object)))
     L <- length(object$freq)
     
-     ######  guess the nature of the fitted model
+    ######  guess the nature of the fitted model
     mixed.logit <- !is.null(object$call$rpar)
     heterosc.logit <- !is.null(object$call$heterosc) && object$call$heterosc
     nested.logit <- !is.null(object$call$nests)
 
-     ###### Heteroscedastic logit model
-     # the hypothesis is that J-1 parameters = 1
+    ###### Heteroscedastic logit model
+    # the hypothesis is that J-1 parameters = 1
     if (heterosc.logit){
         su <- (K+1):(K+L-1)
         q <- rep(1, length(su))
@@ -64,11 +64,11 @@ waldtest.mlogit <- function(object, ...){
         # TRUE)). stop if un.nest.el = FALSE and warning if other arguments
         # are provided.
         
-        if (!un.nest.el){
-            if (!is.null(mlogit.args$nests)) stop("the nest argument should be NULL")
-            if (!is.null(mlogit.args$un.nest.el) && mlogit.args$un.nest.el){
+        if (! un.nest.el){
+            if (! is.null(mlogit.args$nests)) stop("the nest argument should be NULL")
+            if (! is.null(mlogit.args$un.nest.el) && mlogit.args$un.nest.el){
                 irrelevant.args.warning(mlogit.args, "un.nest.el")
-                su <- (K+1):length(coef(object))
+                su <- (K + 1):length(coef(object))
                 R <- matrix(0, nrow = length(coef(object)), ncol = length(su) - 1)
                 for (i in 1:ncol(R)){
                     R[K + 1, i] <- 1
@@ -98,6 +98,7 @@ waldtest.mlogit <- function(object, ...){
     
     ###### Mixed logit model
     if (mixed.logit){
+        ncoefs <- names(coef(object))
         J <- length(object$rpar)
         # First check whether the random effects are correlated or not
         if (is.null(object$call$correlation)) correlation <- FALSE
@@ -105,10 +106,10 @@ waldtest.mlogit <- function(object, ...){
         # If the fitted model is uncorrelated, the only relevant test is
         # no random effects, mlogit.args = (rpar = NULL) ; stop if rpar is
         # not NULL and warning if supplementary arguments are provided
-        if (!correlation){
+        if (! correlation){
             if (!is.null(mlogit.args$rpar)) stop("rpar should be NULL")
             irrelevant.args.warning(mlogit.args, "rpar")
-            su <- K + (1:J)
+            su <- grep("sd.", ncoefs)
             hyp <- "no random effects"
         }
         else{
@@ -119,13 +120,13 @@ waldtest.mlogit <- function(object, ...){
          # 2. no random effects : mlogit.args = (rpar = NULL), stop if
          # rpar not NULL and a warning if supplementary arguments are
          # provided
-            rd.el <- K+(1:(J*(J+1)/2))
-            diag.el <- K + c(1, cumsum(J:2)+1)
-            if (!is.null(mlogit.args$correlation) && mlogit.args$correlation)
+            rd.el <- grep("chol.", ncoefs)
+            diag.el <- rd.el[cumsum(1:J)]
+            if (! is.null(mlogit.args$correlation) && mlogit.args$correlation)
                 stop("irrelevant constrained model")
-            if (!is.null(mlogit.args$correlation) && !mlogit.args$correlation){
+            if (! is.null(mlogit.args$correlation) && !mlogit.args$correlation){
                 irrelevant.args.warning(mlogit.args, "correlation")
-                su <- rd.el[!(rd.el %in% diag.el)]
+                su <- rd.el[! (rd.el %in% diag.el)]
                 hyp <- "uncorrelated random effects"
             }
             else{
@@ -227,26 +228,27 @@ scoretest.mlogit <- function(object, ...){
     }
 
     if (mixed.logit){
-        init.mixed.model <- !is.null(object$call$rpar)
+        init.mixed.model <- ! is.null(object$call$rpar)
         if (init.mixed.model){
-            if (!is.null(object$call$correlation) && object$call$correlation) stop("not a relevant model for a score test")
+            if (! is.null(object$call$correlation) && object$call$correlation)
+                stop("not a relevant model for a score test")
             alt.hyp <- "uncorrelated random effects"
             data.name <- "correlation = TRUE"
         }
         else{
-            if (m$correlation)
-                alt.hyp <- "no correlated random effects"
+            if (m$correlation) alt.hyp <- "no correlated random effects"
             else alt.hyp <- "no uncorrelated random effects"
             data.name <- paste(names(m$rpar), paste("\'",as.character(m$rpar),"\'", sep = ""),
                                collapse = ",", sep = "=")
             data.name <- paste("rpar", "(", data.name, ")", sep = "")
         }
         if (init.mixed.model){
+            ncoef <- names(coef(object))
             J <- length(object$rpar)
             K <- ncol(model.matrix(object))
-            sd <- coef(object)[-c(1:K)]
-            rd.el <- K+(1:(J*(J+1)/2))
-            diag.el <- K + c(1, cumsum(J:2)+1)
+            sd <- coef(object)[grep("sd.", ncoef)]
+            rd.el <- K + (1:(J * (J + 1) / 2))
+            diag.el <- K + cumsum(1:J)
             start.values <- c(start.values[1:K], rep(0, length(rd.el)))
             start.values[diag.el] <- sd
         }
@@ -257,7 +259,8 @@ scoretest.mlogit <- function(object, ...){
     mc[c('iterlim', 'method', 'start', 'print.level')] <- list(0, 'bfgs', start.values, 0)
     newmodel <- eval(mc, parent.frame())
     # gradient used to be a vector, now a matrix (the following ifelse should may be removed
-    if (is.matrix(newmodel$gradient)) gradvect <- apply(newmodel$gradient, 2, sum) else gradvect <- newmodel$gradient
+    if (is.matrix(newmodel$gradient))
+        gradvect <- apply(newmodel$gradient, 2, sum) else gradvect <- newmodel$gradient
     # fixed coefficients should be removed to compute the statistic
     fixed <- attr(newmodel$coefficients, "fixed")
     stat <- - sum(gradvect[! fixed] * solve(newmodel$hessian[! fixed, ! fixed], gradvect[! fixed]))
@@ -293,7 +296,8 @@ scoretest.default <- function(object, ...){
     newmodel <- update(object, new, start= start, iterlim = 0)
     data.name <- paste(deparse(formula(newmodel)))
     alt.hyp <- "unconstrained model"
-    if (is.matrix(newmodel$gradient)) gradvect <- apply(newmodel$gradient, 2, sum) else gradvect <- newmodel$gradient
+    if (is.matrix(newmodel$gradient))
+        gradvect <- apply(newmodel$gradient, 2, sum) else gradvect <- newmodel$gradient
     stat <- - sum(gradvect * solve(newmodel$hessian, gradvect))
     names(stat) <- "chisq"
     df <- c(df = length(coef(newmodel)) - length(coef(object)))

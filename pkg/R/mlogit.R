@@ -75,8 +75,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     mf <- eval(mf, parent.frame())
     # ensures that the response is logical
     mf[[1]] <- tological(mf[[1]])
-    
-    
+        
     # change the reference level of the response if required
     if (! is.null(reflevel)) attr(mf, "index")[["alt"]] <- relevel(attr(mf, "index")[["alt"]], reflevel)
     index <- attr(mf, "index")
@@ -310,11 +309,11 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
             names.sup.coef <- paste("sd", utwopars, sep = ".")
         }
         if (Kc){
-            if (is.null(start) || length(start) == K) sup.coef <- c(sup.coef, rep(0.1, 0.5 * Kc * (Kc + 1)))
-            for (i in 1:Kc){
-                names.sup.coef <- c(names.sup.coef,
-                                    paste(correlated[i], correlated[i:Kc], sep = "."))
+            if (is.null(start) || length(start) == K){
+                sup.coef <- c(sup.coef, rep(0.1, 0.5 * Kc * (Kc + 1)))
             }
+            names.sup.coef <- c(names.sup.coef,
+                                names.rpar(correlated, prefix = "chol"))
         }
         if (is.null(start) || length(start) == K) names(sup.coef) <- names.sup.coef
     }
@@ -356,7 +355,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
             callst$nests <- callst$rpar <- callst$constPar <- callst$iterlim <- NULL
             callst$heterosc <- callst$panel <- callst$probit <- FALSE
             callst$print.level <- 0
-            if (length(callst$formula)[2] == 4) callst$formula <- mFormula(formula(callst$formula, rhs = 1:3))#stop("lesbon")
+            if (length(callst$formula)[2] == 4) callst$formula <- mFormula(formula(callst$formula, rhs = 1:3))
             #      start <- coef(eval(callst, sys.frame(which=nframe)))
             #      start <- coef(eval(callst, parent.frame()))
             #      start <- coef(eval(callst, parent.frame))
@@ -463,6 +462,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
                         null = sum(freq * log(freq / n)),
                         class = "logLik"
                         )
+
     if (mixed.logit) rpar <- make.rpar(rpar, correlation, x$coefficients, NULL) else rpar <- NULL
     if (! (nested.logit | pair.comb.logit)) nests <- NULL
   
@@ -474,6 +474,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     linpred <- attr(x$optimum, "linpred")
     resid <- Reduce("cbind", yl) - fitted
     attr(x$coefficients, "fixed") <- attr(x$optimum, "fixed")
+    attr(x$coefficients, "sup") <- names.sup.coef
     gradient <- -  attr(x$optimum, "gradient")
     gradient <- - attr(x$optimum, "gradi")
     if (mixed.logit) indpar <- attr(x$optimum, "indpar") else indpar <- NULL

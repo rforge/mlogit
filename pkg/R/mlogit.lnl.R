@@ -605,7 +605,8 @@ lnl.rlogit <- function(param, X, y, Xs, weights = NULL,
         B <- vector(mode = "list", length = J)
         for (j in 1:J) B[[j]] <- matrix(NA, N, R)
         ndraws <- ifelse(panel, n, N)
-        b <- make.beta(mua, siga, rpar, random.nb, correlation)
+        NOUVEAU <- FALSE
+        if (! NOUVEAU) b <- make.beta(mua, siga, rpar, random.nb, correlation)
         if (panel) theIds <- unique(id)
         for (i in 1:ndraws){
             if (panel){
@@ -613,10 +614,13 @@ lnl.rlogit <- function(param, X, y, Xs, weights = NULL,
                 theRows <- which(id == anid)
             }
             else theRows <- i
-            ## b <- make.beta(mua, siga, rpar,
-            ##                random.nb[((i - 1) * R + 1):(i * R), ,
-            ##                          drop = FALSE] , correlation)
-            betaa <- b$betaa[((i - 1) * R + 1):(i * R), , drop = FALSE]
+            if (NOUVEAU){
+                b <- make.beta(mua, siga, rpar,
+                               random.nb[((i - 1) * R + 1):(i * R), ,
+                                         drop = FALSE] , correlation)
+                betaa <- b$betaa
+            }
+            else betaa <- b$betaa[((i - 1) * R + 1):(i * R), , drop = FALSE]
             for (j in 1:J) B[[j]][theRows,] <-
                                tcrossprod(Xa[[j]][theRows, ,
                                                   drop = FALSE] / sigma[theRows], betaa)
@@ -636,9 +640,12 @@ lnl.rlogit <- function(param, X, y, Xs, weights = NULL,
 
         Pch2 <- Pch / rowSums(Pch)
         Pch2 <- as.numeric(t(Pch2))
-        indparam <- Pch2 * b$betaa
-        indparam <- apply(indparam, 2, tapply, rep(1:ndraws, each = R), sum)
-        if(panel) indparam <- data.frame(id = unique(id), as.data.frame(indparam))
+        if (! NOUVEAU){
+            indparam <- Pch2 * b$betaa
+            indparam <- apply(indparam, 2, tapply, rep(1:ndraws, each = R), sum)
+            if(panel) indparam <- data.frame(id = unique(id), as.data.frame(indparam))
+        }
+        else indparam <- NULL
         
         if (is.null(initial.value) || lnl <= initial.value) break
     }

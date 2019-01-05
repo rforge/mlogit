@@ -146,7 +146,7 @@ knit_theme$set('edit-kwrite')
 @ 
 
 <<label = setup, include = FALSE>>=
-knitr::opts_chunk$set(echo = TRUE, cache = TRUE, message = FALSE, warning = FALSE, widtht = 65,
+knitr::opts_chunk$set(echo = TRUE, cache = FALSE, message = FALSE, warning = FALSE, widtht = 65,
                       fig.width = 8, fig.height = 6, cache.path = "./cache/mlogit2/")
 options(width = 65)
 @ 
@@ -1762,11 +1762,23 @@ Train.mxlc <- mlogit(choice ~ price + time + change + comfort | - 1, Tr,
 Train.mxlu <- update(Train.mxlc, correlation = FALSE)
 @ 
 
-<<>>=
+<<Train.mxlu, echo = FALSE, results = 'hide'>>=
+strt <- c(0.137351794146992, 4.30849574719798, 0.887994686551665, 
+          2.45345140549618, 4.90794881965367, 1.6382548714579, 2.40096289296281)
+Train.mxlu <- mlogit(choice ~ price + time + change + comfort | - 1, Tr,
+                     panel = TRUE, rpar = c(time = "n", change = "n", 
+                                            comfort = "n"), R = 100,
+                     correlation = FALSE, halton = NA, method = "bhhh", start = strt)
+@
+
+<<eval = FALSE>>=
 Train.mxlu <- mlogit(choice ~ price + time + change + comfort | - 1, Tr,
                      panel = TRUE, rpar = c(time = "n", change = "n", 
                                             comfort = "n"), R = 100,
                      correlation = FALSE, halton = NA, method = "bhhh")
+@ 
+
+<<>>=
 names(coef(Train.mxlu))
 @ 
 
@@ -1775,8 +1787,22 @@ coefficients which are the standard deviations of the distribution of
 the three random parameters. The correlated model is obtained by
 setting the \Ra{correlation}{mlogit} argument to \code{TRUE}.
 
-<<>>=
+
+<<Train.mxlc, echo = FALSE, results = 'hide'>>=
+strt <- c(0.146661855513732, 4.89375230619496, 0.995435497561417, 2.66085236909391, 
+           5.35219944579397, -0.0520907097201832, 1.76125615858177, 1.03843914364791, 
+           0.730478464708962, 2.50670698404667)
+Train.mxlc <- mlogit(choice ~ price + time + change + comfort | - 1, Tr,
+                     panel = TRUE, rpar = c(time = "n", change = "n", 
+                                            comfort = "n"), R = 100,
+                     correlation = TRUE, halton = NA, method = "bhhh", start = strt)
+@ 
+
+<<eval = FALSE>>=
 Train.mxlc <- update(Train.mxlu, correlation = TRUE)
+@ 
+
+<<>>=
 names(coef(Train.mxlc))
 @ 
 
@@ -1815,8 +1841,20 @@ two other random parameters, the correlation can be restricted to the
 \code{time} and \code{comfort} attributes by filling the
 \code{correlation} argument with a character vector.
 
-<<>>=
+<<Train.mxlc2, echo = FALSE, results = 'hide'>>=
+strt <- c(0.149178038536331, 5.15159582558438, 1.10490245223184,
+          2.75984080509624, 1.76784572945564, 5.57261582208262,
+          1.19752704860657, 2.81936053678655)
+Train.mxlc2 <- mlogit(choice ~ price + time + change + comfort | - 1, Tr,
+                      panel = TRUE, rpar = c(time = "n", change = "n", comfort = "n"), R = 100,
+                      correlation = c("time", "comfort"), halton = NA, method = "bhhh", start = strt)
+@ 
+
+<<eval = FALSE>>=
 Train.mxlc2 <- update(Train.mxlc, correlation = c("time", "comfort"))
+@ 
+
+<<>>=
 cor.mlogit(Train.mxlc2)
 @ 
 
@@ -1936,7 +1974,16 @@ a mixed logit model. The coefficients of \code{cost} and \code{risk}
 are assumed to be random, following a zero-bounded triangular
 distribution.
 
-<<>>=
+<<mx.rt, echo = FALSE, results = 'hide'>>=
+strt <- c(-0.0186807298038184, -0.103028409822579, 0.108497212141664, 
+          0.142260749207574, -0.715731973680346, -0.149741650205133, -0.331424607943094)
+mx.rt <- mlogit(choice ~ cost + risk  + seats + noise + crowdness + 
+                    convloc + clientele | 0, data = RT, weights = weight,
+                rpar = c(cost = 'zbt', risk = 'zbt'),
+                R = 100, halton = NA, panel = TRUE, start = strt)
+@ 
+
+<<eval = FALSE>>=
 mx.rt <- mlogit(choice ~ cost + risk  + seats + noise + crowdness + 
                     convloc + clientele | 0, data = RT, weights = weight,
                 rpar = c(cost = 'zbt', risk = 'zbt'),

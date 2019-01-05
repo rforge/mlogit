@@ -177,8 +177,8 @@ library('knitr')
 knit_theme$set('edit-kwrite')
 @ 
 
-<<label = setup, include = FALSE>>=
-knitr::opts_chunk$set(echo = TRUE, cache = TRUE, message = FALSE, warning = FALSE, widtht = 65,
+<<label = setup, include = FALSE>>=<<<
+knitr::opts_chunk$set(echo = TRUE, cache = FALSE, message = FALSE, warning = FALSE, widtht = 65,
                       cache.path = "./cache/mlogit/")
 options(width = 65)
 @ 
@@ -2485,8 +2485,9 @@ taken into account.
 
 We estimate a model with three random parameters, \va{time},
 \va{change} and \va{comfort}. Two mixed logit models are estimated :
-\va{Train.mxlc} is a correlated model and \va{Train.mxlu} is an uncorrelated
-model. A basic multinomial model \va{ml} is also estimated.
+\va{Train.mxlc} is a correlated model and \va{Train.mxlu} is an
+uncorrelated model. A basic multinomial model \va{ml} is also
+estimated.
 
 <<>>=
 data("Train", package = "mlogit")
@@ -2495,7 +2496,22 @@ Tr <- mlogit.data(Train, shape = "wide", varying = 4:11,
                   opposite = c("price", "time", "change", "comfort"),
                   alt.levels=c("A", "B"), id.var ="id")
 @ 
-<<echo = TRUE>>=
+
+<<Train.mxl, echo = FALSE, results = 'hide'>>=
+Train.ml <- mlogit(choice ~ price + time + change + comfort, Tr)
+strt <- c(-0.0328626599226729, 0.00322845651846002, 0.0815196369846546, 
+          0.992231432724274, 2.6594585734457, 0.089060462812217, -0.0526096680545326, 
+          1.75824796627052, 1.0363911955317, 0.727512643831715, 2.49926973797478)
+Train.mxlc <- mlogit(choice ~ price + time + change + comfort, Tr,
+                     panel = TRUE, rpar = c(time = "n", change = "n", comfort = "n"),
+                     correlation = TRUE, R = 100, halton = NA, start = strt)
+strt <- c(-0.0437110605538352, 0.00302623580133227, 0.0718177199730085, 0.884911256339111, 
+          2.45210546315616, 0.0818219134817959, 1.63735162627383, 2.40134128836196)
+Train.mxlu <- update(Train.mxlc, correlation = FALSE, start = strt)
+@  
+
+
+<<eval = FALSE>>=
 Train.ml <- mlogit(choice ~ price + time + change + comfort, Tr)
 Train.mxlc <- mlogit(choice ~ price + time + change + comfort, Tr,
                panel = TRUE, rpar = c(time = "cn", change = "n", comfort = "ln"),
@@ -2873,6 +2889,16 @@ alternatives used. The multinomial probit model is estimated using
 <<>>=
 data("Fishing", package = "mlogit")
 Fish <- mlogit.data(Fishing, shape="wide", varying=2:9, choice="mode")
+@ 
+
+<<echo = FALSE, results = 'hide'>>=
+strt <- c(0.725136619390524, 0.623929046825871, -0.012154264563254, 
+          2.40052090993936e-06, -6.54190678882061e-05, 1.54787449680641, 
+          0.400099854168002, 1.27472767540054, 1, 0.545695205792339, 0.695440476892784)
+Fish.mprobit <- mlogit(mode~price | income | catch, Fish, probit = TRUE, alt.subset=c('beach', 'boat','pier'), start = strt)
+@
+
+<<eval = FALSE>>=
 Fish.mprobit <- mlogit(mode~price | income | catch, Fish, probit = TRUE, alt.subset=c('beach', 'boat','pier'))
 @
 

@@ -1,5 +1,4 @@
 make.beta <- function(mua, siga, rpar, random.nb, correlation){
-
     uncorrelated <- setdiff(names(rpar), correlation)
     correlated <-   names(mua)[sort(match(correlation,  names(mua)))]
     uncorrelated <- names(mua)[sort(match(uncorrelated, names(mua)))]
@@ -111,7 +110,9 @@ make.beta <- function(mua, siga, rpar, random.nb, correlation){
         betaa.sigmac <- random.nbc[, Reduce("c", lapply(1:Kc, function(i) 1:i))]
         colnames(betaa.sigmac) <- names.corr.coef
         for (i in 1:Kc){
-            sigi <- i + cumsum(c(0, (Kc - 1):1))[1:i]
+#            sigi <- i + cumsum(c(0, (Kc - 1):1))[1:i]
+            sigi <- (i * (i - 1) / 2 + 1):(i * (i + 1) / 2)
+#            print(sigi)
             if (rpar[i] == "cn"){
                 betaa[, i] <- pmax(betaa[, i], 0)
                 betaa.mu[, i] <- as.numeric(betaa[, i] > 0)
@@ -128,6 +129,7 @@ make.beta <- function(mua, siga, rpar, random.nb, correlation){
     if (Kc & ! (Ku - Ko)) betaa.sigma <- betaa.sigmac
     if (! Kc & (Ku - Ko)) betaa.sigma <- betaa.sigmau
     if (! Kc & ! (Ku - Ko)) betaa.sigma <- NULL
+
     list(betaa = betaa, betaa.mu = betaa.mu, betaa.sigma = betaa.sigma)
 }
 

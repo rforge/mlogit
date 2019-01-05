@@ -234,7 +234,7 @@ mlogit.optim <- function(logLik, start,
         }
         # compute the quadratic form of the gradient
         chi2 <- -  crossprod(d[!fixed], oldg[!fixed])
-    
+
         # print some informations about the iteration
         if (print.level > 0){
             chaine <- paste("iteration ",i,", step = ",step,

@@ -18,6 +18,8 @@
 ##    * coef                  |
 ##----------------------------
 
+#' @rdname mlogit
+#' @export
 residuals.mlogit <- function(object, outcome = TRUE, ...){
     if (! outcome){
         result <- object$residuals
@@ -30,25 +32,35 @@ residuals.mlogit <- function(object, outcome = TRUE, ...){
     result
 }
 
+#' @rdname mlogit
+#' @export
 df.residual.mlogit <- function(object, ...){
     n <- length(residuals(object))
     K <- length(coef(object))
     n - K
 }
 
+#' @rdname mlogit
+#' @export
 terms.mlogit <- function(x, ...){
     terms(x$formula)
 }
 
+#' @rdname mlogit
+#' @export
 model.matrix.mlogit <- function(object, ...){
     model.matrix(object$formula, object$model)
 }
 
+#' @rdname mlogit
+#' @export
 model.response.mlogit <- function(object, ...){
     y.name <- paste(deparse(object$formula[[2]]))
     object$model[[y.name]]
 }
 
+#' @rdname mlogit
+#' @export
 update.mlogit <- function (object, new, ...){
     call <- object$call
     if (is.null(call))
@@ -68,6 +80,8 @@ update.mlogit <- function (object, new, ...){
     eval(call, parent.frame())
 }
 
+#' @rdname mlogit
+#' @export
 print.mlogit <- function (x, digits = max(3, getOption("digits") - 2),
                           width = getOption("width"), ...){
     cat("\nCall:\n", deparse(x$call), "\n\n", sep = "")
@@ -81,10 +95,14 @@ print.mlogit <- function (x, digits = max(3, getOption("digits") - 2),
     invisible(x)
 }
 
+#' @rdname mlogit
+#' @export
 logLik.mlogit <- function(object,...){
     object$logLik
 }
 
+#' @rdname mlogit
+#' @export
 summary.mlogit <- function (object, ..., type = c("chol", "cov", "cor")){
     type <- match.arg(type)
     fixed <- attr(object$coefficients, "fixed")
@@ -113,6 +131,9 @@ summary.mlogit <- function (object, ..., type = c("chol", "cov", "cor")){
     return(object)
 }
 
+#' @rdname mlogit
+#' @method print summary.mlogit
+#' @export
 print.summary.mlogit <- function(x, digits = max(3, getOption("digits") - 2),
                                  width = getOption("width"), ...){
     cat("\nCall:\n")
@@ -139,6 +160,8 @@ print.summary.mlogit <- function(x, digits = max(3, getOption("digits") - 2),
     invisible(x)
 }
 
+#' @rdname mlogit
+#' @export
 index.mlogit <- function(x, ...){
     index(model.frame(x))
 }
@@ -147,6 +170,8 @@ index.matrix <- function(x, ...){
     attr(x, "index")
 }
 
+#' @rdname mlogit
+#' @export
 predict.mlogit <- function(object, newdata = NULL, returnData = FALSE, ...){
     # if no newdata is provided, use the mean of the model.frame
     if (is.null(newdata)) newdata <- mean(model.frame(object))
@@ -185,6 +210,8 @@ predict.mlogit <- function(object, newdata = NULL, returnData = FALSE, ...){
     result
 }
 
+#' @rdname mlogit
+#' @export
 fitted.mlogit <- function(object, type = c("outcome", "probabilities",
                                            "linpred", "parameters"),
                           outcome = NULL, ...){
@@ -203,47 +230,58 @@ fitted.mlogit <- function(object, type = c("outcome", "probabilities",
     result
 }
 
-coef.mlogit <- function(object, fixed = FALSE, ...){
-    result <- object$coefficients
-    if (! fixed) result <- result[! attr(result, "fixed")]
-    attr(result, "fixed") <- NULL
-    result
-}
-
+#' @rdname mlogit
+#' @method coef summary.mlogit
+#' @export
 coef.summary.mlogit <- function(object, ...){
     result <- object$CoefTable
     result
 }
 
-mean.mlogit.data <- function(x, ...){
-    alt <- index(x)$alt
-    J <- length(levels(alt))
-    result <- data.frame(lapply(x,
-                                function(x){
-                                    if (is.numeric(x)) result <- as.numeric(tapply(x, alt, mean))
-                                    else{
-                                        if (is.logical(x)){
-                                            z <- tapply(x, alt, sum)
-                                            result <- z == max(z)
-                                        }
-                                        if(is.character(x)){
-                                            x <- factor(x, levels = unique(x))
-                                        }
-                                        if (is.factor(x)){
-                                            result <- factor(names(which.max(table(x))), levels = levels(x))
-                                        }
-                                    }
-                                    result
-                                }
-                                )
-                         )
-    attr(result, "index") <- data.frame(alt = factor(levels(alt), levels =  levels(alt)), chid = rep(1, J))
-    rownames(result) <- rownames(attr(result, "index")) <- paste(rep(1, J), levels(alt), sep = ".")
-    class(result) <- c("mlogit.data", "data.frame")
-    result
-}
-
-
+#' Marginal effects of the covariates
+#' 
+#' The \code{effects} method for \code{mlogit} objects computes the marginal
+#' effects of the selected covariate on the probabilities of choosing the
+#' alternatives
+#' 
+#' @name effects.mlogit
+#' @param object a \code{mlogit} object,
+#' @param covariate the name of the covariate for which the effect should be
+#' computed,
+#' @param type the effect is a ratio of two marginal variations of the
+#' probability and of the covariate ; these variations can be absolute
+#' \code{"a"} or relative \code{"r"}. This argument is a string that contains
+#' two letters, the first refers to the probability, the second to the
+#' covariate,
+#' @param data a data.frame containing the values for which the effects should
+#' be calculated. The number of lines of this data.frame should be equal to the
+#' number of alternatives,
+#' @param ... further arguments.
+#' @return If the covariate is alternative specific, a \eqn{J times J} matrix is
+#' returned, \eqn{J} being the number of alternatives. Each line contains the
+#' marginal effects of the covariate of one alternative on the probability to
+#' choose any alternative. If the covariate is individual specific, a vector of
+#' length \eqn{J} is returned.
+#' @export
+#' @author Yves Croissant
+#' @seealso \code{\link{mlogit}} for the estimation of multinomial logit
+#' models.
+#' @keywords regression
+#' @examples
+#' 
+#' data("Fishing", package = "mlogit")
+#' library("zoo")
+#' Fish <- mlogit.data(Fishing, varying = c(2:9), shape = "wide", choice = "mode")
+#' m <- mlogit(mode ~ price | income | catch, data = Fish)
+#' # compute a data.frame containing the mean value of the covariates in
+#' # the sample
+#' z <- with(Fish, data.frame(price = tapply(price, index(m)$alt, mean),
+#'                            catch = tapply(catch, index(m)$alt, mean),
+#'                            income = mean(income)))
+#' # compute the marginal effects (the second one is an elasticity
+#' effects(m, covariate = "income", data = z)
+#' effects(m, covariate = "price", type = "rr", data = z)
+#' effects(m, covariate = "catch", type = "ar", data = z)
 effects.mlogit <- function(object, covariate = NULL,
                            type = c("aa", "ar", "rr", "ra"),
                            data = NULL, ...){
@@ -295,7 +333,295 @@ effects.mlogit <- function(object, covariate = NULL,
     me
 }
 
+#' vcov method for mlogit objects
+#' 
+#' The \code{vcov} method for \code{mlogit} objects extract the covariance
+#' matrix of the coefficients, the errors or the random parameters.
+#' 
+#' This new interface replaces the \code{cor.mlogit} and \code{cov.mlogit}
+#' functions which are deprecated.
+#'
+#' @name vcov.mlogit
+#' 
+#' @aliases vcov.mlogit print.vcov.mlogit summary.vcov.mlogit
+#' print.summary.vcov.mlogit
+#' @param object a \code{mlogit} object (and a \code{vcov.mlogit} for the
+#' summary method),
+#' @param x a \code{vcov.mlogit} or a \code{summary.vcov.mlogit} object,
+#' @param what indicates which covariance matrix has to be extracted : the
+#' default value is \code{coefficients}, in this case, \code{vcov} behaves as
+#' usual. If \code{what} equals \code{errors} the covariance matrix of the
+#' errors of the model is returned. Finally, if \code{what} equals \code{rpar},
+#' the covariance matrix of the random parameters are extracted,
+#' @param subset the subset of the coefficients that have to be extracted (only
+#' relevant if \code{what} \code{ = "coefficients"}),
+#' @param type with this argument, the covariance matrix may be returned (the
+#' default) ; the correlation matrix with the standard deviation on the
+#' diagonal may also be extracted,
+#' @param reflevel relevent for the extraction of the errors of a multinomial
+#' probit model ; in this case the covariance matrix is of error differences is
+#' returned and, with this argument, the alternative used for differentiation
+#' is indicated,
+#' @param digits the number of digits,
+#' @param width the width of the printing,
+#' @param ... further arguments.
+#' @export
+#' @author Yves Croissant
+#' @seealso \code{\link{mlogit}} for the estimation of multinomial logit
+#' models.
+#' @keywords regression
+vcov.mlogit <- function(object,
+                        what = c('coefficient', 'errors', 'rpar'),
+                        subset = c("all", "iv", "sig", "sd", "sp", "chol"),
+                        type = c('cov', 'cor', 'sd'),
+                        reflevel = NULL, ...){
+    whichcoef <- match.arg(subset)
+    what <- match.arg(what)
+    type <- match.arg(type)
+    fixed <- attr(object$coefficients, "fixed")
+    ncoefs <- names(object$coefficients)
 
+    # for the coefficients, we have to check the problem for fixed
+    # coefficients
+    if (what == 'coefficient'){
+        if (whichcoef == "all") selcoef <- 1:length(ncoefs)
+        else selcoef <- grep(whichcoef, ncoefs)
+        if (any(fixed)) selcoef <- selcoef[! fixed]
+        result <- solve(- object$hessian[selcoef, selcoef])
+    }
+    
+    if (what == 'errors'){
+        if (! is.null(object$omega)){
+            if (is.null(reflevel)){
+                if (is.list(object$omega)) result <- object$omega[[1]]
+                else result <- object$omega
+            }
+            else result <- object$omega[[reflevel]]
+        }
+        result <- switch(type,
+                         cov = result,
+                         cor = result / tcrossprod(sqrt(diag(result))),
+                         sd = sqrt(diag(result))
+                         )
+    }
+    if (what == 'rpar'){
+        if (is.null(object$rpar)) stop('no random parameters')
+        nrpar <- names(object$rpar)
+        if (is.null(attr(object$rpar, "covariance"))){
+            # No correlated parameters
+            result <- stdev(object)
+            if (type != 'sd'){
+                V  <- matrix(0, length(result), length(result),
+                             dimnames = list(names(result), names(result)))
+                if (type == 'cor') diag(V) <- 1
+#                if (type == 'vcov') diag(V) <- result ^ 2
+#                if (type == 'cov') V <- result ^ 2
+                if (type == 'cov') diag(V) <- result ^ 2
+                result <- V
+            }
+        }
+        else{
+            # correlated parameters
+            coefs <- coef(object, subset = "chol")
+            ncoefs <- names(coefs)
+            # compute the vcov matrix of random parameters
+            result <- tcrossprod(ltm(coefs, to = "ltm"))
+            # compute the variance of the vcov matrix of random
+            # parameters
+            vcovstruct <- chol2vcov(object, type = type)
+            if (type == "cov") attr(result, "cov") <- vcovstruct
+            if (type == 'cor'){
+                sd <- sqrt(diag(result))
+                result <- result / tcrossprod(sqrt(diag(result)))
+                diag(result) <- sd
+                attr(result, "cov") <- vcovstruct
+            }
+            attr(result, "type") <- type
+            ## if (type == 'cov'){
+            ##     result <- diag(result)
+            ##     attr(result, "cov") <- diag(ltm(vcovstruct, to = "ltm"))
+            ## }
+            if (type == 'sd') result <- sqrt(diag(result))
+            nrparcor <- rownames(attr(object$rpar, "covariance"))
+            if (is.null(dim(result))) names(result) <- nrparcor
+            else dimnames(result) <- list(nrparcor, nrparcor)
+        }
+    }
+    structure(result, class = c('vcov.mlogit', class(result)), type = type)
+}
+
+#' @rdname vcov.mlogit
+#' @method print vcov.mlogit
+#' @export
+print.vcov.mlogit <- function(x, ...){
+    attr(x, "cov") <- attr(x, "type") <- NULL
+    print(unclass(x))
+}
+
+#' @rdname vcov.mlogit
+#' @method summary vcov.mlogit
+#' @export
+summary.vcov.mlogit <- function(object, ...){
+    if (is.null(attr(object, "cov")))
+        stop("summary.vcov.mlogit only implemented for random parameters")
+    if (is.matrix(object)){
+        coefs <- ltm(object, to = "vec")
+        nrpar <- rownames(object)
+        K <- length(nrpar)
+        type <- attr(object, "type")
+        diag <- ifelse(type == "cov", "var", "sd")
+        nstruct <- names.rpar(nrpar, prefix = type, diag = diag, unique = TRUE)
+    }
+    else{
+        coefs <- object
+        nstruct <- names(coefs)
+    }
+    std.err <- sqrt(attr(object, "cov"))
+    b <- coefs
+    z <- b / std.err
+    p <- 2 * pnorm(abs(z), lower.tail = FALSE)
+    # construct the object of class summary.plm
+    coefficients <- cbind("Estimate"   = b,
+                          "Std. Error" = std.err,
+                          "z-value"    = z,
+                          "Pr(>|z|)"   = p)
+    rownames(coefficients) <- nstruct
+    if (is.matrix(object)){
+        diagpos <- (1:K) * ( (1:K) + 1) / 2
+        coefficients <- coefficients[c(diagpos, (1:nrow(coefficients))[- diagpos]), ]
+    }
+    structure(coefficients, class = "summary.vcov.mlogit")
+    }   
+
+#' @rdname vcov.mlogit
+#' @method print summary.vcov.mlogit
+#' @export
+print.summary.vcov.mlogit <- function(x, digits = max(3, getOption("digits") - 2),
+                                      width = getOption("width"), ...){
+    printCoefmat(x, digits = digits)
+}
+
+chol2vcov <- function(x, type = c("cov", "cor")){
+    type <- match.arg(type)
+    # Take a mlogit object as argument and returns a vector of
+    # variance for the structural parameters
+    # First get the position of the coefficients of the Cholesky
+    # decomposition
+    cholspos <- grep("chol.", names(coef(x)))
+    # Then get these coefficients
+    coefs <- coef(x)[cholspos]
+    # and the covariance matrix of these coefficients
+    vcovs <- vcov(x)[cholspos, cholspos]
+    # compute the matrix of derivatives
+    Dcholcov <- function(x){
+        # x is a Cholesky matrix (lower triangular + diagonal),
+        # entered as a matrix or as a vector ; Dchol returns the
+        # matrix of derivatives of the structural parameters (variance
+        # and covariance) respective to the estimated parameters (the
+        # element of the Cholesky decomposition).
+        if (! is.matrix(x)) x <- ltm(x, to = "ltm")
+        K <- nrow(x)    
+        Delta <- matrix(0, nrow = K * (K + 1) / 2, ncol = K * (K + 1) / 2)
+        dims <- c(0, (1:K) * (1:K + 1) / 2)
+        Delta[1, 1] <- x[1, 1]
+        if (K > 1){
+            for (i in 2:K){
+                pos <- (dims[i] + 1):dims[i + 1]
+                betas <- ltm(ltm(x, to = "vec")[1:dims[i + 1]], to = "ltm")
+                Delta[pos, pos] <- betas
+                for (j in 1:(i - 1)){
+                    Delta[dims[i] + j, (dims[j] + 1):dims[j + 1]] <- x[i, 1:j]
+                }
+            }
+        }
+        dblrows <- (1:K) * ( (1:K) + 1) / 2
+        Delta[dblrows, ] <- Delta[dblrows, ] * 2
+        Delta
+    }
+    Dcovcor <- function(x){
+        y <- ltm(x, to = "ltm")
+        sd <- sqrt(diag(y))
+        y <- y / outer(sd, sd)
+        diag(y) <- sd
+        x <- ltm(x, to = "vec")
+        y <- ltm(y, to = "vec")
+        dims <- length(x)
+        K <- - 0.5 + sqrt(1 + 8 * dims) / 2
+        diags <- (1:K) * ((1:K) + 1) / 2
+        rows <- Reduce("c", lapply(1:K, function(x) 1:x))
+        cols <- rep(1:K, 1:K)
+        M <- matrix(0, dims, dims)
+        for (i in 1:dims){
+            if (cols[i] == rows[i]) M[i, i] <- 1 / 2 * y[i] / x[i]
+            else{
+                M[i, i] <- 1  * y[i] / x[i]
+                first <- rows[i]
+                second <- cols[i]      
+                M[i, rows == first  & cols == first ] <- - 1 / 2  * y[i] / x[i]
+                M[i, rows == second & cols == second] <- - 1 / 2  * y[i] / x[i]
+            }   
+        }
+        M
+    }
+    Derchols <- Dcholcov(ltm(coefs, to = "ltm"))
+    # estimate the covariance matrix of the structural parameters
+    result <- Derchols %*% vcovs %*% t(Derchols)
+    if (type == "cor"){
+        coefs <- tcrossprod(ltm(coefs, to = "ltm"))
+        Dercov <- Dcovcor(ltm(coefs, to = "ltm"))
+        result <- Dercov %*% result %*% t(Dercov)
+    }
+    # coerce it to a vector and set the relevant names
+    result <- diag(result)
+    names(result) <- names(coef(x))[cholspos]
+    result
+}
+
+#' Compute the log-sum or inclusive value/utility
+#' 
+#' The \code{logsum} function computes the inclusive value, or inclusive
+#' utility, which is used to compute the surplus and to estimate the two steps
+#' nested logit model.
+#' 
+#' @name logsum
+#' @param coef a numerical vector or a \code{mlogit} object, from which the
+#' \code{coef} vector is extracted,
+#' @param X a matrix or a \code{mlogit} object from which the
+#' \code{model.matrix} is extracted,
+#' @param formula a formula or a \code{mlogit} object from which the
+#' \code{formula} is extracted,
+#' @param data a \code{data.frame} or a \code{mlogit} object from which the
+#' \code{model.frame} is extracted,
+#' @param type either \code{"group"} or \code{"global"} : if a \code{group}
+#' argument has been provided in the \code{mlogit.data}, the inclusive values
+#' are by default computed for every group, otherwise, a unique global
+#' inclusive value is computed for each choice situation,
+#' @param output the shape of the results: if \code{"chid"}, the results is a
+#' vector (if \code{type = "global"}) or a matrix (if \code{type = "region"})
+#' with row number equal to the number of choice situation, if \code{"obs"} a
+#' vector of length equal to the number of lines of the data in long format is
+#' returned.
+#' @details
+#' The inclusive value, or inclusive utility, or log-sum is the log of the
+#' denominator of the probabilities of the multinomial logit model. If a
+#' \code{"group"} variable is provided in the \code{"mlogit.data"} function,
+#' the denominator can either be the one of the multinomial model or those of
+#' the lower model of the nested logit model.
+#' 
+#' If only one argument (\code{coef}) is provided, it should a \code{mlogit}
+#' object and in this case, the \code{coefficients} and the \code{model.matrix}
+#' are extracted from this model.
+#' 
+#' In order to provide a different \code{model.matrix}, further arguments could
+#' be used. \code{X} is a \code{matrix} or a \code{mlogit} from which the
+#' \code{model.matrix} is extracted. The \code{formula}-\code{data} interface
+#' can also be used to construct the relevant \code{model.matrix}.
+#' @return either a vector or a matrix.
+#' @export
+#' @author Yves Croissant
+#' @seealso \code{\link{mlogit}} for the estimation of a multinomial logit
+#' model.
+#' @keywords regression
 logsum <- function(coef, X = NULL, formula = NULL, data = NULL,
                    type = NULL, output = c("chid", "obs")){
     # the model.matrix is from model x
@@ -407,7 +733,8 @@ logsum <- function(coef, X = NULL, formula = NULL, data = NULL,
     iv        
 }
 
-
+#' @rdname mlogit
+#' @export
 coef.mlogit <- function(object,
                         subset = c("all", "iv", "sig", "sd", "sp", "chol"),
                         fixed = FALSE, ...){
@@ -452,228 +779,5 @@ ltm <- function(x, to = c("vec", "mat", "ltm")){
         }
     }
     result
-}
-
-chol2vcov <- function(x, type = c("cov", "cor")){
-    type <- match.arg(type)
-    # Take a mlogit object as argument and returns a vector of
-    # variance for the structural parameters
-    # First get the position of the coefficients of the Cholesky
-    # decomposition
-    cholspos <- grep("chol.", names(coef(x)))
-    # Then get these coefficients
-    coefs <- coef(x)[cholspos]
-    # and the covariance matrix of these coefficients
-    vcovs <- vcov(x)[cholspos, cholspos]
-    # compute the matrix of derivatives
-    Dcholcov <- function(x){
-        # x is a Cholesky matrix (lower triangular + diagonal),
-        # entered as a matrix or as a vector ; Dchol returns the
-        # matrix of derivatives of the structural parameters (variance
-        # and covariance) respective to the estimated parameters (the
-        # element of the Cholesky decomposition).
-        if (! is.matrix(x)) x <- ltm(x, to = "ltm")
-        K <- nrow(x)    
-        Delta <- matrix(0, nrow = K * (K + 1) / 2, ncol = K * (K + 1) / 2)
-        dims <- c(0, (1:K) * (1:K + 1) / 2)
-        Delta[1, 1] <- x[1, 1]
-        if (K > 1){
-            for (i in 2:K){
-                pos <- (dims[i] + 1):dims[i + 1]
-                betas <- ltm(ltm(x, to = "vec")[1:dims[i + 1]], to = "ltm")
-                Delta[pos, pos] <- betas
-                for (j in 1:(i - 1)){
-                    Delta[dims[i] + j, (dims[j] + 1):dims[j + 1]] <- x[i, 1:j]
-                }
-            }
-        }
-        dblrows <- (1:K) * ( (1:K) + 1) / 2
-        Delta[dblrows, ] <- Delta[dblrows, ] * 2
-        Delta
-    }
-    Dcovcor <- function(x){
-        y <- ltm(x, to = "ltm")
-        sd <- sqrt(diag(y))
-        y <- y / outer(sd, sd)
-        diag(y) <- sd
-        x <- ltm(x, to = "vec")
-        y <- ltm(y, to = "vec")
-        dims <- length(x)
-        K <- - 0.5 + sqrt(1 + 8 * dims) / 2
-        diags <- (1:K) * ((1:K) + 1) / 2
-        rows <- Reduce("c", lapply(1:K, function(x) 1:x))
-        cols <- rep(1:K, 1:K)
-        M <- matrix(0, dims, dims)
-        for (i in 1:dims){
-            if (cols[i] == rows[i]) M[i, i] <- 1 / 2 * y[i] / x[i]
-            else{
-                M[i, i] <- 1  * y[i] / x[i]
-                first <- rows[i]
-                second <- cols[i]      
-                M[i, rows == first  & cols == first ] <- - 1 / 2  * y[i] / x[i]
-                M[i, rows == second & cols == second] <- - 1 / 2  * y[i] / x[i]
-            }   
-        }
-        M
-    }
-    Derchols <- Dcholcov(ltm(coefs, to = "ltm"))
-    # estimate the covariance matrix of the structural parameters
-    result <- Derchols %*% vcovs %*% t(Derchols)
-    if (type == "cor"){
-        coefs <- tcrossprod(ltm(coefs, to = "ltm"))
-        Dercov <- Dcovcor(ltm(coefs, to = "ltm"))
-        result <- Dercov %*% result %*% t(Dercov)
-    }
-    # coerce it to a vector and set the relevant names
-    result <- diag(result)
-    names(result) <- names(coef(x))[cholspos]
-    result
-}
-
-vcov.mlogit <- function(object,
-                        what = c('coefficient', 'errors', 'rpar'),
-                        subset = c("all", "iv", "sig", "sd", "sp", "chol"),
-                        type = c('cov', 'cor', 'sd'),
-                        reflevel = NULL, ...){
-    whichcoef <- match.arg(subset)
-    what <- match.arg(what)
-    type <- match.arg(type)
-    fixed <- attr(object$coefficients, "fixed")
-    ncoefs <- names(object$coefficients)
-
-    # for the coefficients, we have to check the problem for fixed
-    # coefficients
-    if (what == 'coefficient'){
-        if (whichcoef == "all") selcoef <- 1:length(ncoefs)
-        else selcoef <- grep(whichcoef, ncoefs)
-        if (any(fixed)) selcoef <- selcoef[! fixed]
-        result <- solve(- object$hessian[selcoef, selcoef])
-    }
-    
-    if (what == 'errors'){
-        if (! is.null(object$omega)){
-            if (is.null(reflevel)){
-                if (is.list(object$omega)) result <- object$omega[[1]]
-                else result <- object$omega
-            }
-            else result <- object$omega[[reflevel]]
-        }
-        result <- switch(type,
-                         cov = result,
-                         cor = result / tcrossprod(sqrt(diag(result))),
-                         sd = sqrt(diag(result))
-                         )
-    }
-    if (what == 'rpar'){
-        if (is.null(object$rpar)) stop('no random parameters')
-        nrpar <- names(object$rpar)
-        if (is.null(attr(object$rpar, "covariance"))){
-            # No correlated parameters
-            result <- stdev(object)
-            if (type != 'sd'){
-                V  <- matrix(0, length(result), length(result),
-                             dimnames = list(names(result), names(result)))
-                if (type == 'cor') diag(V) <- 1
-#                if (type == 'vcov') diag(V) <- result ^ 2
-#                if (type == 'cov') V <- result ^ 2
-                if (type == 'cov') diag(V) <- result ^ 2
-                result <- V
-            }
-        }
-        else{
-            # correlated parameters
-            coefs <- coef(object, subset = "chol")
-            ncoefs <- names(coefs)
-            # compute the vcov matrix of random parameters
-            result <- tcrossprod(ltm(coefs, to = "ltm"))
-            # compute the variance of the vcov matrix of random
-            # parameters
-            vcovstruct <- chol2vcov(object, type = type)
-            if (type == "cov") attr(result, "cov") <- vcovstruct
-            if (type == 'cor'){
-                sd <- sqrt(diag(result))
-                result <- result / tcrossprod(sqrt(diag(result)))
-                diag(result) <- sd
-                attr(result, "cov") <- vcovstruct
-            }
-            attr(result, "type") <- type
-            ## if (type == 'cov'){
-            ##     result <- diag(result)
-            ##     attr(result, "cov") <- diag(ltm(vcovstruct, to = "ltm"))
-            ## }
-            if (type == 'sd') result <- sqrt(diag(result))
-            nrparcor <- rownames(attr(object$rpar, "covariance"))
-            if (is.null(dim(result))) names(result) <- nrparcor
-            else dimnames(result) <- list(nrparcor, nrparcor)
-        }
-    }
-    structure(result, class = c('vcov.mlogit', class(result)), type = type)
-}
-
-print.vcov.mlogit <- function(x, ...){
-    attr(x, "cov") <- attr(x, "type") <- NULL
-    print(unclass(x))
-}
-
-summary.vcov.mlogit <- function(object, ...){
-    if (is.null(attr(object, "cov")))
-        stop("summary.vcov.mlogit only implemented for random parameters")
-    if (is.matrix(object)){
-        coefs <- ltm(object, to = "vec")
-        nrpar <- rownames(object)
-        K <- length(nrpar)
-        type <- attr(object, "type")
-        diag <- ifelse(type == "cov", "var", "sd")
-        nstruct <- names.rpar(nrpar, prefix = type, diag = diag, unique = TRUE)
-    }
-    else{
-        coefs <- object
-        nstruct <- names(coefs)
-    }
-    std.err <- sqrt(attr(object, "cov"))
-    b <- coefs
-    z <- b / std.err
-    p <- 2 * pnorm(abs(z), lower.tail = FALSE)
-    # construct the object of class summary.plm
-    coefficients <- cbind("Estimate"   = b,
-                          "Std. Error" = std.err,
-                          "z-value"    = z,
-                          "Pr(>|z|)"   = p)
-    rownames(coefficients) <- nstruct
-    if (is.matrix(object)){
-        diagpos <- (1:K) * ( (1:K) + 1) / 2
-        coefficients <- coefficients[c(diagpos, (1:nrow(coefficients))[- diagpos]), ]
-    }
-    structure(coefficients, class = "summary.vcov.mlogit")
-    }   
-
-print.summary.vcov.mlogit <- function(x, digits = max(3, getOption("digits") - 2),
-                                      width = getOption("width"), ...){
-    printCoefmat(x, digits = digits)
-}
-
-names.rpar <- function(rpar, prefix = NULL, diag = NULL, unique = FALSE){
-    K <- length(rpar)
-    nms <- vector(mode = "character", length = K * (K + 1) / 2)
-    pos <- 0
-    for (i in 1:K){
-        for (j in 1:i){
-            pos <- pos + 1
-            if (is.null(prefix)) nms[pos] <- paste(rpar[j], ":", rpar[i], sep = "")
-            else{
-                if (is.null(diag)) nms[pos] <- paste(prefix, ".", rpar[j], ":", rpar[i], sep = "")
-                else{
-                    ifelse(i == j,
-                           nms[pos] <- paste(diag, ".",
-                                             ifelse(unique,
-                                                    rpar[i],
-                                                    paste(rpar[j], ":", rpar[i], sep = "")), sep = ""),
-                           nms[pos] <- paste(prefix, ".", rpar[j], ":", rpar[i], sep = "")
-                           )
-                }
-            }
-        }
-    }
-    nms
 }
                   

@@ -1,237 +1,152 @@
-make.beta <- function(mua, siga, rpar, random.nb, correlation){
-    uncorrelated <- setdiff(names(rpar), correlation)
-    correlated <-   names(mua)[sort(match(correlation,  names(mua)))]
-    uncorrelated <- names(mua)[sort(match(uncorrelated, names(mua)))]
-    singlepar <- names(rpar)[rpar %in% c("zbu", "zbt")]
-    singlepar <- names(mua)[sort(match(singlepar, names(mua)))]
-    utwopars <- setdiff(uncorrelated, singlepar)
-
-    if (is.logical(correlation) && ! correlation) correlation <- character(0)
-    nr <- names(mua)
-    rpar <- rpar[nr]
-
-    censored <-    nr[rpar == "cn"]
-    lognormal <-   nr[rpar == "ln"]
-    truncated <-   nr[rpar == "tn"]
-    normal  <-     nr[rpar ==  "n"]
-    uniform  <-    nr[rpar ==  "u"]
-    triangular  <- nr[rpar ==  "t"]
-
-    zbuniform <- nr[rpar == "zbu"]
-    zbtriangular <- nr[rpar == "zbt"]
-
-    Ko <- sum(rpar %in% c("zbu", "zbt"))
-        
-    R <- nrow(random.nb)
-    Ku <- length(uncorrelated)
-    Kc <- length(correlated)
-    Ka <- Kc + Ku
-
-    betaa <- matrix(NA, R, Ka)
-    colnames(betaa) <- nr
-    betaa.mu <- betaa
-
-    if (Ku){
-        random.nbu <- random.nb[, 1:Ku, drop = FALSE]
-        if (Ku - Ko){
-            betaa.sigmau <- matrix(NA, R, Ku - Ko)       
-            colnames(betaa.sigmau) <- paste("sd.", utwopars, sep = "")
-        }
-        colnames(random.nbu) <- paste("sd.", uncorrelated, sep = "")
-
-
-        sel <- intersect(uniform, uncorrelated)
-        sd.sel <- paste("sd.", sel, sep = "")
-        if (length(sel)){
-            etauni <- pnorm(random.nbu[, sd.sel, drop = FALSE])
-            betaa[, sel] <- t(mua[sel] - siga[sd.sel] + 2 * t(etauni) * siga[sd.sel])
-            betaa.mu[, sel] <- 1
-            betaa.sigmau[, sd.sel] <- 2 * etauni - 1
-        }
-
-        sel <- intersect(zbuniform, uncorrelated)
-        if (length(sel)){
-            etauni <- pnorm(random.nbu[, paste("sd.", sel, sep = ""), drop = FALSE])
-            betaa[, sel] <- 2 * etauni * mua[sel]
-            betaa.mu[, sel] <- 2 * etauni
-        }
-
-        sel <- intersect(triangular, uncorrelated)
-        sd.sel <- paste("sd.", sel, sep = "")
-        if (length(sel)){
-            eta <- pnorm(random.nbu[, sd.sel, drop = FALSE])
-            betaa.mu[, sel] <- 1
-            betaa.sigmau[, sd.sel] <- (eta < 0.5) * (sqrt(2 * eta) - 1) +
-                (eta > 0.5) * (1 - sqrt(2 * (1 - eta)))
-            betaa[, sel] <- t(mua[sel] + siga[sd.sel] * t(betaa.sigmau[, sd.sel]))
-        }
-
-        sel <- intersect(zbtriangular, uncorrelated)
-        sd.sel <- paste("sd.", sel, sep = "")
-        if (length(sel)){
-            eta <- pnorm(random.nbu[, sd.sel, drop = FALSE])
-            betaa.mu[, sel] <- (eta < 0.5) * sqrt(2 * eta) +
-                (eta > 0.5) * (2 - sqrt(2 * (1 - eta)))
-            betaa[, sel] <- t(t(betaa.mu[, sel]) * mua[sel])
-        }
-        
-        sel <- intersect(censored, uncorrelated)
-        sd.sel <- paste("sd.", sel, sep = "")
-        if (length(sel)){
-            betaa[, sel] <- pmax(t(mua[sel] + siga[sd.sel] *
-                                   t(random.nbu[, sd.sel, drop = FALSE])), 0)
-            betaa.mu[, sel] <- as.numeric(betaa[, sel] > 0)
-            betaa.sigmau[, sd.sel] <- betaa.mu[, sel] * random.nbu[, sd.sel]
-        }
-
-        sel <- intersect(lognormal, uncorrelated)
-        sd.sel <- paste("sd.", sel, sep = "")
-        if (length(sel)){
-            betaa[, sel] <- exp(t(mua[sel] + siga[sd.sel] * t(random.nbu[, sd.sel, drop = FALSE])))
-            betaa.mu[, sel] <- betaa[, sel, drop = FALSE]
-            betaa.sigmau[, sd.sel] <- betaa.mu[, sel] * random.nbu[, sd.sel]
-        }
-        sel <- intersect(normal, uncorrelated)
-        sd.sel <- paste("sd.", sel, sep = "")
-        if (length(sel)){
-            betaa[, sel] <- t(mua[sel] + siga[sd.sel] * t(random.nbu[, sd.sel, drop = FALSE]))
-            betaa.mu[, sel] <- 1
-            betaa.sigmau[, sd.sel] <- random.nbu[, sd.sel, drop = FALSE]
-        }        
+#' random parameter objects
+#' 
+#' \code{rpar} objects contain the relevant information about estimated random
+#' parameters. The homonymous function extract on \code{rpar} object from a
+#' \code{mlogit} object.
+#' 
+#' \code{mlogit} objects contain an element called \code{rpar} which contain a
+#' list of \code{rpar} objects, one for each estimated random parameter. The
+#' \code{print} method prints the name of the distribution and the parameter,
+#' the \code{summary} behave like the one for numeric vectors.
+#' 
+#' @name rpar
+#' @aliases rpar print.rpar summary.rpar
+#' @param x,object a \code{mlogit} object,
+#' @param par the name or the index of the parameters to be extracted ; if
+#' \code{NULL}, all the parameters are selected,
+#' @param norm the coefficient used for normalization if any,
+#' @param ... further arguments.
+#' @param digits the number of digits
+#' @param width the width of the printed output
+#' @return a \code{rpar} object, which contain : \item{dist}{the name of the
+#' distribution,} \item{mean}{the first parameter of the distribution,}
+#' \item{sigma}{the second parameter of the distribution,} \item{name}{the name
+#' of the parameter,}
+#' @export
+#' @author Yves Croissant
+#' @seealso \code{\link{mlogit}} for the estimation of a random parameters
+#' logit model.
+#' @keywords regression
+rpar <- function(x, par = NULL, norm = NULL, ...){
+    if (is.null(par)) par <- names(x$rpar)
+    if (length(par) == 1){
+        result <- x$rpar[[par]]
+        if (!is.null(norm)) result$norm <- abs(coef(x)[norm])
+    }    
+    else{
+        result <- x$rpar[par]
+        if (!is.null(norm))
+            lapply(result, function(x){x$norm <- abs(coef(x)[norm]); x})
     }
-    if (Kc){
-        random.nbc <- random.nb[, (Ku + 1):(Ku + Kc), drop = FALSE]
-        names.corr.coef <- names.rpar(correlated, prefix = "chol")
-        CC <- ltm(siga[(Ku - Ko + 1):length(siga)], to = "ltm")
-        sigeta <- random.nbc %*% t(CC)
-        colnames(sigeta) <- correlated
-        betaa[, correlated] <- t(mua[correlated] + t(sigeta))
-        betaa.mu[, correlated] <- matrix(1, R, length(correlated))
-        betaa.sigmac <- random.nbc[, Reduce("c", lapply(1:Kc, function(i) 1:i))]
-        colnames(betaa.sigmac) <- names.corr.coef
-        for (i in 1:Kc){
-#            sigi <- i + cumsum(c(0, (Kc - 1):1))[1:i]
-            sigi <- (i * (i - 1) / 2 + 1):(i * (i + 1) / 2)
-#            print(sigi)
-            if (rpar[i] == "cn"){
-                betaa[, i] <- pmax(betaa[, i], 0)
-                betaa.mu[, i] <- as.numeric(betaa[, i] > 0)
-                betaa.sigmac[, sigi] <- as.numeric(betaa[, i] > 0) * betaa.sigmac[, sigi]
-            }
-            if (rpar[i] == "ln"){
-                betaa[, i] <- exp(betaa[, i])
-                betaa.mu[, i] <- betaa[, i]
-                betaa.sigmac[, sigi] <- betaa[, i] * betaa.sigmac[, sigi]
-            }
-        }
-    }
-    if (Kc &   (Ku - Ko)) betaa.sigma <- cbind(betaa.sigmau, betaa.sigmac)
-    if (Kc & ! (Ku - Ko)) betaa.sigma <- betaa.sigmac
-    if (! Kc & (Ku - Ko)) betaa.sigma <- betaa.sigmau
-    if (! Kc & ! (Ku - Ko)) betaa.sigma <- NULL
-
-    list(betaa = betaa, betaa.mu = betaa.mu, betaa.sigma = betaa.sigma)
+    result
 }
 
-gnrpoints <- function(low, up, n = 100){
-    low + (up - low) * (0:n) / n
+#' @rdname rpar
+#' @export
+print.rpar <- function(x, digits = max(3, getOption("digits") - 2),
+                       width = getOption("width"), ...){
+    dist <- switch(x$dist,
+                   "n"  = "normal",
+                   "ln" = "log-normal",
+                   "cn" = "censored normal",
+                   "t"  = "triangular",
+                   "u"  = "uniform",
+                   "zbu" = "uniform",
+                   "zbt" = "triangular"
+                   )
+    npar1 <- switch(x$dist,
+                    "n"  = "mean",
+                    "ln" = "meanlog",
+                    "cn" = "mean",
+                    "t"  = "center",
+                    "u"  = "center",
+                    "zbu" = "center",
+                    "zbt" = "center"
+                    )
+    
+    npar2 <- switch(x$dist,
+                    "n"  = "sd",
+                    "ln" = "sdlog",
+                    "cn" = "sd",
+                    "t"  = "span",
+                    "u"  = "span",
+                    "zbu" = NA,
+                    "zbt" = NA
+                    )
+    par1 <- x$mean
+    par2 <- x$sigma
+    cat(paste(dist, " distribution with parameters ",round(par1, 3),
+              " (", npar1, ")", " and ", round(par2, 3),
+              " (",npar2,")", "\n",sep = ""))
 }
 
-halton <- function(prime = 3, length = 100, drop = 10){
-    halt <- 0
-    t <- 0
-    while(length(halt) < length + drop){
-        t <- t + 1
-        halt <- c(halt, rep(halt, prime - 1) + rep(seq(1, prime - 1, 1) / prime ^ t, each = length(halt)))
-    }
-    halt[(drop + 1):(length + drop)]
+#' @rdname rpar
+#' @export
+summary.rpar <- function(object, ...){
+    norm <- object$norm
+    rg <- rg.rpar(object, norm)
+    Q1 <- qrpar(object, norm)(0.25)
+    M <-  qrpar(object, norm)(0.5)
+    Q3 <- qrpar(object, norm)(0.75)
+    m <- mean(object, norm)
+    c('Min.' = as.numeric(rg[1]), '1st Qu.' = as.numeric(Q1), 'Median' = as.numeric(M),
+      'Mean' = as.numeric(m), '3rd Qu.' = as.numeric(Q3), 'Max.' = as.numeric(rg[2]))
 }
 
-make.random.nb <- function(R, Ka, halton){
-    # Create the matrix of random numbers
-    if (! is.null(halton)){
-        length.halton <- rep(R,Ka)
-        prime <- c(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43,
-                   47, 53, 59, 61, 71, 73, 79, 83, 89, 97, 101, 103,
-                   107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167,
-                   173, 179, 181, 191, 193, 197, 199)
-        drop.halton <- rep(100,Ka)
-        if (! is.na(halton) && ! is.null(halton$prime)){
-            if (length(halton$prime) != Ka){
-                stop("wrong number of prime numbers indicated")
-            }
-            else{
-                prime <- halton$prime
-            }
-            if (! is.na(halton) && ! is.null(halton$drop)){
-                if (! length(halton$drop) %in% c(1, Ka)) stop("wrong number of drop indicated")
-                if (length(halton$drop) == 1){
-                    drop.halton <- rep(halton$drop, Ka)
-                }
-                else{
-                    drop.halton <- halton$drop
-                }
-            }
+#' Plot of the distribution of estimated random parameters
+#' 
+#' Methods for \code{rpar} and \code{mlogit} objects which provide a
+#' plot of the distribution of one or all of the estimated random
+#' parameters
+#' 
+#' For the \code{rpar} method, one plot is drawn. For the
+#' \code{mlogit} method, one plot for each selected random parameter
+#' is drawn.
+#'
+#' @name plot.mlogit
+#' @aliases plot.mlogit plot.rpar
+#' @importFrom graphics lines plot polygon segments title
+#' @param x a \code{mlogit} or a \code{rpar} object,
+#' @param type the function to be plotted, whether the density or the
+#'     probability density function,
+#' @param par a subset of the random parameters ; if \code{NULL}, all
+#'     the parameters are selected,
+#' @param norm the coefficient's name for the \code{mlogit} method or
+#'     the coefficient's value for the \code{rpar} method used for
+#'     normalization,
+#' @param ... further arguments, passed to \code{plot.rpar} for the
+#'     \code{mlogit} method and to \code{plot} for the \code{rpar}
+#'     method.
+#' @export
+#' @author Yves Croissant
+#' @seealso \code{\link{mlogit}} for the estimation of random
+#'     parameters logit models and \code{\link{rpar}} for the
+#'     description of \code{rpar} objects and
+#'     \code{\link{distribution}} for functions which return
+#'     informations about the distribution of random parameters.
+#' @keywords regression
+plot.mlogit <- function(x, par = NULL, norm = NULL, type = c("density", "probability"), ...){
+    if (is.null(x$rpar)) stop("the plot method is only relevant for random parameters")
+    if (is.null(par)) par <- names(x$rpar)
+    if (!is.null(norm)) norm = abs(coef(x)[norm])
+    rpar <- x$rpar[par]
+    K <- length(rpar)
+    if (K > 1){
+        nrow <- 1 + (K > 2) + (K > 6)
+        ncol <- 1 + (K > 1) + (K > 4)
+        opar <- par(mfrow = c(nrow, ncol))
+        for (i in names(rpar)){
+            plot(rpar(x, i), norm = norm, type = type, ...)
         }
-        random.nb <- numeric(0)
-        i <- 0
-        for (i in 1:Ka){
-            random.nb <- cbind(random.nb, qnorm(halton(prime[i], R, drop.halton[i])))
-        }
+        par(opar)
     }
     else{
-        random.nb <- matrix(rnorm(R * Ka), ncol = Ka, nrow = R)
+        plot(rpar(x, 1), norm = norm, type = type, ...)
     }
-    random.nb
 }
 
-makeC <- function(x){
-    # create the lower triangular C matrix
-    K <- (- 1 + sqrt(1 + 8 * length(x))) / 2
-    mat <- matrix(0, K, K)
-    mat[lower.tri(mat, diag = TRUE)] <- x
-    mat
-}
-
-make.rpar <- function(rpar, correlation, estimate, norm){
-    K <- length(rpar)
-    Kc <- length(correlation)
-    Ku <- K - Kc
-    nr <- names(rpar)
-    rpar <- lapply(rpar, function(x) list(dist = x))
-    if (Kc){
-        Ktot <- length(estimate)
-        index.corr <- (Ktot - 0.5 * Kc * (Kc + 1) + 1):Ktot
-        v <- estimate[index.corr]
-        v <- tcrossprod(ltm(v, to = "ltm"))
-        colnames(v) <- rownames(v) <- correlation
-        sc <- sqrt(diag(v))
-        names(sc) <- correlation
-    }
-    else sc <- c()
-    for (i in (1:K)){
-        m <- estimate[nr[i]]
-        if (! nr[i] %in% correlation){
-            s <- estimate[paste("sd.", nr[i], sep = "")]
-        }
-        else{
-            s <- sc[nr[i]]
-        }
-        names(m) <- names(s) <- NULL
-        rpar[[i]]$mean <- m
-        rpar[[i]]$sigma <- s
-        rpar[[i]]$name <- nr[[i]]
-        if (! is.null(norm)){
-            vn <- estimate[norm]
-            names(vn) <- NULL
-            rpar[[i]]$norm <- vn
-        }
-    }
-    z <- lapply(rpar, function(x){attr(x, "class") = "rpar" ; x})
-    if (length(correlation)) attr(z, 'covariance') <- v
-    z
-}
-
+#' @rdname plot.mlogit
+#' @export
 plot.rpar <- function(x, norm = NULL, type = c("density", "probability"), ...){
     type <- match.arg(type)
     if (type == "density") f <- drpar
@@ -275,91 +190,21 @@ plot.rpar <- function(x, norm = NULL, type = c("density", "probability"), ...){
     title(main = ma)
 }
 
-plot.mlogit <- function(x, par = NULL, norm = NULL, type = c("density", "probability"), ...){
-    if (is.null(x$rpar)) stop("the plot method is only relevant for random parameters")
-    if (is.null(par)) par <- names(x$rpar)
-    if (!is.null(norm)) norm = abs(coef(x)[norm])
-    rpar <- x$rpar[par]
-    K <- length(rpar)
-    if (K > 1){
-        nrow <- 1 + (K > 2) + (K > 6)
-        ncol <- 1 + (K > 1) + (K > 4)
-        opar <- par(mfrow = c(nrow, ncol))
-        for (i in names(rpar)){
-            plot(rpar(x, i), norm = norm, type = type, ...)
-        }
-        par(opar)
-    }
-    else{
-        plot(rpar(x, 1), norm = norm, type = type, ...)
-    }
-}
-
-#rpar extract one or several random parameters from an mlogit object
-rpar <- function(x, par = NULL, norm = NULL, ...){
-    if (is.null(par)) par <- names(x$rpar)
-    if (length(par) == 1){
-        result <- x$rpar[[par]]
-        if (!is.null(norm)) result$norm <- abs(coef(x)[norm])
-    }    
-    else{
-        result <- x$rpar[par]
-        if (!is.null(norm))
-            lapply(result, function(x){x$norm <- abs(coef(x)[norm]); x})
-    }
-    result
-}
-
-print.rpar <- function(x, digits = max(3, getOption("digits") - 2),
-                       width = getOption("width"), ...){
-    dist <- switch(x$dist,
-                   "n"  = "normal",
-                   "ln" = "log-normal",
-                   "cn" = "censored normal",
-                   "t"  = "triangular",
-                   "u"  = "uniform",
-                   "zbu" = "uniform",
-                   "zbt" = "triangular"
-                   )
-    npar1 <- switch(x$dist,
-                    "n"  = "mean",
-                    "ln" = "meanlog",
-                    "cn" = "mean",
-                    "t"  = "center",
-                    "u"  = "center",
-                    "zbu" = "center",
-                    "zbt" = "center"
-                    )
-    
-    npar2 <- switch(x$dist,
-                    "n"  = "sd",
-                    "ln" = "sdlog",
-                    "cn" = "sd",
-                    "t"  = "span",
-                    "u"  = "span",
-                    "zbu" = NA,
-                    "zbt" = NA
-                    )
-    par1 <- x$mean
-    par2 <- x$sigma
-    cat(paste(dist, " distribution with parameters ",round(par1, 3),
-              " (", npar1, ")", " and ", round(par2, 3),
-              " (",npar2,")", "\n",sep = ""))
-}
-
-summary.rpar <- function(object, ...){
-    norm <- object$norm
-    rg <- rg.rpar(object, norm)
-    Q1 <- qrpar(object, norm)(0.25)
-    M <-  qrpar(object, norm)(0.5)
-    Q3 <- qrpar(object, norm)(0.75)
-    m <- mean(object, norm)
-    c('Min.' = as.numeric(rg[1]), '1st Qu.' = as.numeric(Q1), 'Median' = as.numeric(M),
-      'Mean' = as.numeric(m), '3rd Qu.' = as.numeric(Q3), 'Max.' = as.numeric(rg[2]))
-}
-
-# [cor, cov].rpar extract the covariance or the correlation matrix of
-# the random effects
+#' Correlation structure of the random parameters
+#' 
+#' Functions that extract the correlation structure of a mlogit object
+#' 
+#' @name cor.mlogit
+#' @aliases cor.mlogit cov.mlogit
+#' @param x an \code{mlogit} object with random parameters and
+#'     \code{correlation=TRUE}.
+#' @details These functions are deprecated, use
+#'     \code{\link{vcov.mlogit}} instead.
+#' @return A numerical matrix which returns either the correlation or
+#'     the covariance matrix of the random parameters.
+#' @export
+#' @author Yves Croissant
+#' @keywords regression
 cor.mlogit <- function(x){
     if (is.null(x$rpar) || is.null(attr(x$rpar, 'covariance')))
         stop('cor.mlogit only relevant for random models with correlation')
@@ -374,6 +219,8 @@ cor.mlogit <- function(x){
     cor.mlogit
 }
 
+#' @rdname cor.mlogit
+#' @export
 cov.mlogit <- function(x){
     if (is.null(x$rpar) || is.null(attr(x$rpar, 'covariance')))
         stop('cov.mlogit only relevant for random models with correlation')
@@ -406,21 +253,70 @@ s2norm <- function(s, dist, norm){
            )
 }
 
+#' Functions used to describe the characteristics of estimated random
+#' parameters
+#'
+#' @name distribution
+#' 
+#' @aliases distribution med rg stdev mean.rpar med.rpar stdev.rpar rg.mlogit
+#' mean.mlogit med.mlogit stdev.mlogit rg.rpar qrpar prpar drpar qrpar.rpar
+#' prpar.rpar drpar.rpar qrpar.mlogit prpar.mlogit drpar.mlogit
+#' @param x a \code{mlogit} or a \code{rpar} object,
+#' @param norm the variable used for normalization if any : for the
+#' \code{mlogit} method, this should be the name of the parameter, for the
+#' \code{rpar} method the absolute value of the parameter,
+#' @param par the required parameter(s) for the \code{mlogit} methods (either
+#' the name or the position of the parameter(s). If \code{NULL}, all the random
+#' parameters are used.
+#' @param y values for which the function has to be evaluated,
+#' @param ... further arguments.
+#'
+#' @details
+#' \code{rpar} objects contain all the relevant information about the
+#' distribution of random parameters. These functions enables to obtain easily
+#' descriptive statistics, density, probability and quantiles of the
+#' distribution.
+#' 
+#' \code{mean}, \code{med}, \code{stdev} and \code{rg} compute respectively the
+#' mean, the median, the standard deviation and the range of the random
+#' parameter. \code{qrpar}, \code{prpar}, \code{drpar} return functions that
+#' compute the quantiles, the probability and the density of the random
+#' parameters (note that \code{sd} and \code{range} are not generic function in
+#' \code{R} and that \code{median} is, but without \code{...}).
+#' 
+#' @return a numeric vector for \code{qrpar}, \code{drpar} and \code{prpar}, a
+#' numeric vector for \code{mean}, \code{stdev} and \code{med} and a numeric
+#' matrix for \code{rg}.
+#' @author Yves Croissant
+#' @seealso \code{\link{mlogit}} for the estimation of random parameters logit
+#' models and \code{\link{rpar}} for the description of \code{rpar} objects.
+#' @keywords regression
+
+
 # mean, med, rg and stdev methods for rpar and mlogit objects (sd and
 # range are not generic, so create a stdev and a rg generic ; median
 # is generic, but without ..., so create a med generic
+
+#' @rdname distribution
+#' @export
 stdev <- function(x, ...){
     UseMethod("stdev")
 }
 
+#' @rdname distribution
+#' @export
 rg <- function(x, ...){
     UseMethod("rg")
 }
 
+#' @rdname distribution
+#' @export
 med <- function(x, ...){
     UseMethod("med")
 }
 
+#' @rdname distribution
+#' @export
 mean.rpar <- function(x, norm = NULL, ...){
     if (is.null(norm) & ! is.null(x$norm)) norm <- as.numeric(x$norm)
     dist <- x$dist
@@ -441,6 +337,8 @@ mean.rpar <- function(x, norm = NULL, ...){
            )
 }
 
+#' @rdname distribution
+#' @export
 med.rpar <- function(x, norm = NULL, ...){
     if (is.null(norm) & ! is.null(x$norm)) norm <- as.numeric(x$norm)
     dist <- x$dist
@@ -461,6 +359,8 @@ med.rpar <- function(x, norm = NULL, ...){
            )
 }
 
+#' @rdname distribution
+#' @export
 stdev.rpar <- function(x, norm = NULL, ...){
     if (is.null(norm) & ! is.null(x$norm)) norm <- as.numeric(x$norm)
     dist <- x$dist
@@ -482,6 +382,9 @@ stdev.rpar <- function(x, norm = NULL, ...){
            )
 }
 
+
+#' @rdname distribution
+#' @export
 rg.rpar <- function(x, norm = NULL, ...){
     if (is.null(norm) & ! is.null(x$norm)) norm <- as.numeric(x$norm)
     dist <- x$dist
@@ -504,24 +407,32 @@ rg.rpar <- function(x, norm = NULL, ...){
     result
 }
 
+#' @rdname distribution
+#' @export
 mean.mlogit <- function(x, par = NULL, norm = NULL, ...){
     if (!is.null(norm)) norm <- abs(coef(x)[norm])
     if (is.null(par)) par <- names(x$rpar)
     sapply(x$rpar[par], function(x) mean(x, norm = norm, ...))
 }
 
+#' @rdname distribution
+#' @export
 med.mlogit <- function(x, par = NULL, norm = NULL, ...){
     if (!is.null(norm)) norm <- abs(coef(x)[norm])
     if (is.null(par)) par <- names(x$rpar)
     sapply(x$rpar[par], function(x) med(x, norm = norm, ...))
 }
 
+#' @rdname distribution
+#' @export
 stdev.mlogit <- function(x, par = NULL, norm = NULL, ...){
     if (!is.null(norm)) norm <- abs(coef(x)[norm])
     if (is.null(par)) par <- names(x$rpar)
     sapply(x$rpar[par], function(x) stdev(x, norm = norm, ...))
 }
 
+#' @rdname distribution
+#' @export
 rg.mlogit <- function(x, par = NULL, norm = NULL, ...){
     if (!is.null(norm)) norm <- abs(coef(x)[norm])
     if (is.null(par)) par <- names(x$rpar)
@@ -530,20 +441,26 @@ rg.mlogit <- function(x, par = NULL, norm = NULL, ...){
     else rg(x$rpar[[par]])
 }
 
-# [qpd]rpar methods for rpar and rlogit objects
-
+#' @rdname distribution
+#' @export
 qrpar <- function(x, ...){
     UseMethod("qrpar")
 }
 
+#' @rdname distribution
+#' @export
 prpar <- function(x, ...){
     UseMethod("prpar")
 }
 
+#' @rdname distribution
+#' @export
 drpar <- function(x, ...){
     UseMethod("drpar")
 }
 
+#' @rdname distribution
+#' @export
 qrpar.rpar <- function(x, norm = NULL, ...){
     dist <- x$dist
     m <- x$mean
@@ -565,6 +482,8 @@ qrpar.rpar <- function(x, norm = NULL, ...){
            )
 }
 
+#' @rdname distribution
+#' @export
 prpar.rpar <- function(x, norm = NULL, ...){
     dist <- x$dist
     m <- x$mean
@@ -587,6 +506,8 @@ prpar.rpar <- function(x, norm = NULL, ...){
            )
 }
 
+#' @rdname distribution
+#' @export
 drpar.rpar <- function(x, norm = NULL, ...){
     dist <- x$dist
     m <- x$mean
@@ -608,6 +529,8 @@ drpar.rpar <- function(x, norm = NULL, ...){
            )
 }
 
+#' @rdname distribution
+#' @export
 qrpar.mlogit <- function(x, par = 1, y = NULL, norm = NULL, ...){
     if (is.null(rpar))
         stop("qrpar function only relevant for random parameters models")
@@ -623,7 +546,8 @@ qrpar.mlogit <- function(x, par = 1, y = NULL, norm = NULL, ...){
     }
 }
 
-
+#' @rdname distribution
+#' @export
 prpar.mlogit <- function(x, par = 1, y = NULL, norm = NULL, ...){
     if (is.null(rpar))
         stop("prpar function only relevant for random parameters models")
@@ -639,6 +563,8 @@ prpar.mlogit <- function(x, par = 1, y = NULL, norm = NULL, ...){
     }
 }
 
+#' @rdname distribution
+#' @export
 drpar.mlogit <- function(x, par = 1, y = NULL, norm = NULL, ...){
     if (is.null(rpar))
         stop("drpar function only relevant for random parameters models")

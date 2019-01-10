@@ -1,3 +1,257 @@
+#' Multinomial logit model
+#' 
+#' Estimation by maximum likelihood of the multinomial logit model,
+#' with alternative-specific and/or individual specific variables.
+#' 
+#' @name mlogit
+#' @aliases mlogit print.mlogit suml fitted.mlogit predict.mlogit
+#'     residuals.mlogit df.residual.mlogit terms.mlogit
+#'     model.matrix.mlogit coef.mlogit update.mlogit summary.mlogit
+#'     coef.summary.mlogit print.summary.mlogit logLik.mlogit
+#' @importFrom stats as.formula coef dlnorm dnorm formula logLik
+#' @importFrom stats model.frame model.matrix model.response
+#' @importFrom stats na.omit pchisq plnorm pnorm predict
+#' @importFrom stats printCoefmat punif qlnorm qnorm qunif
+#' @importFrom stats relevel reshape residuals rnorm runif
+#' @importFrom stats terms update vcov dunif effects
+#' @importFrom statmod gauss.quad
+#' @importFrom MASS ginv
+#' @importFrom zoo index
+#' @param x,object an object of class \code{mlogit}
+#' @param formula a symbolic description of the model to be estimated,
+#' @param new an updated formula for the \code{update} method,
+#' @param newdata a \code{data.frame} for the \code{predict} method,
+#' @param returnData if \code{TRUE}, the data is returned as an
+#'     attribute,
+#' @param data the data: an \code{mlogit.data} object or an ordinary
+#'     \code{data.frame},
+#' @param subset an optional vector specifying a subset of
+#'     observations for \code{mlogit}, an optional vector of
+#'     coefficients to extract for the \code{coef} method,
+#' @param weights an optional vector of weights,
+#' @param na.action a function which indicates what should happen when
+#'     the data contains '\code{NA}'s,
+#' @param start a vector of starting values,
+#' @param alt.subset a vector of character strings containing the
+#'     subset of alternative on which the model should be estimated,
+#' @param reflevel the base alternative (the one for which the
+#'     coefficients of individual-specific variables are normalized to
+#'     0),
+#' @param nests a named list of characters vectors, each names being a
+#'     nest, the corresponding vector being the set of alternatives
+#'     that belong to this nest,
+#' @param un.nest.el a boolean, if \code{TRUE}, the hypothesis of
+#'     unique elasticity is imposed for nested logit models,
+#' @param unscaled a boolean, if \code{TRUE}, the unscaled version of
+#'     the nested logit model is estimated,
+#' @param heterosc a boolean, if \code{TRUE}, the heteroscedastic
+#'     logit model is estimated,
+#' @param rpar a named vector whose names are the random parameters
+#'     and values the distribution : \code{'n'} for normal, \code{'l'}
+#'     for log-normal, \code{'t'} for truncated normal, \code{'u' }
+#'     for uniform,
+#' @param probit if \code{TRUE}, a multinomial porbit model is
+#'     estimated,
+#' @param R the number of function evaluation for the gaussian
+#'     quadrature method used if \code{heterosc=TRUE}, the number of
+#'     draws of pseudo-random numbers if \code{rpar} is not
+#'     \code{NULL},
+#' @param correlation only relevant if \code{rpar} is not \code{NULL},
+#'     if true, the correlation between random parameters is taken
+#'     into account,
+#' @param halton only relevant if \code{rpar} is not \code{NULL}, if
+#'     not \code{NULL}, halton sequence is used instead of
+#'     pseudo-random numbers. If \code{halton=NA}, some default values
+#'     are used for the prime of the sequence (actually, the primes
+#'     are used in order) and for the number of elements
+#'     droped. Otherwise, \code{halton} should be a list with elements
+#'     \code{prime} (the primes used) and \code{drop} (the number of
+#'     elements droped).
+#' @param random.nb only relevant if \code{rpar} is not \code{NULL}, a
+#'     user-supplied matrix of random,
+#' @param panel only relevant if \code{rpar} is not \code{NULL} and if
+#'     the data are repeated observations of the same unit ; if
+#'     \code{TRUE}, the mixed-logit model is estimated using panel
+#'     techniques,
+#' @param estimate a boolean indicating whether the model should be
+#'     estimated or not: if not, the \code{model.frame} is returned,
+#' @param seed ,
+#' @param digits the number of digits,
+#' @param width the width of the printing,
+#' @param outcome a boolean which indicates, for the \code{fitted} and
+#'     the \code{residuals} methods whether a matrix (for each choice,
+#'     one value for each alternative) or a vector (for each choice,
+#'     only a value for the alternative chosen) should be returned,
+#' @param type one of \code{outcome} (probability of the chosen
+#'     alternative), \code{probabilities} (probabilities for all the
+#'     alternatives), \code{parameters} for individual-level random
+#'     parameters for the fitted method, how the correlated random
+#'     parameters should be displayed : \code{"chol"} for the
+#'     estimated parameters (the elements of the Cholesky
+#'     decomposition matrix), \code{"cov"} for the covariance matrix
+#'     and \code{"cor"} for the correlation matrix and the standard
+#'     deviations,
+#' @param fixed if \code{FALSE} (the default), constant coefficients
+#'     are not returned,
+#' @param ... further arguments passed to \code{mlogit.data} or
+#'     \code{mlogit.optim}.
+#' 
+#' @details For how to use the formula argument, see
+#'     \code{\link{mFormula}}.
+#' 
+#' The \code{data} argument may be an ordinary \code{data.frame}. In
+#' this case, some supplementary arguments should be provided and are
+#' passed to \code{\link{mlogit.data}}. Note that it is not necessary
+#' to indicate the choice argument as it is deduced from the formula.
+#' 
+#' The model is estimated using the \code{\link{mlogit.optim}}
+#' function.
+#' 
+#' The basic multinomial logit model and three important extentions of
+#' this model may be estimated.
+#' 
+#' If \code{heterosc=TRUE}, the heteroscedastic logit model is estimated.
+#' \code{J-1} extra coefficients are estimated that represent the scale
+#' parameter for \code{J-1} alternatives, the scale parameter for the reference
+#' alternative being normalized to 1. The probabilities don't have a closed
+#' form, they are estimated using a gaussian quadrature method.
+#' 
+#' If \code{nests} is not \code{NULL}, the nested logit model is estimated.
+#' 
+#' If \code{rpar} is not \code{NULL}, the random parameter model is
+#' estimated.  The probabilities are approximated using simulations
+#' with \code{R} draws and halton sequences are used if \code{halton}
+#' is not \code{NULL}. Pseudo-random numbers are drawns from a
+#' standard normal and the relevant transformations are performed to
+#' obtain numbers drawns from a normal, log-normal, censored-normal or
+#' uniform distribution. If \code{correlation=TRUE}, the correlation
+#' between the random parameters are taken into account by estimating
+#' the components of the cholesky decomposition of the covariance
+#' matrix. With G random parameters, without correlation G standard
+#' deviations are estimated, with correlation G * (G + 1) /2
+#' coefficients are estimated.
+
+#' @return An object of class \code{"mlogit"}, a list with elements: \itemize{
+#' \item{coefficients}{the named vector of coefficients,}
+#' \item{logLik}{the value of the log-likelihood,}
+#' \item{hessian}{the hessian of the log-likelihood at convergence,}
+#' \item{gradient}{the gradient of the log-likelihood at convergence,}
+#' \item{call}{the matched call,}
+#' \item{est.stat}{some information about the estimation (time used,
+#' optimisation method),}
+#' \item{freq}{the frequency of choice,}
+#' \item{residuals}{the residuals,}
+#' \item{fitted.values}{the fitted values,}
+#' \item{formula}{the formula (a \code{mFormula} object),}
+#' \item{expanded.formula}{the formula (a \code{formula} object),}
+#' \item{model}{the model frame used,}
+#' \item{index}{the index of the choice and of the alternatives.}
+#' }
+#' @export
+#' @author Yves Croissant
+#' @seealso
+#' \code{\link{mlogit.data}} to shape the data. \code{\link{multinom}} from
+#' package \code{nnet} performs the estimation of the multinomial logit model
+#' with individual specific variables. \code{\link{mlogit.optim}} for details
+#' about the optimization function.
+#' @references
+#' McFadden, D. (1973) Conditional Logit Analysis of Qualitative Choice
+#' Behavior, in P. Zarembka ed., \emph{Frontiers in Econometrics}, New-York:
+#' Academic Press.
+#' 
+#' McFadden, D. (1974) ``The Measurement of Urban Travel Demand'',
+#' \emph{Journal of Public Economics}, 3, pp. 303-328.
+#' 
+#' Train, K. (2004) \emph{Discrete Choice Modelling, with Simulations},
+#' Cambridge University Press.
+#' @keywords regression
+#' @examples
+#' ## Cameron and Trivedi's Microeconometrics p.493 There are two
+#' ## alternative specific variables : price and catch one individual
+#' ## specific variable (income) and four fishing mode : beach, pier, boat,
+#' ## charter
+#' 
+#' data("Fishing", package = "mlogit")
+#' Fish <- mlogit.data(Fishing, varying = c(2:9), shape = "wide", choice = "mode")
+#' 
+#' ## a pure "conditional" model
+#' summary(mlogit(mode ~ price + catch, data = Fish))
+#' 
+#' ## a pure "multinomial model"
+#' summary(mlogit(mode ~ 0 | income, data = Fish))
+#' 
+#' ## which can also be estimated using multinom (package nnet)
+#' library("nnet")
+#' summary(multinom(mode ~ income, data = Fishing))
+#' 
+#' ## a "mixed" model
+#' m <- mlogit(mode ~ price+ catch | income, data = Fish)
+#' summary(m)
+#' 
+#' ## same model with charter as the reference level
+#' m <- mlogit(mode ~ price+ catch | income, data = Fish, reflevel = "charter")
+#' 
+#' ## same model with a subset of alternatives : charter, pier, beach
+#' m <- mlogit(mode ~ price+ catch | income, data = Fish,
+#'             alt.subset = c("charter", "pier", "beach"))
+#' 
+#' ## model on unbalanced data i.e. for some observations, some
+#' ## alternatives are missing
+#' # a data.frame in wide format with two missing prices
+#' Fishing2 <- Fishing
+#' Fishing2[1, "price.pier"] <- Fishing2[3, "price.beach"] <- NA
+#' mlogit(mode~price+catch|income, Fishing2, shape="wide", choice="mode", varying = 2:9)
+#' 
+#' # a data.frame in long format with three missing lines
+#' data("TravelMode", package = "AER")
+#' Tr2 <- TravelMode[-c(2, 7, 9),]
+#' mlogit(choice~wait+gcost|income+size, Tr2, shape = "long",
+#'        chid.var = "individual", alt.var="mode", choice = "choice")
+#' 
+#' ## An heteroscedastic logit model
+#' data("TravelMode", package = "AER")
+#' hl <- mlogit(choice ~ wait + travel + vcost, TravelMode,
+#'              shape = "long", chid.var = "individual", alt.var = "mode",
+#'              method = "bfgs", heterosc = TRUE, tol = 10)
+#' 
+#' ## A nested logit model
+#' TravelMode$avincome <- with(TravelMode, income * (mode == "air"))
+#' TravelMode$time <- with(TravelMode, travel + wait)/60
+#' TravelMode$timeair <- with(TravelMode, time * I(mode == "air"))
+#' TravelMode$income <- with(TravelMode, income / 10)
+#' # Hensher and Greene (2002), table 1 p.8-9 model 5
+#' TravelMode$incomeother <- with(TravelMode, ifelse(mode %in% c('air', 'car'), income, 0))
+#' nl <- mlogit(choice~gcost+wait+incomeother, TravelMode,
+#'              shape='long', alt.var='mode',
+#'              nests=list(public=c('train', 'bus'), other=c('car','air')))
+#' # same with a comon nest elasticity (model 1)
+#' nl2 <- update(nl, un.nest.el = TRUE)
+#' 
+#' ## a probit model
+#' \dontrun{
+#' pr <- mlogit(choice ~ wait + travel + vcost, TravelMode,
+#'              shape = "long", chid.var = "individual", alt.var = "mode",
+#'              probit = TRUE)
+#' }
+#' 
+#' ## a mixed logit model
+#' \dontrun{
+#' rpl <- mlogit(mode ~ price+ catch | income, Fishing, varying = 2:9,
+#'               shape = 'wide', rpar = c(price= 'n', catch = 'n'),
+#'               correlation = TRUE, halton = NA,
+#'               R = 10, tol = 10, print.level = 0)
+#' summary(rpl)
+#' rpar(rpl)
+#' cor.mlogit(rpl)
+#' cov.mlogit(rpl)
+#' rpar(rpl, "catch")
+#' summary(rpar(rpl, "catch"))
+#' }
+#' 
+#' # a ranked ordered model
+#' data("Game", package = "mlogit")
+#' g <- mlogit(ch~own|hours, Game, choice='ch', varying = 1:12,
+#'             ranked=TRUE, shape="wide", reflevel="PC")
 mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
                    alt.subset = NULL, reflevel= NULL,
                    nests = NULL, un.nest.el = FALSE, unscaled = FALSE,
@@ -66,7 +320,6 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     m <- match(c("formula", "data", "subset", "na.action", "weights"),
                names(mf), 0L)
     mf <- mf[c(1L, m)]
-    # Est-ce important ??
     #  mf$drop.unused.levels <- TRUE
     mf$formula <- formula
     mf[[1L]] <- as.name("model.frame")
@@ -91,8 +344,6 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
         id <- unique(index[, c("chid", "id")])$id
     }
     else id <- NULL
-    #YC POURQUOI CE TRUC CI DESSOUS
-#    id <- index[["id"]]
     
     # compute the relevent subset if required
     if (! is.null(alt.subset)){
@@ -134,7 +385,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     balanced <- TRUE
     if (nrow(mf) != (n * T)){
         omf <- mf
-        # la ligne ci-dessous ne sert a rien ?
+        # check the relevance of the following line
         rownames(mf) <- paste(chid, alt, sep = ".")
         all.rn <- as.character(t(outer(chid.un, alt.un, paste, sep = ".")))
         mf <- mf[all.rn, ]
@@ -152,18 +403,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
         balanced <- FALSE
     }
     else omf <- mf
-    # ! QDBC YC
     
-    #suppress individuals for which no choice is made
-    if (FALSE){
-        delete.id <- tapply(model.response(mf), chid, sum, na.rm = TRUE)
-        delete.id <- names(delete.id[delete.id == 0])
-        mf <- mf[!(chid %in% delete.id), ]
-        index <- index[rownames(mf),]
-        index[[1]] <- index[[1]][, drop=TRUE]
-        index[[2]] <- alt <- index[[2]][, drop=TRUE]
-        attr(mf, "index") <- index
-    }
     attr(mf, "formula") <- formula
     # if estimate is FALSE, return the data.frame
     if (! estimate) return(mf)
@@ -448,8 +688,9 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
         opt$unscaled <- as.name('unscaled')
         opt$un.nest.el <- as.name('un.nest.el')
     }
-    ## Plante avec parent.frame
+    ## doesn't work with parent.frame
     x <- eval(opt, sys.frame(which = nframe))
+    
     # 6 ###########################################################
     # put the result in form
     ###############################################################
@@ -514,7 +755,7 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
                 names(they) <- names(yl)
                 opt$y <- they
             }
-            # Plante avec parent.frame
+            # doesn't work with parent.frame
             probabilities <- cbind(probabilities,
                                    attr(eval(opt, sys.frame(which = nframe)), 'fitted'))
         }
@@ -605,4 +846,36 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     #result$Mi <- Mi
     #result$alt.lev <- alt.lev
     result
+}
+
+tological <- function(x){
+    if (! is.logical(x)){
+        if (is.factor(x)){
+            if (length(levels(x)) != 2)
+                stop("the number of levels for the choice variable should equal two")
+            x <- x == levels(x)[2]
+        }
+        if (is.numeric(x)) x <- x != 0
+    }
+    x
+}
+
+suml <- function(x){
+    n <- length(x)
+    if (!is.null(dim(x[[1]]))){
+        d <- dim(x[[1]])
+        s <- matrix(0,d[1],d[2])
+        for (i in 1:n){
+            x[[i]][is.na(x[[i]])] <- 0
+            s <- s+x[[i]]
+        }
+    }
+    else{
+        s <- rep(0,length(x[[n]]))
+        for (i in 1:n){
+            x[[i]][is.na(x[[i]])] <- 0
+            s <- s+x[[i]]
+        }
+    }
+    s
 }

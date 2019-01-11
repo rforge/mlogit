@@ -1,0 +1,48 @@
+reference:
+  - title: "Data"
+    desc: >
+      data sets used to illustrate the use of mlogit
+    contents:
+      - Electricity
+      - Fishing
+      - Game
+      - Game2
+      - HC
+      - Heating
+      - JapaneseFDI
+      - Mode
+      - ModeCanada
+      - NOx
+      - RiskyTransport
+      - Train
+  - title: "Model description"
+    desc: "Enhanced formula-data interface for random utility models"
+    contents:
+      - mFormula
+      - mlogit.data
+  - title: "Estimation"
+    desc: "Estimation methods for random utility models"
+    contents:
+      - mlogit
+      - mlogit.optim
+  - title: "methods"
+    desc: "Method for fitted models"
+    contents:
+      - vcov.mlogit
+      - cor.mlogit
+      - plot.mlogit
+      - effects.mlogit
+      - logsum
+  - title: "random parameters"
+    desc: "Tools for random parameter models"
+    contents:
+      - rpar
+      - distribution
+      - plot.mlogit
+  - title: "Tests"
+    desc : "Testing functions for random utility models"
+    contents:
+      - hmftest
+      - scoretest
+
+    

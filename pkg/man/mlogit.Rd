@@ -233,15 +233,11 @@ g <- mlogit(ch~own|hours, Game, choice='ch', varying = 1:12,
             ranked=TRUE, shape="wide", reflevel="PC")
 }
 \references{
-McFadden, D. (1973) Conditional Logit Analysis of Qualitative
-Choice Behavior, in P. Zarembka ed., \strong{Frontiers in
-Econometrics}, New-York: Academic Press.
+\citeRef{MCFA:73}
 
-McFadden, D. (1974) ``The Measurement of Urban Travel Demand'',
-\emph{Journal of Public Economics}, 3, pp. 303-328.
+\citeRef{MCFA:74}
 
-Train, K. (2004) \emph{Discrete Choice Modelling, with Simulations},
-Cambridge University Press.
+\citeRef{TRAI:09}
 }
 \seealso{
 \code{\link[=mlogit.data]{mlogit.data()}} to shape the data. \code{\link[nnet:multinom]{nnet::multinom()}} from

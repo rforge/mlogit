@@ -1,11 +1,17 @@
-# mlogit 1.0-0
+# mlogit 0.4-0
 
-* improved version of the vignette mlogit2, due to reviews
+* improved version of the vignette mlogit2, due to reviews and split
+  by sections
 
 * the Exercises vignette is splited and is now writen in markdown
 
 * importantly, the Cholesky matrix is now coerced to a vector by rows
   and note by columns.
+  
+* the mlogit function was checked and improved.
+
+* implementation of the computation of the standard deviations of the
+  covariance matrix of the random parameters, using the delta method.
 
 # mlogit 0.3-0
 

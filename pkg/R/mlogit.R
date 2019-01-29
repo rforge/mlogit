@@ -126,11 +126,12 @@
 #'     model with individual specific variables. [mlogit.optim()]
 #'     details about the optimization function.
 #' @references
-#' \citeRef{MCFA:73}
 #'
-#' \citeRef{MCFA:74}
-#'
-#' \citeRef{TRAI:09}
+#' \insertRef{MCFA:73}{mlogit}
+#' 
+#' \insertRef{MCFA:74}{mlogit}
+#' 
+#' \insertRef{TRAI:09}{mlogit}
 #' 
 #' @keywords regression
 #' @examples

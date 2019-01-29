@@ -233,11 +233,11 @@ g <- mlogit(ch~own|hours, Game, choice='ch', varying = 1:12,
             ranked=TRUE, shape="wide", reflevel="PC")
 }
 \references{
-\citeRef{MCFA:73}
+\insertRef{MCFA:73}{mlogit}
 
-\citeRef{MCFA:74}
+\insertRef{MCFA:74}{mlogit}
 
-\citeRef{TRAI:09}
+\insertRef{TRAI:09}{mlogit}
 }
 \seealso{
 \code{\link[=mlogit.data]{mlogit.data()}} to shape the data. \code{\link[nnet:multinom]{nnet::multinom()}} from

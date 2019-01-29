@@ -358,8 +358,7 @@ nl2.fdi <- update(nl.fdi, un.nest.el = FALSE, constPar = c('iv:PT' = 1,
 'iv:IE' = 1))
 ``` 
 
-The results of the fitted models are presented in
-Table~\@ref(tab:nlogit).
+The results of the fitted models are presented in the following table:
 
 ```{r label = 'results for the JapaneseFDI data', results = 'asis'}
 library("texreg")

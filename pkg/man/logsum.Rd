@@ -56,7 +56,7 @@ be used. \code{X} is a \code{matrix} or a \code{mlogit} from which the
 can also be used to construct the relevant \code{model.matrix}.
 }
 \seealso{
-\code{\link{mlogit}} for the estimation of a multinomial logit
+\code{\link[=mlogit]{mlogit()}} for the estimation of a multinomial logit
 model.
 }
 \author{

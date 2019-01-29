@@ -130,7 +130,7 @@ three relevant indexes: `chid` is the choice situation index,
 index. This attribute is a `data.frame` that can be extracted
 using the `index` function.
 
-```{r label = 'index of the transoformed Train data set'}
+```{r label = 'index of the transformed Train data set'}
 head(index(Tr), 3)
 ``` 
 
@@ -160,12 +160,12 @@ the wide format, the caveat being that values of `dist`, `income` and
 For data in "long" format, the `shape` and the `choice` arguments are
 no more mandatory.
 
-To replicate published results later in the text (Section
-\@ref(sec:modecanada)), we'll use only a subset of the choice
-situations, namely those for which the 4 alternatives are
-available. This can be done using the `subset` function with the
-`subset` argument set to `noalt == 4` while estimating the model. This
-can also be done within `mlogit.data`, using the `subset` argument.
+To replicate published results later in the text, we'll use only a
+subset of the choice situations, namely those for which the 4
+alternatives are available. This can be done using the `subset`
+function with the `subset` argument set to `noalt == 4` while
+estimating the model. This can also be done within `mlogit.data`,
+using the `subset` argument.
 
 The information about the structure of the data can be explicitly
 indicated using choice situations and alternative indexes

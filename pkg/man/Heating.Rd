@@ -4,31 +4,24 @@
 \name{Heating}
 \alias{Heating}
 \title{Heating System Choice in California Houses}
-\format{A dataframe containing : \describe{
-
-\item{idcase}{id}
-\item{depvar}{heating system, one of gc (gas central), gr (gas room), ec
-(electric central), er (electric room), hp (heat pump)}
-\item{ic.z}{installation cost for heating system z (defined for the
-5 heating systems)}
-\item{oc.z}{annual operating cost for heating system z (defined for
-the 5 heating systems)}
-\item{pb.z}{ratio oc.z/ic.z }
-\item{income}{annual income of the household} \item{agehed}{age of
-the household head} \item{rooms}{numbers of rooms in the house}
+\format{A dataframe containing:
+\itemize{
+\item idcase: id,
+\item depvar: heating system, one of gc (gas central), gr (gas room), ec
+(electric central), er (electric room), hp (heat pump),
+\item ic.z: installation cost for heating system z (defined for the
+5 heating systems),
+\item oc.z: annual operating cost for heating system z (defined for
+the 5 heating systems),
+\item pb.z: ratio oc.z/ic.z ,
+\item income: annual income of the household,
+\item agehed: age of the household head
+\item rooms: numbers of rooms in the house,
 }}
+\source{
+\href{http://elsa.berkeley.edu/~train/}{Kenneth Train's home page}.
+}
 \description{
-a cross-section
-}
-\details{
-\emph{number of observations} : 900
-
-\emph{observation} : households
-
-\emph{country} : California
-}
-\references{
-Kenneth Train's home page :
-\url{http://elsa.berkeley.edu/~train/}.
+A sample of 900 Californian households#'
 }
 \keyword{datasets}

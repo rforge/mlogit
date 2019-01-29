@@ -5,21 +5,15 @@
 \alias{Mode}
 \title{Mode Choice}
 \format{A dataframe containing :
-\describe{
-\item{choice}{one of car, carpool, bus or rail}
-\item{cost.z}{cost of mode z}
-\item{time.z}{time of mode z}
+\itemize{
+\item choice: one of car, carpool, bus or rail,
+\item cost.z: cost of mode z,
+\item time.z: time of mode z.
 }}
+\source{
+\href{http://elsa.berkeley.edu/~train/}{Kenneth Train's home page}.
+}
 \description{
-a cross-section
-}
-\details{
-\emph{number of observations} : 453
-
-\emph{observation} : individuals
-}
-\references{
-Kenneth Train's home page :
-\url{http://elsa.berkeley.edu/~train/}.
+A sample of 453 individuals for 4 transport modes.
 }
 \keyword{datasets}

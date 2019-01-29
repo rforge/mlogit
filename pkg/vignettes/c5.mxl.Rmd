@@ -155,8 +155,8 @@ distribution:
   but, in this case, if only negative values are expected, one should
   consider the distribution of the opposite of the random price
   coefficient. This can easily be done using the `opposite`
-  argument of `mlogit.data`.^[See Section
-    \@ref(sec:dataman).],
+  argument of `mlogit.data`.^[See vignette
+    [formula/data](./2.formula.data.html).],
 - the use of unbounded distributions often leads to implausible
   values of some statistics of the random parameters, especially the
   mean. This is particularly the case of the log-normal distribution,
@@ -474,7 +474,7 @@ convloc + clientele | 0, data = RT, weights = weight,
 rpar = c(cost = 'zbt', risk = 'zbt'), R = 100, halton = NA, panel = TRUE)
 ``` 
 
-The results are presented in Table~\@ref(tab:risktr).
+The results are presented in the following table:
 ```{r label = 'results for RiskyTransport', results = 'asis'}
 library("texreg")
 htmlreg(list('Multinomial logit' = ml.rt, 'Mixed logit' = mx.rt),
@@ -492,10 +492,9 @@ head(indpar)
 ``` 
 
 We can then compute the VSL for every individual and analyse their
-distribution, using quantiles and plotting on
-figure~\@ref(fig:plotindpar) the empirical density of VSL for African
-and non-African travelers \citep[as done in][Table 4, p.219 and Figure
-5, p.223]{LEON:MIGU:17}.
+distribution, using quantiles and plotting on the following figure the
+empirical density of VSL for African and non-African travelers
+\citep[as done in][Table 4, p.219 and Figure 5, p.223]{LEON:MIGU:17}.
 
 ```{r label = 'individal parameters'}
 indpar$VSL <- with(indpar, risk / cost * 100)

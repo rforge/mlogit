@@ -14,36 +14,32 @@
 \arguments{
 \item{x}{a \code{mlogit} or a \code{rpar} object,}
 
-\item{par}{a subset of the random parameters ; if \code{NULL}, all
-the parameters are selected,}
+\item{par}{a subset of the random parameters ; if \code{NULL}, all the
+parameters are selected,}
 
-\item{norm}{the coefficient's name for the \code{mlogit} method or
-the coefficient's value for the \code{rpar} method used for
+\item{norm}{the coefficient's name for the \code{mlogit} method or the
+coefficient's value for the \code{rpar} method used for
 normalization,}
 
 \item{type}{the function to be plotted, whether the density or the
 probability density function,}
 
 \item{...}{further arguments, passed to \code{plot.rpar} for the
-\code{mlogit} method and to \code{plot} for the \code{rpar}
-method.}
+\code{mlogit} method and to \code{plot} for the \code{rpar} method.}
 }
 \description{
-Methods for \code{rpar} and \code{mlogit} objects which provide a
-plot of the distribution of one or all of the estimated random
-parameters
+Methods for \code{rpar} and \code{mlogit} objects which provide a plot of the
+distribution of one or all of the estimated random parameters
 }
 \details{
-For the \code{rpar} method, one plot is drawn. For the
-\code{mlogit} method, one plot for each selected random parameter
-is drawn.
+For the \code{rpar} method, one plot is drawn. For the \code{mlogit} method,
+one plot for each selected random parameter is drawn.
 }
 \seealso{
-\code{\link{mlogit}} for the estimation of random
-    parameters logit models and \code{\link{rpar}} for the
-    description of \code{rpar} objects and
-    \code{\link{distribution}} for functions which return
-    informations about the distribution of random parameters.
+\code{\link[=mlogit]{mlogit()}} the estimation of random parameters logit
+models and \code{\link[=rpar]{rpar()}} for the description of \code{rpar} objects and
+\link{distribution} for functions which return informations about
+the distribution of random parameters.
 }
 \author{
 Yves Croissant

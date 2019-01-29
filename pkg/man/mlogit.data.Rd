@@ -40,45 +40,49 @@ mlogit.data(data, choice = NULL, shape = c("long", "wide"),
 \arguments{
 \item{data}{a \code{data.frame},}
 
-\item{choice}{the variable indicating the choice made: it can be either a
-logical vector, a numerical vector with 0 where the alternative is not
-chosen, a factor with level 'yes' when the alternative is chosen}
+\item{choice}{the variable indicating the choice made: it can be
+either a logical vector, a numerical vector with 0 where the
+alternative is not chosen, a factor with level 'yes' when the
+alternative is chosen}
 
 \item{shape}{the shape of the \code{data.frame}: whether \code{long} if each
 row is an alternative or \code{wide} if each row is an observation,}
 
-\item{varying}{the indexes of the variables that are alternative specific,}
+\item{varying}{the indexes of the variables that are alternative
+specific,}
 
-\item{sep}{the seperator of the variable name and the alternative name (only
-relevant for a \code{wide} \code{data.frame}),}
+\item{sep}{the seperator of the variable name and the alternative
+name (only relevant for a \code{wide} \code{data.frame}),}
 
-\item{alt.var}{the name of the variable that contains the alternative index
-(for a \code{long} \code{data.frame} only) or the name under which the
-alternative index will be stored (the default name is \code{alt}),}
+\item{alt.var}{the name of the variable that contains the
+alternative index (for a \code{long} \code{data.frame} only) or the name
+under which the alternative index will be stored (the default
+name is \code{alt}),}
 
-\item{chid.var}{the name of the variable that contains the choice index or
-the name under which the choice index will be stored,}
+\item{chid.var}{the name of the variable that contains the choice
+index or the name under which the choice index will be stored,}
 
-\item{alt.levels}{the name of the alternatives: if null, for a \code{wide}
-data.frame, they are guessed from the variable names and the choice variable
-(both should be the same), for a \code{long} \code{data.frame}, they are
-guessed from the \code{alt.var} argument,}
+\item{alt.levels}{the name of the alternatives: if null, for a
+\code{wide} data.frame, they are guessed from the variable names and
+the choice variable (both should be the same), for a \code{long}
+\code{data.frame}, they are guessed from the \code{alt.var} argument,}
 
-\item{id.var}{the name of the variable that contains the individual index if
-any,}
+\item{id.var}{the name of the variable that contains the individual
+index if any,}
 
-\item{group.var}{the name of the variable that contains the group index if
-any,}
+\item{group.var}{the name of the variable that contains the group
+index if any,}
 
 \item{opposite}{returns the opposite of the specified variables,}
 
 \item{drop.index}{should the index variables be dropped from the
 \code{data.frame},}
 
-\item{ranked}{a logical value which is true if the response is a rank,}
+\item{ranked}{a logical value which is true if the response is a
+rank,}
 
-\item{subset}{a logical expression which defines the subset of observations
-to be selected,}
+\item{subset}{a logical expression which defines the subset of
+observations to be selected,}
 
 \item{...}{further arguments passed to \code{reshape}.}
 
@@ -88,7 +92,8 @@ to be selected,}
 
 \item{j}{the columns to extract,}
 
-\item{drop}{a boolean, equal to \code{FALSE} if one wants that a \code{data.frame} is always returned,}
+\item{drop}{a boolean, equal to \code{FALSE} if one wants that a
+\code{data.frame} is always returned,}
 
 \item{y}{the column of the \code{data.frame} to extract or to replace,}
 
@@ -97,11 +102,12 @@ to be selected,}
 \value{
 A \code{mlogit.data} object, which is a \code{data.frame} in \code{long}
 format, \emph{i.e.} one line for each alternative.  It has a \code{index}
-attribute, which is a \code{data.frame} that contains the index of the
-choice made (\code{'chid'}), the index of the alternative (\code{'alt'})
-and, if any, the index of the individual (\code{'id'}).  The choice variable
-is a boolean which indicates the choice made. This function use
-\code{reshape} if the \code{data.frame} is in \code{wide} format.
+attribute, which is a \code{data.frame} that contains the index of
+the choice made (\code{chid}), the index of the alternative (\code{alt})
+and, if any, the index of the individual (\code{id}) and of the
+alternative groups (\code{group}).  The choice variable is a boolean
+which indicates the choice made. This function use
+\code{\link[stats:reshape]{stats::reshape()}} if the \code{data.frame} is in \code{wide} format.
 }
 \description{
 shape a \code{data.frame} in a suitable form for the use of the
@@ -160,7 +166,7 @@ data("Game2", package = "mlogit")
 G2 <- mlogit.data(Game2,  shape='long', choice="ch", alt.var = 'platform', ranked = TRUE)
 }
 \seealso{
-\code{\link[stats]{reshape}}
+\code{\link[stats:reshape]{stats::reshape()}}
 }
 \author{
 Yves Croissant

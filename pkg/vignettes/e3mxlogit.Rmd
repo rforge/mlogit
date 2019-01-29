@@ -276,7 +276,7 @@ strt <-  c(-0.917703974, -0.215851727,  2.392570989,  1.747531863,  2.155462393,
            -1.236664544,  0.643190285,  0.001982314,  0.062508396,  0.160672338,
            0.375855648,  0.025996362, -0.001225349,  0.141381623,  0.089990150,
            0.211244575)
-Elec.mxl5 <- update(Elec.mxl4, correlation = TRUE, start = strt)
+#Elec.mxl5 <- update(Elec.mxl4, correlation = TRUE, start = strt)
 ``` 
   
 ```{r eval = FALSE}
@@ -284,11 +284,11 @@ Elec.mxl5 <- update(Elec.mxl4, correlation = TRUE)
 ``` 
 
 ```{r }
-summary(Elec.mxl5)
-cor.mlogit(Elec.mxl5)
-lrtest(Elec.mxl5, Elec.mxl4)
-waldtest(Elec.mxl5, correlation = FALSE)
-scoretest(Elec.mxl4, correlation = TRUE)
+#summary(Elec.mxl5)
+#cor.mlogit(Elec.mxl5)
+#lrtest(Elec.mxl5, Elec.mxl4)
+#waldtest(Elec.mxl5, correlation = FALSE)
+#scoretest(Elec.mxl4, correlation = TRUE)
 ``` 
 
 > The three tests clearly reject the hypothesis that the random

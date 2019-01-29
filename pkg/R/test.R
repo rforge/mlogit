@@ -1,39 +1,42 @@
 #' Hausman-McFadden Test
 #' 
-#' Test the IIA hypothesis (independence of irrelevant alternatives) for a
-#' multinomial logit model.
+#' Test the IIA hypothesis (independence of irrelevant alternatives)
+#' for a multinomial logit model.
 #' 
-#' @name hmftest 
+#' @name hmftest
 #' @aliases hmftest hmftest.formula hmftest.mlogit
-#' @param x an object of class \code{mlogit} or a formula,
-#' @param z an object of class \code{mlogit} or a subset of alternatives for
-#' the \code{mlogit} method. This should be the same model as \code{x}
-#' estimated on a subset of alternatives,
+#' @param x an object of class `mlogit` or a formula,
+#' @param z an object of class `mlogit` or a subset of alternatives
+#'     for the `mlogit` method. This should be the same model as `x`
+#'     estimated on a subset of alternatives,
 #' @param alt.subset a subset of alternatives,
-#' @param ... further arguments passed to \code{mlogit} for the \code{formula}
-#' method.
+#' @param ... further arguments passed to `mlogit` for the `formula`
+#'     method.
 #' @export
-#' @return an object of class \code{"htest"}.
+#' @return an object of class `"htest"`.
 #'
 #' @details
-#' This is an implementation of the Hausman's consistency test for multinomial
-#' logit models. If the independance of irrelevant alternatives applies, the
-#' probability ratio of every two alternatives depends only on the
-#' characteristics of these alternatives. Consequentely, the results obtained
-#' on the estimation with all the alternatives or only on a subset of them are
-#' consistent, but more efficient in the first case. On the contrary, only the
-#' results obtained from the estimation on a relevant subset are consistent. To
-#' compute this test, one needs a model estimated with all the alternatives and
-#' one model estimated on a subset of alternatives. This can be done by
-#' providing two objects of class \code{mlogit}, one object of class
-#' \code{mlogit} and a character vector indicating the subset of alternatives,
-#' or a formula and a subset of alternatives.
+#' This is an implementation of the Hausman's consistency test for
+#' multinomial logit models. If the independance of irrelevant
+#' alternatives applies, the probability ratio of every two
+#' alternatives depends only on the characteristics of these
+#' alternatives. Consequentely, the results obtained on the estimation
+#' with all the alternatives or only on a subset of them are
+#' consistent, but more efficient in the first case. On the contrary,
+#' only the results obtained from the estimation on a relevant subset
+#' are consistent. To compute this test, one needs a model estimated
+#' with all the alternatives and one model estimated on a subset of
+#' alternatives. This can be done by providing two objects of class
+#' `mlogit`, one object of class `mlogit` and a character vector
+#' indicating the subset of alternatives, or a formula and a subset of
+#' alternatives.
 #'
 #' @author Yves Croissant
 #' @references
 #' 
 #' Hausman, J.A. and D. McFadden (1984), A Specification Test for the
-#' Multinomial Logit Model, \emph{Econometrica}, \bold{52}, pp.1219--1240.
+#' Multinomial Logit Model, *Econometrica*, **52**, pp.1219--1240.
+#' 
 #' @keywords htest
 #' @examples
 #' 
@@ -148,37 +151,39 @@ irrelevant.args.warning <- function(object, args){
 
 #' The three tests for mlogit models
 #' 
-#' Three tests for mlogit models: specific methods for the Wald test and the
-#' likelihood ration test and a new function for the score test
+#' Three tests for mlogit models: specific methods for the Wald test
+#' and the likelihood ration test and a new function for the score
+#' test
 #' 
 #' @name scoretest
 #' @importFrom lmtest lrtest lrtest.default waldtest waldtest.default
-#' @aliases scoretest scoretest.mlogit scoretest.default waldtest.mlogit
-#' waldtest lrtest.mlogit lrtest
-#' @param object an object of class \code{mlogit} or a formula,
-#' @param ... two kinds of arguments can be used. If \code{"mlogit"} arguments
-#' are introduced, initial model is updated using these arguments. If
-#' \code{"formula"} or other \code{"mlogit"} models are introduced, the
-#' standard behavior of \code{"waldtest"} and \code{"lrtest"} is followed.
-#' @details
-#' The \code{"scoretest"} function and \code{"mlogit"} method for
-#' \code{"waldtest"} and \code{"lrtest"} from the \code{"lmtest"} package
-#' provides the infrastructure to compute the three tests of hypothesis for
-#' \code{"mlogit"} objects.
+#' @aliases scoretest scoretest.mlogit scoretest.default
+#'     waldtest.mlogit waldtest lrtest.mlogit lrtest
+#' @param object an object of class `mlogit` or a formula,
+#' @param ... two kinds of arguments can be used. If `mlogit`
+#'     arguments are introduced, initial model is updated using these
+#'     arguments. If `formula` or other `mlogit` models are
+#'     introduced, the standard behavior of [lmtest::waldtest()] and
+#'     [lmtest::lrtest()] is followed.
+#' @details The `scoretest` function and `mlogit` method for
+#'     `waldtest` and `lrtest` from the `lmtest` package provides the
+#'     infrastructure to compute the three tests of hypothesis for
+#'     `mlogit` objects.
 #' 
-#' The first argument must be a \code{"mlogit"} object. If the second one is a
+#' The first argument must be a `mlogit` object. If the second one is a
 #' fitted model or a formula, the behaviour of the three functions is the one
-#' of the default methods of \code{"waldtest"} and \code{"lrtest"}: the two
+#' of the default methods of `waldtest` and `lrtest`: the two
 #' models provided should be nested and the hypothesis tested is that the
 #' constrained model is the `right' model.
 #' 
-#' If no second model is provided and if the model provided is the constrained
-#' model, some specific arguments of \code{"mlogit"} should be provided to
-#' descibe how the initial model should be updated. If the first model is the
-#' unconstrained model, it is tested versus the `natural' constrained model;
-#' for example, if the model is a heteroscedastic logit model, the constrained
-#' one is the multinomial logit model.
-#' @return an object of class \code{"htest"}.
+#' If no second model is provided and if the model provided is the
+#' constrained model, some specific arguments of `mlogit` should be
+#' provided to descibe how the initial model should be updated. If the
+#' first model is the unconstrained model, it is tested versus the
+#' `natural' constrained model; for example, if the model is a
+#' heteroscedastic logit model, the constrained one is the multinomial
+#' logit model.
+#' @return an object of class `htest`.
 #' @export
 #' @author Yves Croissant
 #' @keywords htest
@@ -358,12 +363,12 @@ waldtest.mlogit <- function(object, ...){
     K <- length(colnames(model.matrix(object)))
     L <- length(object$freq)
     
-    ######  guess the nature of the fitted model
+    # guess the nature of the fitted model
     mixed.logit <- !is.null(object$call$rpar)
     heterosc.logit <- !is.null(object$call$heterosc) && object$call$heterosc
     nested.logit <- !is.null(object$call$nests)
 
-    ###### Heteroscedastic logit model
+    ## Heteroscedastic logit model
     # the hypothesis is that J-1 parameters = 1
     if (heterosc.logit){
         su <- (K+1):(K+L-1)
@@ -371,7 +376,7 @@ waldtest.mlogit <- function(object, ...){
         hyp <- "homoscedasticity"
     }
     
-     ###### Nested logit Models
+    ## Nested logit Models
     if (nested.logit){
         J <- length(coef(object)) - K
         # First check whether the fitted model has a unique nest
@@ -431,7 +436,7 @@ waldtest.mlogit <- function(object, ...){
         }
     }
     
-    ###### Mixed logit model
+    ## Mixed logit model
     if (mixed.logit){
         ncoefs <- names(coef(object))
         J <- length(object$rpar)

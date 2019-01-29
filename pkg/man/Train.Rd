@@ -4,38 +4,28 @@
 \name{Train}
 \alias{Train}
 \title{Stated Preferences for Train Traveling}
-\format{A dataframe containing : \describe{
-\item{id}{individual identifient}
-\item{choiceid}{choice identifient}
-\item{choice}{one of 'A' or 'B'}
-\item{price_z}{price of proposition z (z = 'A', 'B') in cents of
-guilders}
-\item{time_z}{travel time of proposition z (z = 'A', 'B') in
-minutes}
-\item{comfort_z}{comfort of proposition z (z = 'A', 'B'), 0, 1 or
-2 in decreasing comfort order}
-\item{change_z}{number of changes for proposition z (z = 'A', 'B')} }}
+\format{A dataframe containing:
+\itemize{
+\item id: individual identifient,
+\item choiceid: choice identifient,
+\item choice: one of 'A' or 'B',
+\item price_z: price of proposition z (z = 'A', 'B') in cents of
+guilders,
+\item time_z: travel time of proposition z (z = 'A', 'B') in
+minutes,
+\item comfort_z: comfort of proposition z (z = 'A', 'B'), 0, 1 or
+2 in decreasing comfort order,
+\item change_z: number of changes for proposition z (z = 'A', 'B').
+}}
 \source{
-Ben--Akiva, M., D.  Bolduc and M.  Bradley (1993) \dQuote{Estimation
-of travel choice models with randomly distributed values of time},
-\emph{Transportation Research Record}, \bold{1413}, 88--97.
-
-Meijer, Erik and Jan Rouwendal (2006) \dQuote{Measuring welfare effects in
-models with random coefficients}, \emph{Journal of Applied Econometrics},
-\bold{21}(2), 227-244.
+\href{http://jae.wiley.com/jae/}{Journal of Applied Econometrics data archive}.
 }
 \description{
-a cross-section from 1987
-}
-\details{
-\emph{number of observations} : 2929
-
-\emph{observation} : individuals
-
-\emph{country} : Netherland
+A sample of 235 Dutch individuals facing 2929 choice situations
 }
 \references{
-Journal of Applied Econometrics data archive :
-\url{http://jae.wiley.com/jae/}.
+\insertRef{BENA:BOLD:BRAD:93}{mlogit}
+
+\insertRef{MEIJ:ROUW:06}{mlogit}
 }
 \keyword{datasets}

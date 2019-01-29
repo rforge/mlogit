@@ -57,7 +57,7 @@ This new interface replaces the \code{cor.mlogit} and \code{cov.mlogit}
 functions which are deprecated.
 }
 \seealso{
-\code{\link{mlogit}} for the estimation of multinomial logit
+\code{\link[=mlogit]{mlogit()}} for the estimation of multinomial logit
 models.
 }
 \author{

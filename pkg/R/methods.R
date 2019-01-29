@@ -1,24 +1,39 @@
-##----------------------------
-## methods for mlogit objects |
-##----------------------------
-##    * fitted                |
-##    * residuals             |
-##    * df.residual           |
-##    * terms                 |
-##    * model.matrix          |
-##    * model.response        |
-##    * update                |
-##    * print                 |
-##    * vcov                  |
-##    * logLik                |
-##    * summary               |
-##    * print.summary         |
-##    * index                 |
-##    * predict               |
-##    * coef                  |
-##----------------------------
-
-#' @rdname mlogit
+#' Methods for mlogit objects
+#'
+#' Miscellaneous methods for `mlogit` objects.
+#' 
+#' @name miscmethods.mlogit
+#' @aliases residuals.mlogit df.residual.mlogit terms.mlogit
+#'     model.matrix.mlogit model.response.mlogit update.mlogit
+#'     print.mlogit logLik.mlogit summary.mlogit print.summary.mlogit
+#'     index.mlogit predict.mlogit fitted.mlogit coef.mlogit
+#'     coef.summary.mlogit
+#' @param x,object an object of class `mlogit`
+#' @param subset an optional vector of coefficients to extract for the
+#'     `coef` method,
+#' @param digits the number of digits,
+#' @param width the width of the printing,
+#' @param new an updated formula for the `update` method,
+#' @param newdata a `data.frame` for the `predict` method,
+#' @param outcome a boolean which indicates, for the `fitted` and the
+#'     `residuals` methods whether a matrix (for each choice, one
+#'     value for each alternative) or a vector (for each choice, only
+#'     a value for the alternative chosen) should be returned,
+#' @param type one of `outcome` (probability of the chosen
+#'     alternative), `probabilities` (probabilities for all the
+#'     alternatives), `parameters` for individual-level random
+#'     parameters for the fitted method, how the correlated random
+#'     parameters should be displayed : `"chol"` for the estimated
+#'     parameters (the elements of the Cholesky decomposition matrix),
+#'     `"cov"` for the covariance matrix and `"cor"` for the
+#'     correlation matrix and the standard deviations,
+#' @param returnData for the `predict` method, if `TRUE`, the data is
+#'     returned as an attribute,
+#' @param fixed if `FALSE` (the default), constant coefficients are
+#'     not returned,
+#' @param ... further arguments.
+#' 
+#' @rdname miscmethods.mlogit
 #' @export
 residuals.mlogit <- function(object, outcome = TRUE, ...){
     if (! outcome){
@@ -32,7 +47,7 @@ residuals.mlogit <- function(object, outcome = TRUE, ...){
     result
 }
 
-#' @rdname mlogit
+#' @rdname miscmethods.mlogit
 #' @export
 df.residual.mlogit <- function(object, ...){
     n <- length(residuals(object))
@@ -40,26 +55,26 @@ df.residual.mlogit <- function(object, ...){
     n - K
 }
 
-#' @rdname mlogit
+#' @rdname miscmethods.mlogit
 #' @export
 terms.mlogit <- function(x, ...){
     terms(x$formula)
 }
 
-#' @rdname mlogit
+#' @rdname miscmethods.mlogit
 #' @export
 model.matrix.mlogit <- function(object, ...){
     model.matrix(object$formula, object$model)
 }
 
-#' @rdname mlogit
+#' @rdname miscmethods.mlogit
 #' @export
 model.response.mlogit <- function(object, ...){
     y.name <- paste(deparse(object$formula[[2]]))
     object$model[[y.name]]
 }
 
-#' @rdname mlogit
+#' @rdname miscmethods.mlogit
 #' @export
 update.mlogit <- function (object, new, ...){
     call <- object$call
@@ -80,7 +95,7 @@ update.mlogit <- function (object, new, ...){
     eval(call, parent.frame())
 }
 
-#' @rdname mlogit
+#' @rdname miscmethods.mlogit
 #' @export
 print.mlogit <- function (x, digits = max(3, getOption("digits") - 2),
                           width = getOption("width"), ...){
@@ -95,13 +110,13 @@ print.mlogit <- function (x, digits = max(3, getOption("digits") - 2),
     invisible(x)
 }
 
-#' @rdname mlogit
+#' @rdname miscmethods.mlogit
 #' @export
 logLik.mlogit <- function(object,...){
     object$logLik
 }
 
-#' @rdname mlogit
+#' @rdname miscmethods.mlogit
 #' @export
 summary.mlogit <- function (object, ..., type = c("chol", "cov", "cor")){
     type <- match.arg(type)
@@ -131,7 +146,7 @@ summary.mlogit <- function (object, ..., type = c("chol", "cov", "cor")){
     return(object)
 }
 
-#' @rdname mlogit
+#' @rdname miscmethods.mlogit
 #' @method print summary.mlogit
 #' @export
 print.summary.mlogit <- function(x, digits = max(3, getOption("digits") - 2),
@@ -160,7 +175,7 @@ print.summary.mlogit <- function(x, digits = max(3, getOption("digits") - 2),
     invisible(x)
 }
 
-#' @rdname mlogit
+#' @rdname miscmethods.mlogit
 #' @export
 index.mlogit <- function(x, ...){
     index(model.frame(x))
@@ -170,7 +185,7 @@ index.matrix <- function(x, ...){
     attr(x, "index")
 }
 
-#' @rdname mlogit
+#' @rdname miscmethods.mlogit
 #' @export
 predict.mlogit <- function(object, newdata = NULL, returnData = FALSE, ...){
     # if no newdata is provided, use the mean of the model.frame
@@ -190,6 +205,7 @@ predict.mlogit <- function(object, newdata = NULL, returnData = FALSE, ...){
             newdata[[choice.name]][1] <- TRUE # probit and hev requires that one (arbitrary) choice is TRUE
         }
     }
+
     # if the updated model requires the use of mlogit.data, suppress all
     # the relevant arguments
     m <- match(c("choice", "shape", "varying", "sep",
@@ -210,7 +226,7 @@ predict.mlogit <- function(object, newdata = NULL, returnData = FALSE, ...){
     result
 }
 
-#' @rdname mlogit
+#' @rdname miscmethods.mlogit
 #' @export
 fitted.mlogit <- function(object, type = c("outcome", "probabilities",
                                            "linpred", "parameters"),
@@ -230,7 +246,23 @@ fitted.mlogit <- function(object, type = c("outcome", "probabilities",
     result
 }
 
-#' @rdname mlogit
+#' @rdname miscmethods.mlogit
+#' @export
+coef.mlogit <- function(object,
+                        subset = c("all", "iv", "sig", "sd", "sp", "chol"),
+                        fixed = FALSE, ...){
+    whichcoef <- match.arg(subset)
+    result <- object$coefficients
+    ncoefs <- names(result)
+    # first remove the fixed coefficients if required
+    if (! fixed) result <- result[! attr(result, "fixed")]
+    attr(result, "fixed") <- NULL
+    if (whichcoef == "all") selcoef <- 1:length(result)
+    else selcoef <- grep(whichcoef, ncoefs)
+    result[selcoef]
+}
+    
+#' @rdname miscmethods.mlogit
 #' @method coef summary.mlogit
 #' @export
 coef.summary.mlogit <- function(object, ...){
@@ -240,31 +272,31 @@ coef.summary.mlogit <- function(object, ...){
 
 #' Marginal effects of the covariates
 #' 
-#' The \code{effects} method for \code{mlogit} objects computes the marginal
+#' The `effects` method for `mlogit` objects computes the marginal
 #' effects of the selected covariate on the probabilities of choosing the
 #' alternatives
 #' 
 #' @name effects.mlogit
-#' @param object a \code{mlogit} object,
+#' @param object a `mlogit` object,
 #' @param covariate the name of the covariate for which the effect should be
 #' computed,
 #' @param type the effect is a ratio of two marginal variations of the
 #' probability and of the covariate ; these variations can be absolute
-#' \code{"a"} or relative \code{"r"}. This argument is a string that contains
+#' `"a"` or relative `"r"`. This argument is a string that contains
 #' two letters, the first refers to the probability, the second to the
 #' covariate,
 #' @param data a data.frame containing the values for which the effects should
 #' be calculated. The number of lines of this data.frame should be equal to the
 #' number of alternatives,
 #' @param ... further arguments.
-#' @return If the covariate is alternative specific, a \eqn{J times J} matrix is
+#' @return If the covariate is alternative specific, a \eqn{J \times J} matrix is
 #' returned, \eqn{J} being the number of alternatives. Each line contains the
 #' marginal effects of the covariate of one alternative on the probability to
 #' choose any alternative. If the covariate is individual specific, a vector of
 #' length \eqn{J} is returned.
 #' @export
 #' @author Yves Croissant
-#' @seealso \code{\link{mlogit}} for the estimation of multinomial logit
+#' @seealso  [mlogit()] for the estimation of multinomial logit
 #' models.
 #' @keywords regression
 #' @examples
@@ -335,26 +367,26 @@ effects.mlogit <- function(object, covariate = NULL,
 
 #' vcov method for mlogit objects
 #' 
-#' The \code{vcov} method for \code{mlogit} objects extract the covariance
+#' The `vcov` method for `mlogit` objects extract the covariance
 #' matrix of the coefficients, the errors or the random parameters.
 #' 
-#' This new interface replaces the \code{cor.mlogit} and \code{cov.mlogit}
+#' This new interface replaces the `cor.mlogit` and `cov.mlogit`
 #' functions which are deprecated.
 #'
 #' @name vcov.mlogit
 #' 
 #' @aliases vcov.mlogit print.vcov.mlogit summary.vcov.mlogit
 #' print.summary.vcov.mlogit
-#' @param object a \code{mlogit} object (and a \code{vcov.mlogit} for the
+#' @param object a `mlogit` object (and a `vcov.mlogit` for the
 #' summary method),
-#' @param x a \code{vcov.mlogit} or a \code{summary.vcov.mlogit} object,
+#' @param x a `vcov.mlogit` or a `summary.vcov.mlogit` object,
 #' @param what indicates which covariance matrix has to be extracted : the
-#' default value is \code{coefficients}, in this case, \code{vcov} behaves as
-#' usual. If \code{what} equals \code{errors} the covariance matrix of the
-#' errors of the model is returned. Finally, if \code{what} equals \code{rpar},
+#' default value is `coefficients`, in this case, `vcov` behaves as
+#' usual. If `what` equals `errors` the covariance matrix of the
+#' errors of the model is returned. Finally, if `what` equals `rpar`,
 #' the covariance matrix of the random parameters are extracted,
 #' @param subset the subset of the coefficients that have to be extracted (only
-#' relevant if \code{what} \code{ = "coefficients"}),
+#' relevant if `what` ` = "coefficients"`),
 #' @param type with this argument, the covariance matrix may be returned (the
 #' default) ; the correlation matrix with the standard deviation on the
 #' diagonal may also be extracted,
@@ -367,7 +399,7 @@ effects.mlogit <- function(object, covariate = NULL,
 #' @param ... further arguments.
 #' @export
 #' @author Yves Croissant
-#' @seealso \code{\link{mlogit}} for the estimation of multinomial logit
+#' @seealso  [mlogit()] for the estimation of multinomial logit
 #' models.
 #' @keywords regression
 vcov.mlogit <- function(object,
@@ -579,47 +611,47 @@ chol2vcov <- function(x, type = c("cov", "cor")){
 
 #' Compute the log-sum or inclusive value/utility
 #' 
-#' The \code{logsum} function computes the inclusive value, or inclusive
+#' The `logsum` function computes the inclusive value, or inclusive
 #' utility, which is used to compute the surplus and to estimate the two steps
 #' nested logit model.
 #' 
 #' @name logsum
-#' @param coef a numerical vector or a \code{mlogit} object, from which the
-#' \code{coef} vector is extracted,
-#' @param X a matrix or a \code{mlogit} object from which the
-#' \code{model.matrix} is extracted,
-#' @param formula a formula or a \code{mlogit} object from which the
-#' \code{formula} is extracted,
-#' @param data a \code{data.frame} or a \code{mlogit} object from which the
-#' \code{model.frame} is extracted,
-#' @param type either \code{"group"} or \code{"global"} : if a \code{group}
-#' argument has been provided in the \code{mlogit.data}, the inclusive values
+#' @param coef a numerical vector or a `mlogit` object, from which the
+#' `coef` vector is extracted,
+#' @param X a matrix or a `mlogit` object from which the
+#' `model.matrix` is extracted,
+#' @param formula a formula or a `mlogit` object from which the
+#' `formula` is extracted,
+#' @param data a `data.frame` or a `mlogit` object from which the
+#' `model.frame` is extracted,
+#' @param type either `"group"` or `"global"` : if a `group`
+#' argument has been provided in the `mlogit.data`, the inclusive values
 #' are by default computed for every group, otherwise, a unique global
 #' inclusive value is computed for each choice situation,
-#' @param output the shape of the results: if \code{"chid"}, the results is a
-#' vector (if \code{type = "global"}) or a matrix (if \code{type = "region"})
-#' with row number equal to the number of choice situation, if \code{"obs"} a
+#' @param output the shape of the results: if `"chid"`, the results is a
+#' vector (if `type = "global"`) or a matrix (if `type = "region"`)
+#' with row number equal to the number of choice situation, if `"obs"` a
 #' vector of length equal to the number of lines of the data in long format is
 #' returned.
 #' @details
 #' The inclusive value, or inclusive utility, or log-sum is the log of the
 #' denominator of the probabilities of the multinomial logit model. If a
-#' \code{"group"} variable is provided in the \code{"mlogit.data"} function,
+#' `"group"` variable is provided in the `"mlogit.data"` function,
 #' the denominator can either be the one of the multinomial model or those of
 #' the lower model of the nested logit model.
 #' 
-#' If only one argument (\code{coef}) is provided, it should a \code{mlogit}
-#' object and in this case, the \code{coefficients} and the \code{model.matrix}
+#' If only one argument (`coef`) is provided, it should a `mlogit`
+#' object and in this case, the `coefficients` and the `model.matrix`
 #' are extracted from this model.
 #' 
-#' In order to provide a different \code{model.matrix}, further arguments could
-#' be used. \code{X} is a \code{matrix} or a \code{mlogit} from which the
-#' \code{model.matrix} is extracted. The \code{formula}-\code{data} interface
-#' can also be used to construct the relevant \code{model.matrix}.
+#' In order to provide a different `model.matrix`, further arguments could
+#' be used. `X` is a `matrix` or a `mlogit` from which the
+#' `model.matrix` is extracted. The `formula`-`data` interface
+#' can also be used to construct the relevant `model.matrix`.
 #' @return either a vector or a matrix.
 #' @export
 #' @author Yves Croissant
-#' @seealso \code{\link{mlogit}} for the estimation of a multinomial logit
+#' @seealso  [mlogit()] for the estimation of a multinomial logit
 #' model.
 #' @keywords regression
 logsum <- function(coef, X = NULL, formula = NULL, data = NULL,
@@ -689,12 +721,13 @@ logsum <- function(coef, X = NULL, formula = NULL, data = NULL,
                     }
                 }
                 else idx <- index(data)
+
                 if (! is.null(formula)) X <- model.matrix(formula, data)
                 else{
                     if (inherits(coef, "mlogit")){
                         mf <- update(coef, data = data, estimate = FALSE)
                         idx <- index(mf)
-                        X <- model.matrix(formula(mf), mf)
+                        X <- model.matrix(formula(mf), model.frame(mf))
                     }
                     else stop("no formula provided to compute the model.matrix")
                 }
@@ -733,22 +766,6 @@ logsum <- function(coef, X = NULL, formula = NULL, data = NULL,
     iv        
 }
 
-#' @rdname mlogit
-#' @export
-coef.mlogit <- function(object,
-                        subset = c("all", "iv", "sig", "sd", "sp", "chol"),
-                        fixed = FALSE, ...){
-    whichcoef <- match.arg(subset)
-    result <- object$coefficients
-    ncoefs <- names(result)
-    # first remove the fixed coefficients if required
-    if (! fixed) result <- result[! attr(result, "fixed")]
-    attr(result, "fixed") <- NULL
-    if (whichcoef == "all") selcoef <- 1:length(result)
-    else selcoef <- grep(whichcoef, ncoefs)
-    result[selcoef]
-}
-    
 ltm <- function(x, to = c("vec", "mat", "ltm")){
     to <- match.arg(to)
     result <- x

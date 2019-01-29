@@ -25,9 +25,10 @@ reference:
     contents:
       - mlogit
       - mlogit.optim
-  - title: "methods"
-    desc: "Method for fitted models"
+  - title: "Methods"
+    desc: "Methods for fitted models"
     contents:
+      - miscmethods.mlogit
       - vcov.mlogit
       - cor.mlogit
       - plot.mlogit
@@ -44,5 +45,3 @@ reference:
     contents:
       - hmftest
       - scoretest
-
-    

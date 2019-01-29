@@ -1,31 +1,35 @@
 #' random parameter objects
 #' 
-#' \code{rpar} objects contain the relevant information about estimated random
-#' parameters. The homonymous function extract on \code{rpar} object from a
-#' \code{mlogit} object.
+#' `rpar` objects contain the relevant information about estimated
+#' random parameters. The homonymous function extract on `rpar` object
+#' from a `mlogit` object.
 #' 
-#' \code{mlogit} objects contain an element called \code{rpar} which contain a
-#' list of \code{rpar} objects, one for each estimated random parameter. The
-#' \code{print} method prints the name of the distribution and the parameter,
-#' the \code{summary} behave like the one for numeric vectors.
+#' `mlogit` objects contain an element called `rpar` which contain a
+#' list of `rpar` objects, one for each estimated random
+#' parameter. The `print` method prints the name of the distribution
+#' and the parameter, the `summary` behave like the one for numeric
+#' vectors.
 #' 
 #' @name rpar
 #' @aliases rpar print.rpar summary.rpar
-#' @param x,object a \code{mlogit} object,
-#' @param par the name or the index of the parameters to be extracted ; if
-#' \code{NULL}, all the parameters are selected,
+#' @param x,object a `mlogit` object,
+#' @param par the name or the index of the parameters to be extracted
+#'     ; if `NULL`, all the parameters are selected,
 #' @param norm the coefficient used for normalization if any,
 #' @param ... further arguments.
 #' @param digits the number of digits
 #' @param width the width of the printed output
-#' @return a \code{rpar} object, which contain : \item{dist}{the name of the
-#' distribution,} \item{mean}{the first parameter of the distribution,}
-#' \item{sigma}{the second parameter of the distribution,} \item{name}{the name
-#' of the parameter,}
+#' @return a `rpar` object, which contains:
+#'
+#' - dist: the name of the distribution,
+#' - mean: the first parameter of the distribution,
+#' - sigma: the second parameter of the distribution,
+#' - name: the name of the parameter.
+#' 
 #' @export
 #' @author Yves Croissant
-#' @seealso \code{\link{mlogit}} for the estimation of a random parameters
-#' logit model.
+#' @seealso [mlogit()] for the estimation of a random parameters logit
+#'     model.
 #' @keywords regression
 rpar <- function(x, par = NULL, norm = NULL, ...){
     if (is.null(par)) par <- names(x$rpar)
@@ -95,35 +99,31 @@ summary.rpar <- function(object, ...){
 
 #' Plot of the distribution of estimated random parameters
 #' 
-#' Methods for \code{rpar} and \code{mlogit} objects which provide a
-#' plot of the distribution of one or all of the estimated random
-#' parameters
+#' Methods for `rpar` and `mlogit` objects which provide a plot of the
+#' distribution of one or all of the estimated random parameters
 #' 
-#' For the \code{rpar} method, one plot is drawn. For the
-#' \code{mlogit} method, one plot for each selected random parameter
-#' is drawn.
+#' For the `rpar` method, one plot is drawn. For the `mlogit` method,
+#' one plot for each selected random parameter is drawn.
 #'
 #' @name plot.mlogit
 #' @aliases plot.mlogit plot.rpar
 #' @importFrom graphics lines plot polygon segments title
-#' @param x a \code{mlogit} or a \code{rpar} object,
+#' @param x a `mlogit` or a `rpar` object,
 #' @param type the function to be plotted, whether the density or the
 #'     probability density function,
-#' @param par a subset of the random parameters ; if \code{NULL}, all
-#'     the parameters are selected,
-#' @param norm the coefficient's name for the \code{mlogit} method or
-#'     the coefficient's value for the \code{rpar} method used for
+#' @param par a subset of the random parameters ; if `NULL`, all the
+#'     parameters are selected,
+#' @param norm the coefficient's name for the `mlogit` method or the
+#'     coefficient's value for the `rpar` method used for
 #'     normalization,
-#' @param ... further arguments, passed to \code{plot.rpar} for the
-#'     \code{mlogit} method and to \code{plot} for the \code{rpar}
-#'     method.
+#' @param ... further arguments, passed to `plot.rpar` for the
+#'     `mlogit` method and to `plot` for the `rpar` method.
 #' @export
 #' @author Yves Croissant
-#' @seealso \code{\link{mlogit}} for the estimation of random
-#'     parameters logit models and \code{\link{rpar}} for the
-#'     description of \code{rpar} objects and
-#'     \code{\link{distribution}} for functions which return
-#'     informations about the distribution of random parameters.
+#' @seealso [mlogit()] the estimation of random parameters logit
+#'     models and [rpar()] for the description of `rpar` objects and
+#'     [distribution] for functions which return informations about
+#'     the distribution of random parameters.
 #' @keywords regression
 plot.mlogit <- function(x, par = NULL, norm = NULL, type = c("density", "probability"), ...){
     if (is.null(x$rpar)) stop("the plot method is only relevant for random parameters")
@@ -196,10 +196,10 @@ plot.rpar <- function(x, norm = NULL, type = c("density", "probability"), ...){
 #' 
 #' @name cor.mlogit
 #' @aliases cor.mlogit cov.mlogit
-#' @param x an \code{mlogit} object with random parameters and
-#'     \code{correlation=TRUE}.
-#' @details These functions are deprecated, use
-#'     \code{\link{vcov.mlogit}} instead.
+#' @param x an `mlogit` object with random parameters and `correlation
+#'     = TRUE`.
+#' @details These functions are deprecated, use [vcov][vcov.mlogit].
+#'     instead.
 #' @return A numerical matrix which returns either the correlation or
 #'     the covariance matrix of the random parameters.
 #' @export
@@ -258,38 +258,38 @@ s2norm <- function(s, dist, norm){
 #'
 #' @name distribution
 #' 
-#' @aliases distribution med rg stdev mean.rpar med.rpar stdev.rpar rg.mlogit
-#' mean.mlogit med.mlogit stdev.mlogit rg.rpar qrpar prpar drpar qrpar.rpar
-#' prpar.rpar drpar.rpar qrpar.mlogit prpar.mlogit drpar.mlogit
-#' @param x a \code{mlogit} or a \code{rpar} object,
+#' @aliases distribution med rg stdev mean.rpar med.rpar stdev.rpar
+#'     rg.mlogit mean.mlogit med.mlogit stdev.mlogit rg.rpar qrpar
+#'     prpar drpar qrpar.rpar prpar.rpar drpar.rpar qrpar.mlogit
+#'     prpar.mlogit drpar.mlogit
+#' @param x a `mlogit` or a `rpar` object,
 #' @param norm the variable used for normalization if any : for the
-#' \code{mlogit} method, this should be the name of the parameter, for the
-#' \code{rpar} method the absolute value of the parameter,
-#' @param par the required parameter(s) for the \code{mlogit} methods (either
-#' the name or the position of the parameter(s). If \code{NULL}, all the random
-#' parameters are used.
+#'     `mlogit` method, this should be the name of the parameter, for
+#'     the `rpar` method the absolute value of the parameter,
+#' @param par the required parameter(s) for the `mlogit` methods
+#'     (either the name or the position of the parameter(s). If
+#'     `NULL`, all the random parameters are used.
 #' @param y values for which the function has to be evaluated,
 #' @param ... further arguments.
 #'
-#' @details
-#' \code{rpar} objects contain all the relevant information about the
-#' distribution of random parameters. These functions enables to obtain easily
-#' descriptive statistics, density, probability and quantiles of the
-#' distribution.
+#' @details `rpar` objects contain all the relevant information about
+#'     the distribution of random parameters. These functions enables
+#'     to obtain easily descriptive statistics, density, probability
+#'     and quantiles of the distribution.
 #' 
-#' \code{mean}, \code{med}, \code{stdev} and \code{rg} compute respectively the
-#' mean, the median, the standard deviation and the range of the random
-#' parameter. \code{qrpar}, \code{prpar}, \code{drpar} return functions that
-#' compute the quantiles, the probability and the density of the random
-#' parameters (note that \code{sd} and \code{range} are not generic function in
-#' \code{R} and that \code{median} is, but without \code{...}).
+#' `mean`, `med`, `stdev` and `rg` compute respectively the mean, the
+#' median, the standard deviation and the range of the random
+#' parameter. `qrpar`, `prpar`, `drpar` return functions that compute
+#' the quantiles, the probability and the density of the random
+#' parameters (note that `sd` and `range` are not generic function in
+#' `R` and that `median` is, but without `...`).
 #' 
-#' @return a numeric vector for \code{qrpar}, \code{drpar} and \code{prpar}, a
-#' numeric vector for \code{mean}, \code{stdev} and \code{med} and a numeric
-#' matrix for \code{rg}.
+#' @return a numeric vector for `qrpar`, `drpar` and `prpar`, a
+#'     numeric vector for `mean`, `stdev` and `med` and a numeric
+#'     matrix for `rg`.
 #' @author Yves Croissant
-#' @seealso \code{\link{mlogit}} for the estimation of random parameters logit
-#' models and \code{\link{rpar}} for the description of \code{rpar} objects.
+#' @seealso [mlogit()] for the estimation of random parameters logit
+#'     models and [rpar()] for the description of `rpar` objects.
 #' @keywords regression
 
 

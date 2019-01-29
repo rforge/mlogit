@@ -288,7 +288,7 @@ lnl.rlogit <- function(param, X, y, Xs, weights = NULL,
     randompar <- colnamesX[sort(match(names(rpar), colnamesX))]
     singlepar <- colnamesX[sort(match(singlepar, colnamesX))]
     utwopars <- colnamesX[sort(match(utwopars, colnamesX))]
-    
+
     Kc <- length(correlated)
     Ku <- length(uncorrelated)
     Ktot <- length(param)
@@ -349,9 +349,12 @@ lnl.rlogit <- function(param, X, y, Xs, weights = NULL,
                 betaa <- b$betaa
             }
             else betaa <- b$betaa[((i - 1) * R + 1):(i * R), , drop = FALSE]
-            for (j in 1:J) B[[j]][theRows,] <-
+
+            for (j in 1:J){
+                B[[j]][theRows,] <-
                                tcrossprod(Xa[[j]][theRows, ,
                                                   drop = FALSE] / sigma[theRows], betaa)
+            }
         }
         linpred <- mapply(function(x, y) x + y, A, B, SIMPLIFY = FALSE)
         linpred <- Reduce("cbind", lapply(linpred, apply, 1, mean))
@@ -404,7 +407,6 @@ lnl.rlogit <- function(param, X, y, Xs, weights = NULL,
             Xas.ch <- Xc.ch
             Xas <- Xc
         }
-        
         if (panel){
             Pch <- Pch[as.character(id), ]
             pm <- apply(Pch, 1, mean)

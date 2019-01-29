@@ -71,12 +71,12 @@ drpar(x, ...)
 \item{...}{further arguments.}
 
 \item{norm}{the variable used for normalization if any : for the
-\code{mlogit} method, this should be the name of the parameter, for the
-\code{rpar} method the absolute value of the parameter,}
+\code{mlogit} method, this should be the name of the parameter, for
+the \code{rpar} method the absolute value of the parameter,}
 
-\item{par}{the required parameter(s) for the \code{mlogit} methods (either
-the name or the position of the parameter(s). If \code{NULL}, all the random
-parameters are used.}
+\item{par}{the required parameter(s) for the \code{mlogit} methods
+(either the name or the position of the parameter(s). If
+\code{NULL}, all the random parameters are used.}
 
 \item{y}{values for which the function has to be evaluated,}
 }
@@ -90,21 +90,21 @@ Functions used to describe the characteristics of estimated random
 parameters
 }
 \details{
-\code{rpar} objects contain all the relevant information about the
-distribution of random parameters. These functions enables to obtain easily
-descriptive statistics, density, probability and quantiles of the
-distribution.
+\code{rpar} objects contain all the relevant information about
+the distribution of random parameters. These functions enables
+to obtain easily descriptive statistics, density, probability
+and quantiles of the distribution.
 
-\code{mean}, \code{med}, \code{stdev} and \code{rg} compute respectively the
-mean, the median, the standard deviation and the range of the random
-parameter. \code{qrpar}, \code{prpar}, \code{drpar} return functions that
-compute the quantiles, the probability and the density of the random
+\code{mean}, \code{med}, \code{stdev} and \code{rg} compute respectively the mean, the
+median, the standard deviation and the range of the random
+parameter. \code{qrpar}, \code{prpar}, \code{drpar} return functions that compute
+the quantiles, the probability and the density of the random
 parameters (note that \code{sd} and \code{range} are not generic function in
 \code{R} and that \code{median} is, but without \code{...}).
 }
 \seealso{
-\code{\link{mlogit}} for the estimation of random parameters logit
-models and \code{\link{rpar}} for the description of \code{rpar} objects.
+\code{\link[=mlogit]{mlogit()}} for the estimation of random parameters logit
+models and \code{\link[=rpar]{rpar()}} for the description of \code{rpar} objects.
 }
 \author{
 Yves Croissant

@@ -72,7 +72,7 @@ Bhat <- mlogit.data(Bhat, shape='long', chid.var = 'case',
                     alt.var = 'alt', choice='choice',
                     drop.index=TRUE)
 pcl <- mlogit(choice~freq+cost+ivt+ovt, Bhat, reflevel='car',
-              nests='pcl', constPar=c('iv.train.air'))
+              nests='pcl', constPar=c('iv:train.air'))
 summary(pcl)
 ``` 
 

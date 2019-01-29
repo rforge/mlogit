@@ -33,7 +33,6 @@ Denoting $F_{-l}$ the cumulative density function of all the $\epsilon$s
 except $\epsilon_l$, this probability is:
 
 \begin{equation*}
-  (\#eq:condprobgen)
   (\mbox{P}_l \mid \epsilon_l)=
   F_{-l}(V_l-V_1+\epsilon_l, ..., V_l-V_J+\epsilon_l).
 \end{equation*}
@@ -45,7 +44,6 @@ obtained by integrating out the conditional probability using the
 marginal density of $\epsilon_l$, denoted $f_l$:
 
 \begin{equation*}
-  (\#eq:uncondprobgen)
   \mbox{P}_l=\int F_{-l}(V_l-V_1+\epsilon_l, ...,V_l-V_J)+\epsilon_l)f_l(\epsilon_l) d\epsilon_l.
 \end{equation*}
 
@@ -64,7 +62,6 @@ the univariate distribution of the errors can be used, which leads to
 the following conditional and unconditional probabilities:
 
 \begin{equation*}
-  (\#eq:probcondind)
   (\mbox{P}_l \mid \epsilon_l)=\prod_{j\neq l}F_j(V_l-V_j+\epsilon_l)
 \mbox{ and }
   \mbox{P}_l =\int \prod_{j\neq l}F_j(V_l-V_j+\epsilon_l) \; f_l(\epsilon_l) \;d\epsilon_l,
@@ -83,7 +80,6 @@ respectively:
 f(z)=\frac{1}{\theta}e^{-\frac{z-\mu}{\theta}} e^{-e^{-\frac{z-\mu}{\theta}}}
 \mbox{ and }
 F(z)=\int_{-\infty}^{z} f(t) dt=e^{-e^{-\frac{z-\mu}{\theta}}},
-  (\#eq:probh2)
 \end{equation}
 
 where $\mu$ is the location parameter and $\theta$ the scale
@@ -102,13 +98,11 @@ the location parameter is not identified for any error term, this
 hypothesis is essentially an homoscedasticity hypothesis, which means
 that the scale parameter of the Gumbel distribution is the same for
 all the alternatives. As one of them has been previously set to 1, we
-can therefore suppose that, without loss of generality,
-$\theta_j = 1, \;\forall j \in 1... J$. The conditional and
-unconditional probabilities (\@ref(eq:probh2)) then further simplify
-to:
+can therefore suppose that, without loss of generality, $\theta_j = 1,
+\;\forall j \in 1... J$. The conditional and unconditional
+probabilities then further simplify to:
 
 \begin{equation*}
-  (\#eq:probh3)
   (\mbox{P}_l \mid \epsilon_l)%=\prod_{j\neq l}F(V_l-V_j+\epsilon_l)
   =\prod_{j\neq l}e^{-e^{-(V_l-Vj+\epsilon_l)}}
 \mbox{ and }
@@ -120,7 +114,6 @@ correspond to the logit transformation of the deterministic part of
 the utility.
 
 \begin{equation*}
-  (\#eq:finprobml)
   P_l=\frac{e^{V_l}}{\sum_{j=1}^J e^{V_j}}.
 \end{equation*}
 
@@ -130,7 +123,7 @@ the utility.
 
 If we consider the probabilities of choice for two alternatives $l$
 and $m$, we have $P_l=\frac{e^{V_l}}{\sum_j e^{V_j}}$ and
-$P_m=\frac{e^{V_m}}{\sum_j e^{V_j}} $.  The ratio of these two
+$P_m=\frac{e^{V_m}}{\sum_j e^{V_j}}$.  The ratio of these two
 probabilities is:
 
 $$
@@ -502,7 +495,6 @@ default algorithm failed to converged, we use here `bhhh`.]
 ```{r label = 'estimation of the multinomial logit model for the NOx data'}
 data("NOx", package = "mlogit")
 NOx$kdereg <- with(NOx, kcost * (env == "deregulated"))
-
 NOxml <- mlogit.data(NOx, chid.var = "chid", alt.var = "alt",
 id.var = "id")
 ml.pub <- mlogit(choice ~ post + cm + lnb + vcost + kcost + kcost:age |
@@ -521,20 +513,20 @@ htmlreg(list(Public = ml.pub, Deregulated = ml.dereg, Regulated = ml.reg,
         omit.coef = "(post)|(cm)|(lnb)", float.pos = "hbt", label = "tab:nox")
 ``` 
 
-Results are presented in Table~\@ref(tab:nox), using the `texreg`
-package [@LEIF:13]. Coefficients are very different on the
-sub-samples defined by the regulatory environment. Note in particular
-that the capital cost coefficient is positive and insignificant for
-public and regulated firms, as it is significantly negative for
-deregulated firms. Errors seems to have significant larger variance
-for deregulated firms and lower ones for public firms compared to
+Results are presented in the preceeding table, using the `texreg`
+package [@LEIF:13]. Coefficients are very different on the sub-samples
+defined by the regulatory environment. Note in particular that the
+capital cost coefficient is positive and insignificant for public and
+regulated firms, as it is significantly negative for deregulated
+firms. Errors seems to have significant larger variance for
+deregulated firms and lower ones for public firms compared to
 regulated firms. The hypothesis that the coefficients (except the
 `kcost` one) are identical up to a multiplicative scalar can be
 performed using a likelihood ratio test:
 
 ```{r label = 'likelihood ratio test for the NOx data'}
-stat <- 2 * (logLik(ml.dereg) + logLik(ml.reg) + logLik(ml.pub) -
-logLik(ml.pool))
+stat <- 2 * (logLik(ml.dereg) + logLik(ml.reg) +
+             logLik(ml.pub) - logLik(ml.pool))
 stat
 pchisq(stat, df = 9, lower.tail = FALSE)
 ``` 

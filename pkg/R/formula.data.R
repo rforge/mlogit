@@ -26,51 +26,56 @@ has.intercept.mFormula <- function(object, ...){
 #' Model formula for logit models
 #' 
 #' Two kinds of variables are used in logit models: alternative specific and
-#' individual specific variables. \code{mFormula} provides a relevant class to
+#' individual specific variables. `mFormula` provides a relevant class to
 #' deal with this specificity and suitable methods to extract the elements of
 #' the model.
 #' 
-#' @name mFormula 
-#' @aliases mFormula is.mFormula mFormula.formula model.matrix.mFormula
-#' model.frame.mFormula
+#' @name mFormula
+#' @aliases mFormula is.mFormula mFormula.formula
+#'     model.matrix.mFormula model.frame.mFormula
 #' @import Formula
-#' @param object for the \code{mFormula} function, a formula, for the
-#' \code{update} and \code{model.matrix} methods, a \code{mFormula} object,
-#' @param formula a \code{mFormula} object,
-#' @param data a \code{data.frame},
-#' @param lhs see \code{Formula},
-#' @param rhs see \code{Formula},
+#' @param object for the `mFormula` function, a formula, for the
+#'     `update` and `model.matrix` methods, a `mFormula` object,
+#' @param formula a `mFormula` object,
+#' @param data a `data.frame`,
+#' @param lhs see `Formula`,
+#' @param rhs see `Formula`,
+#' @param alt.subset a vector of subset of alternatives one want to
+#'     select,
+#' @param reflevel the alternative selected to be the reference
+#'     alternative,
 #' @param ... further arguments.
-#' @details
-#' Let \code{J} being the number of alternatives.  The formula may include
-#' alternative-specific and individual specific variables. For the latter,
-#' \code{J-1} coefficients are estimated for each variable. For the former,
-#' only one (generic) coefficient or \code{J} different coefficient may be
-#' estimated.
+#' @details Let `J` being the number of alternatives.  The formula may
+#'     include alternative-specific and individual specific
+#'     variables. For the latter, `J - 1` coefficients are estimated for
+#'     each variable. For the former, only one (generic) coefficient
+#'     or `J` different coefficient may be estimated.
 #' 
-#' A \code{mFormula} is a formula for which the right hand side may contain
-#' three parts: the first one contains the alternative specific variables with
-#' generic coefficient, \emph{i.e.} a unique coefficient for all the
-#' alternatives ; the second one contains the individual specific variables for
-#' which one coefficient is estimated for all the alternatives except one of
-#' them ; the third one contains the alternative specific variables with
-#' alternative specific coefficients.  The different parts are separeted by a
-#' ``\code{|}'' sign. If a standard formula is writen, it is assumed that there
-#' are only alternative specific variables with generic coefficients.
+#' A `mFormula` is a formula for which the right hand side may contain
+#' three parts: the first one contains the alternative specific
+#' variables with generic coefficient, *i.e.* a unique coefficient for
+#' all the alternatives ; the second one contains the individual
+#' specific variables for which one coefficient is estimated for all
+#' the alternatives except one of them ; the third one contains the
+#' alternative specific variables with alternative specific
+#' coefficients.  The different parts are separeted by a `|` sign. If
+#' a standard formula is writen, it is assumed that there are only
+#' alternative specific variables with generic coefficients.
 #' 
-#' The intercept is necessarely alternative specific (a generic intercept is
-#' not identified because only utility differences are relevant). Therefore, it
-#' deals with the second part of the formula. As it is usual in \code{R}, the
-#' default behaviour is to include an intercept. A model without an intercept
-#' (which is hardly meaningfull) may be specified by includint \code{+0} or
-#' \code{-1} in the second rhs part of the formula. \code{+0} or \code{-1} in
-#' the first and in the third part of the formula are simply ignored.
+#' The intercept is necessarely alternative specific (a generic
+#' intercept is not identified because only utility differences are
+#' relevant). Therefore, it deals with the second part of the
+#' formula. As it is usual in `R`, the default behaviour is to include
+#' an intercept. A model without an intercept may be specified by
+#' including `+ 0` or `- 1` in the second right-hand side part of the
+#' formula. `+ 0` or `- 1` in the first and in the third part of the
+#' formula are simply ignored.
 #' 
-#' Specific methods are provided to build correctly the model matrix and to
-#' update the formula. The \code{mFormula} function is not intended to be use
-#' directly. While using the \cite{\code{mlogit}} function, the first argument
-#' is automaticaly coerced to a \code{mFormula} object.
-#' @return an object of class \code{mFormula}.
+#' Specific methods are provided to build correctly the model matrix
+#' and to update the formula. The `mFormula` function is not intended
+#' to be use directly. While using the [mlogit()] function, the first
+#' argument is automaticaly coerced to a `mFormula` object.
+#' @return an object of class `mFormula`.
 #' @export
 #' @author Yves Croissant
 #' @keywords models
@@ -80,8 +85,8 @@ has.intercept.mFormula <- function(object, ...){
 #' Fish <- mlogit.data(Fishing, varying = c(2:9), shape = "wide", choice =
 #' "mode")
 #' 
-#' # a formula with to alternative specific variables (price and catch) and
-#' # an intercept
+#' # a formula with to alternative specific variables (price and
+#' # catch) and an intercept
 #' f1 <- mFormula(mode ~ price + catch)
 #' head(model.matrix(f1, Fish), 2)
 #' 
@@ -93,7 +98,8 @@ has.intercept.mFormula <- function(object, ...){
 #' f3 <- mFormula(mode ~ price + catch | income + 0)
 #' head(model.matrix(f3, Fish), 2)
 #' 
-#' # same as f2, but now, coefficients of catch are alternative specific
+#' # same as f2, but now, coefficients of catch are alternative
+#' # specific
 #' f4 <- mFormula(mode ~ price | income | catch)
 #' head(model.matrix(f4, Fish), 2)
 #' 
@@ -124,16 +130,74 @@ is.mFormula <- function(object)
 #' @rdname mFormula
 #' @method model.frame mFormula
 #' @export
-model.frame.mFormula <- function(formula, data, ..., lhs = NULL, rhs = NULL){
+model.frame.mFormula <- function(formula, data, ..., lhs = NULL, rhs = NULL, alt.subset = NULL, reflevel = NULL){
     if (is.null(rhs)) rhs <- 1:(length(formula)[2])
     if (is.null(lhs)) lhs <- ifelse(length(formula)[1] > 0, 1, 0)
     index <- attr(data, "index")
     mf <- model.frame(as.Formula(formula), as.data.frame(data), ..., rhs = rhs)
-    index <- index[rownames(mf),]
+    index <- index[rownames(mf), ]
+    oindex <- index
+    # a/ coerce the response to a logical if necessary
+    y <- model.response(mf)
+    if (! is.logical(y)){
+        if (is.factor(y)){
+            if (length(levels(y)) != 2)
+                stop("the number of levels for the choice variable should equal two")
+            y <- y == levels(y)[2]
+        }
+        if (is.numeric(y)) y <- y != 0
+    }
+    mf[[1]] <- y
+    # b/ change the reference level of the response if required
+    if (! is.null(reflevel)) index$alt <- relevel(index$alt, reflevel)
+    # c/ compute the relevent subset if required
+    if (! is.null(alt.subset)){
+        # we keep only choices that belong to the subset
+        choice <- index$alt[model.response(mf)]
+        choice <- choice %in% alt.subset
+        unid <- unique(index$chid)
+        names(choice) <- as.character(unid)
+        id.kept <- choice[as.character(index$chid)]
+        # we keep only the relevant alternatives
+        alt.kept <- index$alt %in% alt.subset
+        # the relevant subset for the data.frame and the indexes
+        mf <- mf[id.kept & alt.kept, , drop = FALSE]
+        index <- index[id.kept & alt.kept, , drop = FALSE]
+    }
+    # d/ balance the data.frame i.e. insert rows with NA when an
+    # alternative is not relevant
+    alt.un <- unique(index$alt)
+    chid.un <- unique(index$chid)
+    alt.lev <- levels(index$alt)
+    J <- length(alt.lev)
+    n <- length(chid.un)
+    T <- length(alt.un)
+    if (nrow(mf) != (n * T)){
+        rownames(mf) <- paste(index$chid, index$alt, sep = ".")
+        all.rn <- as.character(t(outer(chid.un, alt.un, paste, sep = ".")))
+        mf <- mf[all.rn, ]
+        rownames(mf) <- all.rn
+        chid <- rep(chid.un, each = T)
+        alt <- rep(alt.un, n)
+        index <- data.frame(chid = chid, alt = alt, row.names = rownames(mf))
+        if (! is.null(oindex$group)){
+            ra <- oindex[c("alt", "group")][! duplicated(oindex$alt), ]
+            gps <- ra$group
+            names(gps) <- ra$alt
+            index$group <- gps[index$alt]
+        }
+        if (! is.null(oindex$id)){
+            ra <- oindex[c("chid", "id")][! duplicated(oindex$chid), ]
+            ids <- ra$id
+            names(ids) <- ra$chid
+            index$id <- ids[index$chid]
+        }
+    }
     index <- data.frame(lapply(index, function(x) x[drop = TRUE]), row.names = rownames(index))
     structure(mf,
-              choice = attr(data, "choice"),
               index = index,
+              formula = formula,
+              choice = names(mf)[1],
               class = c("mlogit.data", class(mf)))
 }
 
@@ -197,9 +261,6 @@ model.matrix.mFormula <- function(object, data, ...){
     revtoremove <- unlist(lapply(as.list(ind.spec.var), function(x) paste(x, lev1, sep = ":")))
     toremove <- colnames(X) %in% c(toremove, revtoremove)
     X <- X[, ! toremove, drop = FALSE]
-    # I comment the following line which seems as best to be useless
-    # X[omitlines, ] <- NA
-
     # the following lines suppress the mentions to 'alt' in the names of
     # the effects and add a mention to '(intercept)'
     namesX <- colnames(X)
@@ -221,58 +282,63 @@ as.Formula.mFormula <- function(x, ...){
 
 #' data.frame for logit model
 #' 
-#' shape a \code{data.frame} in a suitable form for the use of the
-#' \code{mlogit} function.
+#' shape a `data.frame` in a suitable form for the use of the
+#' `mlogit` function.
 #' 
-#' @name mlogit.data 
-#' @aliases mlogit.data [[<-.mlogit.data $<-.mlogit.data print.pseries index
-#' mean.mlogit.data formula.mlogit.data print.mlogit.data
-#' @param data a \code{data.frame},
-#' @param x,object a \code{mlogit.data} or a \code{pseries} object,
-#' @param choice the variable indicating the choice made: it can be either a
-#' logical vector, a numerical vector with 0 where the alternative is not
-#' chosen, a factor with level 'yes' when the alternative is chosen
-#' @param shape the shape of the \code{data.frame}: whether \code{long} if each
-#' row is an alternative or \code{wide} if each row is an observation,
-#' @param varying the indexes of the variables that are alternative specific,
-#' @param sep the seperator of the variable name and the alternative name (only
-#' relevant for a \code{wide} \code{data.frame}),
-#' @param alt.var the name of the variable that contains the alternative index
-#' (for a \code{long} \code{data.frame} only) or the name under which the
-#' alternative index will be stored (the default name is \code{alt}),
-#' @param chid.var the name of the variable that contains the choice index or
-#' the name under which the choice index will be stored,
-#' @param alt.levels the name of the alternatives: if null, for a \code{wide}
-#' data.frame, they are guessed from the variable names and the choice variable
-#' (both should be the same), for a \code{long} \code{data.frame}, they are
-#' guessed from the \code{alt.var} argument,
-#' @param id.var the name of the variable that contains the individual index if
-#' any,
-#' @param group.var the name of the variable that contains the group index if
-#' any,
+#' @name mlogit.data
+#' @aliases mlogit.data [[<-.mlogit.data $<-.mlogit.data print.pseries
+#'     index mean.mlogit.data formula.mlogit.data print.mlogit.data
+#' @param data a `data.frame`,
+#' @param x,object a `mlogit.data` or a `pseries` object,
+#' @param choice the variable indicating the choice made: it can be
+#'     either a logical vector, a numerical vector with 0 where the
+#'     alternative is not chosen, a factor with level 'yes' when the
+#'     alternative is chosen
+#' @param shape the shape of the `data.frame`: whether `long` if each
+#'     row is an alternative or `wide` if each row is an observation,
+#' @param varying the indexes of the variables that are alternative
+#'     specific,
+#' @param sep the seperator of the variable name and the alternative
+#'     name (only relevant for a `wide` `data.frame`),
+#' @param alt.var the name of the variable that contains the
+#'     alternative index (for a `long` `data.frame` only) or the name
+#'     under which the alternative index will be stored (the default
+#'     name is `alt`),
+#' @param chid.var the name of the variable that contains the choice
+#'     index or the name under which the choice index will be stored,
+#' @param alt.levels the name of the alternatives: if null, for a
+#'     `wide` data.frame, they are guessed from the variable names and
+#'     the choice variable (both should be the same), for a `long`
+#'     `data.frame`, they are guessed from the `alt.var` argument,
+#' @param id.var the name of the variable that contains the individual
+#'     index if any,
+#' @param group.var the name of the variable that contains the group
+#'     index if any,
 #' @param opposite returns the opposite of the specified variables,
 #' @param drop.index should the index variables be dropped from the
-#' \code{data.frame},
-#' @param ranked a logical value which is true if the response is a rank,
-#' @param subset a logical expression which defines the subset of observations
-#' to be selected,
+#'     `data.frame`,
+#' @param ranked a logical value which is true if the response is a
+#'     rank,
+#' @param subset a logical expression which defines the subset of
+#'     observations to be selected,
 #' @param i the rows to extract,
 #' @param j the columns to extract,
-#' @param y the column of the \code{data.frame} to extract or to replace,
+#' @param y the column of the `data.frame` to extract or to replace,
 #' @param value the replacement value,
-#' @param drop a boolean, equal to \code{FALSE} if one wants that a \code{data.frame} is always returned,
-#' @param ... further arguments passed to \code{reshape}.
-#' @return
-#' A \code{mlogit.data} object, which is a \code{data.frame} in \code{long}
-#' format, \emph{i.e.} one line for each alternative.  It has a \code{index}
-#' attribute, which is a \code{data.frame} that contains the index of the
-#' choice made (\code{'chid'}), the index of the alternative (\code{'alt'})
-#' and, if any, the index of the individual (\code{'id'}).  The choice variable
-#' is a boolean which indicates the choice made. This function use
-#' \code{reshape} if the \code{data.frame} is in \code{wide} format.
+#' @param drop a boolean, equal to `FALSE` if one wants that a
+#'     `data.frame` is always returned,
+#' @param ... further arguments passed to `reshape`.
+#' @return A `mlogit.data` object, which is a `data.frame` in `long`
+#'     format, *i.e.* one line for each alternative.  It has a `index`
+#'     attribute, which is a `data.frame` that contains the index of
+#'     the choice made (`chid`), the index of the alternative (`alt`)
+#'     and, if any, the index of the individual (`id`) and of the
+#'     alternative groups (`group`).  The choice variable is a boolean
+#'     which indicates the choice made. This function use
+#'     [stats::reshape()] if the `data.frame` is in `wide` format.
 #' @export
 #' @author Yves Croissant
-#' @seealso \code{\link[stats]{reshape}}
+#' @seealso [stats::reshape()]
 #' @keywords attribute
 #' @examples
 #' # ModeChoice is a long data.frame 
@@ -325,7 +391,6 @@ as.Formula.mFormula <- function(x, ...){
 #' # Game2 contains the same data, but in long format 
 #' data("Game2", package = "mlogit")
 #' G2 <- mlogit.data(Game2,  shape='long', choice="ch", alt.var = 'platform', ranked = TRUE)
-
 mlogit.data <- function(data, choice = NULL, shape = c("long", "wide"), varying = NULL,
                         sep = ".", alt.var = NULL, chid.var = NULL, 
                         alt.levels = NULL, id.var = NULL, group.var = NULL,
@@ -384,7 +449,16 @@ mlogit.data <- function(data, choice = NULL, shape = c("long", "wide"), varying 
         if (! ranked & ! is.null(choice)){
             choice.name <- choice
             choice <- data[[choice]]
-            data[[choice.name]] <- tological(data[[choice.name]])
+            # coerce the choice variable to a logical if necessary
+            if (! is.logical(choice)){
+                if (is.factor(choice)){
+                    if (length(levels(choice)) != 2)
+                        stop("the number of levels for the choice variable should equal two")
+                    choice <- choice == levels(choice)[2]
+                }
+                if (is.numeric(choice)) choice <- choice != 0
+            }
+            data[[choice.name]] <- choice
         }
         chid <- as.factor(chid)
         alt <- as.factor(alt)

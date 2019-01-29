@@ -26,7 +26,7 @@ number of alternatives,}
 \item{...}{further arguments.}
 }
 \value{
-If the covariate is alternative specific, a \eqn{J times J} matrix is
+If the covariate is alternative specific, a \eqn{J \times J} matrix is
 returned, \eqn{J} being the number of alternatives. Each line contains the
 marginal effects of the covariate of one alternative on the probability to
 choose any alternative. If the covariate is individual specific, a vector of
@@ -54,7 +54,7 @@ effects(m, covariate = "price", type = "rr", data = z)
 effects(m, covariate = "catch", type = "ar", data = z)
 }
 \seealso{
-\code{\link{mlogit}} for the estimation of multinomial logit
+\code{\link[=mlogit]{mlogit()}} for the estimation of multinomial logit
 models.
 }
 \author{

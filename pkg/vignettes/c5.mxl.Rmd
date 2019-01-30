@@ -492,9 +492,8 @@ head(indpar)
 ``` 
 
 We can then compute the VSL for every individual and analyse their
-distribution, using quantiles and plotting on the following figure the
-empirical density of VSL for African and non-African travelers
-\citep[as done in][Table 4, p.219 and Figure 5, p.223]{LEON:MIGU:17}.
+distribution, using quantiles for African and non-African travelers
+\citep[as done in][Table 4, p.219]{LEON:MIGU:17}.
 
 ```{r label = 'individal parameters'}
 indpar$VSL <- with(indpar, risk / cost * 100)
@@ -514,12 +513,3 @@ max(indpar$VSL)
 This is not the case here as (absolute) minimum value of `cost`
 is $-0.003$ which leads to a maximum value of VSL of \$ $3131$.
 
-
-\clearpage
-
-```{r label = 'plotindpar', fig.cap = "The value of a statistical life."}
-library("ggplot2")
-indpar <- merge(unique(subset(RT, select = c("id", "african"))), indpar)
-ggplot(indpar) + geom_density(aes(x = VSL, linetype = african)) + 
-    scale_x_continuous(limits = c(200, 1200))
-``` 

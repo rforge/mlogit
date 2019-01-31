@@ -99,6 +99,7 @@
 #' 
 #' @author Yves Croissant
 #' @keywords regression
+#' @export
 mlogit.optim <- function(logLik, start,
                          method = c('bfgs', 'nr', 'bhhh'),
                          iterlim = 2000,

@@ -124,8 +124,11 @@ mFormula.default <- function(object){
     object
 }
 
-is.mFormula <- function(object)
+#' @rdname mFormula
+#' @export
+is.mFormula <- function(object){
     inherits(object, "mFormula")
+}
 
 #' @rdname mFormula
 #' @method model.frame mFormula
@@ -135,62 +138,67 @@ model.frame.mFormula <- function(formula, data, ..., lhs = NULL, rhs = NULL, alt
     if (is.null(lhs)) lhs <- ifelse(length(formula)[1] > 0, 1, 0)
     index <- attr(data, "index")
     mf <- model.frame(as.Formula(formula), as.data.frame(data), ..., rhs = rhs)
-    index <- index[rownames(mf), ]
-    oindex <- index
-    # a/ coerce the response to a logical if necessary
-    y <- model.response(mf)
-    if (! is.logical(y)){
-        if (is.factor(y)){
-            if (length(levels(y)) != 2)
-                stop("the number of levels for the choice variable should equal two")
-            y <- y == levels(y)[2]
+    if (inherits(data, "mlogit.data")){
+        # obvious condition, model.frame.mFormula is intended for
+        # mlogit.data and not ordinary data.frame, but the mpbart
+        # package use it in this way
+        index <- index[rownames(mf), ]
+        oindex <- index
+        # a/ coerce the response to a logical if necessary
+        y <- model.response(mf)
+        if (! is.logical(y)){
+            if (is.factor(y)){
+                if (length(levels(y)) != 2)
+                    stop("the number of levels for the choice variable should equal two")
+                y <- y == levels(y)[2]
+            }
+            if (is.numeric(y)) y <- y != 0
         }
-        if (is.numeric(y)) y <- y != 0
-    }
-    mf[[1]] <- y
-    # b/ change the reference level of the response if required
-    if (! is.null(reflevel)) index$alt <- relevel(index$alt, reflevel)
-    # c/ compute the relevent subset if required
-    if (! is.null(alt.subset)){
-        # we keep only choices that belong to the subset
-        choice <- index$alt[model.response(mf)]
-        choice <- choice %in% alt.subset
-        unid <- unique(index$chid)
-        names(choice) <- as.character(unid)
-        id.kept <- choice[as.character(index$chid)]
-        # we keep only the relevant alternatives
-        alt.kept <- index$alt %in% alt.subset
-        # the relevant subset for the data.frame and the indexes
-        mf <- mf[id.kept & alt.kept, , drop = FALSE]
-        index <- index[id.kept & alt.kept, , drop = FALSE]
-    }
-    # d/ balance the data.frame i.e. insert rows with NA when an
-    # alternative is not relevant
-    alt.un <- unique(index$alt)
-    chid.un <- unique(index$chid)
-    alt.lev <- levels(index$alt)
-    J <- length(alt.lev)
-    n <- length(chid.un)
-    T <- length(alt.un)
-    if (nrow(mf) != (n * T)){
-        rownames(mf) <- paste(index$chid, index$alt, sep = ".")
-        all.rn <- as.character(t(outer(chid.un, alt.un, paste, sep = ".")))
-        mf <- mf[all.rn, ]
-        rownames(mf) <- all.rn
-        chid <- rep(chid.un, each = T)
-        alt <- rep(alt.un, n)
-        index <- data.frame(chid = chid, alt = alt, row.names = rownames(mf))
-        if (! is.null(oindex$group)){
-            ra <- oindex[c("alt", "group")][! duplicated(oindex$alt), ]
-            gps <- ra$group
-            names(gps) <- ra$alt
-            index$group <- gps[index$alt]
+        mf[[1]] <- y
+        # b/ change the reference level of the response if required
+        if (! is.null(reflevel)) index$alt <- relevel(index$alt, reflevel)
+        # c/ compute the relevent subset if required
+        if (! is.null(alt.subset)){
+            # we keep only choices that belong to the subset
+            choice <- index$alt[model.response(mf)]
+            choice <- choice %in% alt.subset
+            unid <- unique(index$chid)
+            names(choice) <- as.character(unid)
+            id.kept <- choice[as.character(index$chid)]
+            # we keep only the relevant alternatives
+            alt.kept <- index$alt %in% alt.subset
+            # the relevant subset for the data.frame and the indexes
+            mf <- mf[id.kept & alt.kept, , drop = FALSE]
+            index <- index[id.kept & alt.kept, , drop = FALSE]
         }
-        if (! is.null(oindex$id)){
-            ra <- oindex[c("chid", "id")][! duplicated(oindex$chid), ]
-            ids <- ra$id
-            names(ids) <- ra$chid
-            index$id <- ids[index$chid]
+        # d/ balance the data.frame i.e. insert rows with NA when an
+        # alternative is not relevant
+        alt.un <- unique(index$alt)
+        chid.un <- unique(index$chid)
+        alt.lev <- levels(index$alt)
+        J <- length(alt.lev)
+        n <- length(chid.un)
+        T <- length(alt.un)
+        if (nrow(mf) != (n * T)){
+            rownames(mf) <- paste(index$chid, index$alt, sep = ".")
+            all.rn <- as.character(t(outer(chid.un, alt.un, paste, sep = ".")))
+            mf <- mf[all.rn, ]
+            rownames(mf) <- all.rn
+            chid <- rep(chid.un, each = T)
+            alt <- rep(alt.un, n)
+            index <- data.frame(chid = chid, alt = alt, row.names = rownames(mf))
+            if (! is.null(oindex$group)){
+                ra <- oindex[c("alt", "group")][! duplicated(oindex$alt), ]
+                gps <- ra$group
+                names(gps) <- ra$alt
+                index$group <- gps[index$alt]
+            }
+            if (! is.null(oindex$id)){
+                ra <- oindex[c("chid", "id")][! duplicated(oindex$chid), ]
+                ids <- ra$id
+                names(ids) <- ra$chid
+                index$id <- ids[index$chid]
+            }
         }
     }
     index <- data.frame(lapply(index, function(x) x[drop = TRUE]), row.names = rownames(index))

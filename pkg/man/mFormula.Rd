@@ -12,6 +12,8 @@ mFormula(object)
 
 \method{mFormula}{formula}(object)
 
+is.mFormula(object)
+
 \method{model.frame}{mFormula}(formula, data, ..., lhs = NULL,
   rhs = NULL, alt.subset = NULL, reflevel = NULL)
 

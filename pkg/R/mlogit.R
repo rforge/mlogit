@@ -243,6 +243,8 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     wlogit <- mt['wlogit']
     heterosc.logit <- mt['heterosc']
     mixed.logit <- mt["mixed"]
+    if (multinom.logit) callT$method <- 'nr'
+
     
     # 2 ######################################################
     # Run mlogit.data if necessary

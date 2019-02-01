@@ -1,7 +1,10 @@
 # mlogit 0.4-1
 
-* the Cracker data set is back in mlogit since AER run examples based
-  on it.
+* the Cracker, Catsup and Car data set are back in mlogit since AER,
+  flexmix and mlogitBMA run examples based on them.
+
+* the alt vector in the index is now carrefully checked in case of
+  alternative subseting or reference level change.
 
 # mlogit 0.4-0
 

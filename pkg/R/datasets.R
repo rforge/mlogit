@@ -350,6 +350,30 @@ NULL
 #' @keywords datasets
 NULL
 
+#' Choice of Brand for Crakers
+#' 
+#' a sample of 3292 individualscross-section
+#' 
+#' @name Cracker
+#' @docType data
+#' @format A dataframe containing :
+#'
+#' - id: individuals identifiers,
+#' - choice: one of sunshine, keebler, nabisco, private,
+#' - disp.z: is there a display for brand z?
+#' - feat.z: is there a newspaper feature advertisement for brand z?
+#' - price.z: price of brand z.
+#' 
+#' @source Journal of Business Economics and Statistics web site :
+#' \url{https://www.amstat.org}.
+#' 
+#' @references
+#' \insertRef{DIPA:NAUF:CHIN:94}{mlogit}
+#'
+#' \insertRef{PAAP:FRAN:00}{mlogit}
+#' @keywords datasets
+NULL
+
 #' mlogit package: estimation of random utility discrete choice models
 #' by maximum likelihood
 #'
@@ -362,3 +386,4 @@ NULL
 #' @details For a gentle and comprehensive introduction to the
 #'     package, see the package's vignettes.
 NULL
+

@@ -1,6 +1,11 @@
+# mlogit 0.4-1
+
+* the Cracker data set is back in mlogit since AER run examples based
+  on it.
+
 # mlogit 0.4-0
 
-* improved version of the vignette mlogit2, due to reviews and split
+* the main vignette is improved, writen in markdown and now and split
   by sections
 
 * the Exercises vignette is splited and is now writen in markdown
@@ -12,6 +17,8 @@
 
 * implementation of the computation of the standard deviations of the
   covariance matrix of the random parameters, using the delta method.
+  
+* some data sets are removed 
 
 # mlogit 0.3-0
 

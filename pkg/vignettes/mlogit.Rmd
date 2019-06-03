@@ -1,6 +1,6 @@
 ---
 output: rmarkdown::html_vignette
-bibliography: bibmlogit.bib
+bibliography: ../inst/REFERENCES.bib
 vignette: >
   %\VignetteIndexEntry{mlogit}
   %\VignetteEngine{knitr::rmarkdown}

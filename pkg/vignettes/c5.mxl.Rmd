@@ -154,7 +154,7 @@ distribution:
   negative values are expected, one should consider the distribution
   of the opposite of the random price coefficient. This can easily be
   done using the `opposite` argument of `mlogit.data`.^[See vignette
-  [formula/data](./2.formula.data.html).],
+  [formula/data](./c2.formula.data.html).],
 - the use of unbounded distributions often leads to implausible
   values of some statistics of the random parameters, especially the
   mean. This is particularly the case of the log-normal distribution,

@@ -1,3 +1,8 @@
+# mlogit 1.0-0
+
+* a new package version which coincides with the Journal of
+  Statistical Software article
+
 # mlogit 0.4-2
 
 * the R files for the vignettes are added (they were note while building the package on RForge)

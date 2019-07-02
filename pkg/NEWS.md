@@ -9,6 +9,8 @@
 
 * Rout.save files are added in the test directory
 
+* effects.mlogit now returns a matrix
+
 # mlogit 0.4-2
 
 * the R files for the vignettes are added (they were note while building the package on RForge)

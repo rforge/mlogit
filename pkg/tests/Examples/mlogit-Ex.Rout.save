@@ -569,7 +569,7 @@ alternative hypothesis: heteroscedastic model
 > cleanEx()
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  4.379 0.045 4.441 0 0 
+Time elapsed:  8.761 0.076 8.87 0 0 
 > grDevices::dev.off()
 null device 
           1 

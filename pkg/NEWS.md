@@ -1,3 +1,8 @@
+# mlogit 1.0-3
+
+* some numerical disperancies were caused by Rout.save files. Some
+  IGNORE tags are introduced to fix that.
+
 # mlogit 1.0-2
 
 * bug in model.frame : indexing by a factor and not a character to get

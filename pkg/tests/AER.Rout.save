@@ -1,5 +1,5 @@
 
-R version 3.6.0 (2019-04-26) -- "Planting of a Tree"
+R version 3.6.2 (2019-12-12) -- "Dark and Stormy Night"
 Copyright (C) 2019 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -310,4 +310,4 @@ alternative hypothesis: IIA is rejected
 > 
 > proc.time()
    user  system elapsed 
-  1.656   0.065   1.734 
+  1.281   0.065   1.336 

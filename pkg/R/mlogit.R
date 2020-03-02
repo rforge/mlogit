@@ -264,7 +264,6 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
         mldata[[1L]] <- as.name("mlogit.data")
         data <- eval(mldata, parent.frame())
     }
-    
     # 3 ######################################################
     # compute the model.frame
     ##########################################################
@@ -279,7 +278,10 @@ mlogit <- function(formula, data, subset, weights, na.action, start= NULL,
     mf$data <- data
     mf[[1L]] <- as.name("model.frame")
     mf <- eval(mf, parent.frame())
-
+#    print(class(formula))
+#    print(class(mf))
+#    print(head(mf))
+#stop()
     # 4 ###########################################################
     # get the dimensions of the model
     ###############################################################

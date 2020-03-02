@@ -518,8 +518,10 @@ mlogit.data <- function(data, choice = NULL, shape = c("long", "wide"), varying 
             row.names(data) <- paste(data[[chid.name]], data[[alt.name]], sep = ".")
         }
         data <- data[order(data[[chid.name]], data[[alt.name]]), ]
-        chid <- as.factor(data[[chid.name]])
-        alt <- as.factor(data[[alt.name]])
+        # 2019/03/02 coerce to factor not only the 2 vectors, but also
+        # the corresponding columns in the data.fram (Kurt / Achim)
+        chid <- data[[chid.name]] <- as.factor(data[[chid.name]])
+        alt <- data[[alt.name]] <- as.factor(data[[alt.name]])
         if (! is.null(alt.levels)){
             levels(data[[choice]]) <- alt.levels
             levels(alt) <- alt.levels
